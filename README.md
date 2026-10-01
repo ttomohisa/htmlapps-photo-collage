@@ -2,7 +2,7 @@
 
 A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
 
-The current development release is **v0.8.0**. This milestone focuses on high-resolution photo robustness: orientation-aware decoding, explicit bitmap and Object URL cleanup, sequential processing, and recovery when a device cannot allocate enough image-processing resources.
+The current development release is **v0.8.1**. This milestone focuses on high-resolution photo robustness: orientation-aware decoding, explicit bitmap and Object URL cleanup, sequential processing, and recovery when a device cannot allocate enough image-processing resources.
 
 ## Features
 
@@ -43,6 +43,14 @@ Thumbnail Object URLs remain alive only while the current editor or Undo / Redo 
 - Resource-pressure failures show a recovery suggestion instead of silently failing.
 
 The release-candidate stage will still perform final real-device stress checks for the 20 × 12MP desktop and 10 × 12MP smartphone targets.
+
+## v0.8.1 UX changes
+
+- The default canvas ratio is now **4:3**.
+- **More layouts** now switches to the next candidate page and immediately applies the first layout on that page to the preview.
+- The More layouts button shows the current candidate page.
+- Added photos can be reordered by desktop Drag & Drop or by a touch-friendly drag handle.
+- The privacy badge now says **Fully local processing**.
 
 ## Privacy
 
