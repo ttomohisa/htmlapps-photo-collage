@@ -2,7 +2,7 @@
 
 複数の写真をブラウザー内で読み込み、1枚のコラージュにまとめるBrowser Kitty向けツールです。
 
-現在の開発版は **v0.8.0** です。高解像度写真を扱うときの安定性を中心に、orientation対応decode、Bitmap / Object URLの明示解放、逐次処理、端末の画像処理メモリが不足した場合の回復案内を追加しました。
+現在の開発版は **v0.8.1** です。高解像度写真を扱うときの安定性を中心に、orientation対応decode、Bitmap / Object URLの明示解放、逐次処理、端末の画像処理メモリが不足した場合の回復案内を追加しました。
 
 ## Features
 
@@ -44,6 +44,14 @@ thumbnailのObject URLは現在の編集状態またはUndo / Redo履歴から�
 - 端末resource不足時は無反応にせずrecovery案内を表示
 
 20 × 12MP desktop / 10 × 12MP smartphoneの最終実機stress確認はv0.9.0 Release Candidateで実施します。
+
+## v0.8.1 UX変更
+
+- キャンバス比率の初期値を **4:3** に変更。
+- 「別の配置を見る」を押すと次の候補ページへ移動し、そのページ先頭の配置をpreviewへ即反映。
+- 「別の配置を見る」に現在の候補ページを表示。
+- 追加した写真はPCのDrag & Dropに加え、touch対応drag handleでも並べ替え可能。
+- privacy badgeを **「完全ローカル処理」** に変更。
 
 ## Privacy
 
