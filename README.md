@@ -2,7 +2,6 @@
 
 Combine 2–20 photos into one collage directly in the browser, with photo-aware layout suggestions and local image export.
 
-![Photo Collage screenshot](assets/screenshot.png)
 
 ## Features
 
