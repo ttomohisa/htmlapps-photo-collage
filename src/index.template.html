@@ -114,7 +114,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt=""></div>
         <div class="brand-copy">
-          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.7.0</span></p>
+          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.8.0</span></p>
           <p class="brand-meta" data-i18n="brandMeta">写真を選んで、1枚にまとめる</p>
         </div>
       </div>
@@ -376,6 +376,39 @@
     function resetEditor(){
       const before=captureHistoryState();state.generation+=1;state.photos=[];state.selectedPhotoId='';state.selectedLayoutId='';state.layoutCandidates=[];state.layoutPage=0;state.canvasRatioKey='1:1';state.canvasAspect=1;state.customRatioWidth=1;state.customRatioHeight=1;state.gap=8;state.outerMargin=8;state.cornerRadius=0;state.background='#ffffff';state.transparentBackground=false;state.exportFormat='jpeg';state.exportLongSideKey='2160';state.customLongSide=2160;state.exportQuality=90;state.outputFilename='photo-collage';setStatus('');els.exportResult.classList.remove('show');els.exportResult.textContent='';els.exportProgress.classList.remove('show');els.exportProgress.textContent='';commitHistory(before);renderFinishPanel();updateView();window.AppToast.show({message:tr('resetDone'),tone:'success'});
     }
+    function currentPhotoIds(){return new Set(state.photos.map(photo=>photo.id))}
+    function referencedThumbnailUrls(){
+      const urls=new Set();const addSnapshot=snapshot=>snapshot?.photos?.forEach(photo=>{if(photo.thumbUrl)urls.add(photo.thumbUrl)});
+      addSnapshot(captureHistoryState());undoStack.forEach(addSnapshot);redoStack.forEach(addSnapshot);historyGestures.forEach(addSnapshot);return urls;
+    }
+    function cleanupPreviewCache(){
+      const current=currentPhotoIds();
+      for(const [id,promise] of previewImageCache){if(current.has(id))continue;previewImageCache.delete(id);Promise.resolve(promise).then(image=>{if(image&&'src'in image)image.src=''}).catch(()=>{})}
+    }
+    function cleanupUnusedPhotoResources(){
+      cleanupPreviewCache();const referenced=referencedThumbnailUrls();
+      for(const url of Array.from(photoObjectUrls)){if(referenced.has(url))continue;URL.revokeObjectURL(url);photoObjectUrls.delete(url)}
+    }
+    function sourceDimensions(source){return{width:Math.max(1,Number(source?.naturalWidth||source?.width)||1),height:Math.max(1,Number(source?.naturalHeight||source?.height)||1)}}
+    async function decodeImageSource(file,{resizeWidth=0,resizeHeight=0,resizeQuality='high'}={}){
+      if(typeof createImageBitmap==='function'){
+        try{
+          const options={imageOrientation:'from-image',premultiplyAlpha:'default',colorSpaceConversion:'default'};
+          if(resizeWidth>0)options.resizeWidth=Math.max(1,Math.round(resizeWidth));
+          if(resizeHeight>0)options.resizeHeight=Math.max(1,Math.round(resizeHeight));
+          if(resizeWidth>0||resizeHeight>0)options.resizeQuality=resizeQuality;
+          const bitmap=await createImageBitmap(file,options),dimensions=sourceDimensions(bitmap);
+          return{image:bitmap,width:dimensions.width,height:dimensions.height,dispose(){bitmap.close?.()}};
+        }catch(error){}
+      }
+      const url=URL.createObjectURL(file),image=new Image();image.decoding='async';
+      try{
+        await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error(tr('decodeFailed')));image.src=url});
+        const dimensions=sourceDimensions(image);return{image,width:dimensions.width,height:dimensions.height,dispose(){image.src='';URL.revokeObjectURL(url)}};
+      }catch(error){image.src='';URL.revokeObjectURL(url);throw error}
+    }
+    function yieldToUi(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()))}
+    function isResourcePressureError(error){const text=String(error?.message||error||'').toLowerCase();return error?.name==='RangeError'||error?.name==='InvalidStateError'||error?.name==='EncodingError'||/memory|allocation|canvas|bitmap|resource/.test(text)}
     let toastTimer=0;
     window.AppToast=Object.freeze({show({message,tone='default',actionLabel='',onAction=null,duration=3600}={}){clearTimeout(toastTimer);els.appToastMessage.textContent=message||'';els.appToast.dataset.tone=tone;if(actionLabel&&typeof onAction==='function'){els.appToastAction.hidden=false;els.appToastAction.textContent=actionLabel;els.appToastAction.onclick=()=>{onAction();hideToast()}}else{els.appToastAction.hidden=true;els.appToastAction.onclick=null}els.appToast.classList.add('show');toastTimer=setTimeout(hideToast,duration)}});
     function hideToast(){els.appToast.classList.remove('show');clearTimeout(toastTimer)}
@@ -385,8 +418,20 @@
     function setStatus(message,tone='warning'){if(!message){els.statusStrip.className='status-strip';els.statusText.textContent='';return}els.statusText.textContent=message;els.statusStrip.className=`status-strip show ${tone}`}
     function validType(file){return ['image/jpeg','image/png','image/webp'].includes(file.type)}
     function makeId(){return crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`}
-    async function decodeFile(file,generation){if(!validType(file))throw new Error(tr('unsupported'));const url=URL.createObjectURL(file);try{const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error(tr('decodeFailed')));i.src=url});if(generation!==state.generation)throw new DOMException('Stale image result','AbortError');const max=360;const scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));const ctx=canvas.getContext('2d',{alpha:false});ctx.drawImage(img,0,0,canvas.width,canvas.height);const thumbBlob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Thumbnail encode failed')),'image/jpeg',.82));const thumbUrl=URL.createObjectURL(thumbBlob);photoObjectUrls.add(thumbUrl);return{id:makeId(),file,name:file.name,width:img.naturalWidth,height:img.naturalHeight,aspect:img.naturalWidth/img.naturalHeight,thumbUrl,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false}}finally{URL.revokeObjectURL(url)}}
-    async function addFiles(fileList){const files=Array.from(fileList||[]);if(!files.length)return;const slots=Math.max(0,20-state.photos.length);const accepted=files.slice(0,slots);const overflow=Math.max(0,files.length-accepted.length);if(!accepted.length){if(overflow)window.AppToast.show({message:tr('limit',{count:overflow}),tone:'warning'});return}const historyBefore=captureHistoryState();const generation=++state.generation;setStatus('');setPhase('loading');let ok=0,bad=0;const newPhotos=[];for(let i=0;i<accepted.length;i+=1){els.loadingProgress.textContent=`${i+1} / ${accepted.length}`;try{const photo=await decodeFile(accepted[i],generation);newPhotos.push(photo);ok+=1}catch(error){if(error?.name==='AbortError')return;bad+=1}}
+    async function decodeFile(file,generation){
+      if(!validType(file))throw new Error(tr('unsupported'));const decoded=await decodeImageSource(file);
+      try{
+        if(generation!==state.generation)throw new DOMException('Stale image result','AbortError');
+        const width=decoded.width,height=decoded.height,max=360,scale=Math.min(1,max/Math.max(width,height)),canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));const ctx=canvas.getContext('2d',{alpha:false});
+        if(!ctx)throw new Error('Thumbnail canvas unavailable');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(decoded.image,0,0,canvas.width,canvas.height);
+        const thumbBlob=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Thumbnail encode failed')),'image/jpeg',.82));canvas.width=1;canvas.height=1;
+        if(generation!==state.generation)throw new DOMException('Stale image result','AbortError');
+        const thumbUrl=URL.createObjectURL(thumbBlob);photoObjectUrls.add(thumbUrl);
+        return{id:makeId(),file,name:file.name,width,height,aspect:width/height,thumbUrl,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false};
+      }finally{decoded.dispose()}
+    }
+    async function addFiles(fileList){const files=Array.from(fileList||[]);if(!files.length)return;const slots=Math.max(0,20-state.photos.length);const accepted=files.slice(0,slots);const overflow=Math.max(0,files.length-accepted.length);if(!accepted.length){if(overflow)window.AppToast.show({message:tr('limit',{count:overflow}),tone:'warning'});return}const historyBefore=captureHistoryState();const generation=++state.generation;setStatus('');setPhase('loading');let ok=0,bad=0;const newPhotos=[];for(let i=0;i<accepted.length;i+=1){els.loadingProgress.textContent=`${i+1} / ${accepted.length}`;try{const photo=await decodeFile(accepted[i],generation);newPhotos.push(photo);ok+=1}catch(error){if(error?.name==='AbortError')return;bad+=1}await yieldToUi()}
       if(generation!==state.generation){newPhotos.forEach(p=>{URL.revokeObjectURL(p.thumbUrl);photoObjectUrls.delete(p.thumbUrl)});return}state.photos.push(...newPhotos);if(ok)commitHistory(historyBefore);updateView();if(overflow){setStatus(tr('limit',{count:overflow}),'warning')}else if(bad&&ok){setStatus(tr('partial',{ok,bad}),'warning')}else if(bad&&!ok){setStatus(tr('failed'),'error')}if(ok)window.AppToast.show({message:tr('loaded',{count:ok}),tone:'success'});els.fileInput.value=''}
     function selectedPhoto(){return state.photos.find(photo=>photo.id===state.selectedPhotoId)||null}
     function selectPhoto(id){
