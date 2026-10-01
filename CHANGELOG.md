@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.8.0 - 2026-10-01
+
+### Added
+
+- Orientation-aware image decoding through `createImageBitmap(..., { imageOrientation: "from-image" })` when available.
+- HTMLImageElement decode fallback for compatible browsers that cannot use the ImageBitmap path.
+- Explicit ImageBitmap disposal after thumbnail creation and after each high-resolution export draw.
+- History-aware thumbnail Object URL cleanup.
+- Preview decoded-image cache cleanup when photos leave the current collage.
+- Input and export recovery messages for device image-processing memory pressure.
+- JPEG / PNG / WebP extension fallback when File.type is empty or `application/octet-stream`.
+- Extreme portrait / panorama regression coverage.
+
+### Changed
+
+- Source images are released immediately after thumbnail drawing instead of waiting for thumbnail encoding.
+- Export Canvas is reduced after encoding before download setup where possible.
+- Hidden main / mobile preview canvases are reduced to 1×1 to release backing buffers.
+- Input and export loops yield to the UI between photos.
+- Thumbnail and export Canvas rendering request high-quality image smoothing.
+- Transparent input images are flattened to white only for JPEG preview thumbnails.
+
 ## 0.7.0 - 2026-10-01
 
 ### Added
