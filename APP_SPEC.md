@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.8.0`
+- **Current development version:** `0.8.1`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -126,7 +126,7 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 - 9:16
 - 16:9
 - 3:2
-- 4:3
+- 4:3（初期値）
 - カスタム比率
 - 写真間隔
 - 外周余白
@@ -281,6 +281,16 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - 20×12MP desktop
 - 10×12MP mobile
 - orientation / extreme aspect regression
+
+### v0.8.1 — UX polish
+
+- privacy badgeを「完全ローカル処理」へ変更
+- default canvas ratioを4:3へ変更
+- 「別の配置を見る」で次候補を自動選択しpreviewも更新
+- alternate layout page数をボタンへ表示
+- desktop Drag & Dropを維持
+- touch / pen向けdrag handleを追加
+- drag reorderもUndo / Redo対象として維持
 
 ### v0.9.0 — Release Candidate
 
