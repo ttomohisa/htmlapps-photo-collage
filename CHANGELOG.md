@@ -9,6 +9,10 @@
 - Made More layouts immediately apply the first layout from the next candidate page.
 - Added a page indicator to the More layouts button.
 - Added a touch / pen drag handle for photo reordering while keeping desktop Drag & Drop and arrow controls.
+- Aligned the app header with the current htmlapps-template header UI.
+- Fixed the broken photo action-row CSS that caused controls to stack vertically and cards to grow with large blank areas.
+- Kept photo cards content-height sized instead of stretching to the tallest card in the grid row.
+- Simplified desktop dragging to use the photo thumbnail as the drag ghost and show the grip only on coarse-pointer devices.
 
 ## 0.8.0 - 2026-10-01
 
