@@ -323,7 +323,7 @@
       const balance=Math.sqrt(areas.reduce((sum,area)=>sum+Math.pow((area-mean)/mean,2),0)/Math.max(1,areas.length));
       const singletons=layout.groups.filter(v=>v===1).length;
       const heroIndex=photos.findIndex(photo=>photo.hero);let heroPenalty=0;
-      if(heroIndex>=0){const heroArea=areas[heroIndex]||0;heroPenalty=Math.max(0,1.45-heroArea/mean)*.19}
+      if(heroIndex>=0){const heroArea=areas[heroIndex]||0;heroPenalty=Math.max(0,1.45-heroArea/mean)*1.1}
       return crop/Math.max(1,photos.length)+extreme+balance*.055+singletons*.008+heroPenalty;
     }
     function generateLayouts(photos){
