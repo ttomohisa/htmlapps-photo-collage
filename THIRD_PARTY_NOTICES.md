@@ -1,15 +1,9 @@
 # Third-Party Notices
 
-The default generated starter application contains no bundled third-party library code.
+Photo Collage currently bundles **no third-party runtime library code**.
 
-Browser APIs and system fonts are used directly. The GitHub Actions workflows reference their respective GitHub-maintained actions under the terms published by those projects.
+The application uses browser-native APIs and system fonts. The generated application does not load a runtime CDN, remote font, analytics library, telemetry SDK, or external API.
 
-When adding a package to `dependencies.json`:
+GitHub Actions workflows reference GitHub-maintained actions under the terms published by those projects; those workflow actions are build/CI tooling and are not bundled into the released HTML application.
 
-1. Add its name, exact version, license, and homepage to this file.
-2. Sync and commit the corresponding `dependencies.lock.json` entry.
-3. Include every copyright notice and license text required for redistribution.
-4. Update both README files when the dependency materially affects privacy, size, or capability.
-5. Commit the regenerated `dist/dependency-manifest.json` only if the repository policy chooses to track generated artifacts.
-
-Do not assume that a package being available from npm makes it compatible with MIT redistribution.
+If a dependency is added in the future, its exact version, license, homepage, required notices, and lock hash must be recorded before release.
