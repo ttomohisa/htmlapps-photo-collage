@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.7.0`
+- **Current development version:** `0.8.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,161 +297,118 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.7.0 implementation contract
+## 15. v0.8.0 implementation contract
 
-v0.7.0では、編集操作を安全に試せるようUndo / Redoを正式実装し、キーボード操作とReset確認を整える。
+v0.8.0では高解像度写真を扱うときのpeak memoryを抑え、orientation・extreme aspect・履歴復元を含めた画像resource lifetimeを明示的に管理する。
 
-### History model
+### Decode strategy
 
-最大50操作を保持する。
+画像decodeでは利用可能な場合 `createImageBitmap(file, { imageOrientation: 'from-image' })` を優先する。
 
-履歴snapshotは写真バイナリを複製しない。各写真について既存の `File` referenceとthumbnail URLを保持し、以下の編集値を複製する。
+- EXIF orientationを反映したbitmapを利用する。
+- width / height / aspect ratioはorientation適用後のdrawable dimensionsから取得する。
+- 使用後は `ImageBitmap.close()` を呼ぶ。
+- `createImageBitmap` が利用できない、または通常のdecode互換性理由で失敗した場合のみ `HTMLImageElement` へfallbackする。
+- memory pressureとして判定した失敗では同じ元画像を別decoderで再decodeせず、その失敗を呼び出し側へ返す。
 
-- photo order
-- crop x / y
-- zoom
-- Fill / Fit
-- hero
-- selected layout
-- canvas ratio / custom ratio
-- gap
-- outer margin
-- background / transparency
-- corner radius
-- export format / resolution / quality
-- output filename
+### Input / thumbnail memory
 
-写真選択そのもの、言語切替、mobile page切替はUndo対象にしない。
+写真は1枚ずつdecodeする。
 
-### History behavior
+1. 元画像をdecode
+2. 最大辺360pxのthumbnail Canvasへ描画
+3. 元decodeを即解放
+4. thumbnailをJPEG Blobへencode
+5. thumbnail Canvasを1×1へ縮小
 
-操作前snapshotをUndo stackへ保存し、Undo実行時は現在snapshotをRedo stackへ移して直前状態を復元する。
+元画像decodeをthumbnail encode完了まで保持しない。
 
-新しい編集を行った場合はRedo stackを破棄する。
+写真間ではanimation frameを挟み、長い連続処理中にUI threadへ制御を返す。
 
-履歴復元時はderived stateであるlayout candidatesを再生成し、previewも再描画する。
+### Preview cache
 
-### Continuous controls
+previewにはthumbnailだけを利用し、元写真を編集操作ごとにdecodeしない。
 
-pointer dragやrange inputを1px / 1tickごとに履歴化しない。
+- 現在の写真に存在しないpreview decoded imageはcacheから外す。
+- Undo / Redoで復元する可能性がある写真のthumbnail Object URLは履歴から参照される限り保持する。
+- Undo / Redo stackからも参照されなくなったthumbnail URLはrevokeする。
+- pagehideでpreview cacheと全session thumbnail URLを解放する。
 
-以下は操作開始前から操作終了までを1履歴とする。
+### Export memory
 
-- crop pointer drag
-- zoom
-- gap
-- outer margin
-- corner radius
-- JPEG / WebP quality
-- color picker
-- filename edit
+高解像度exportは従来どおり元Fileを1枚ずつdecodeする。
 
-keyboardでrangeを1step変更した場合は1stepを1履歴としてよい。
+各写真はCanvasへ描画直後にdecode resourceをdisposeし、次の写真をdecodeする前にanimation frameを挟む。
 
-### Photo operations
+encode完了後はdownload Blob URLを作る前にexport Canvasを1×1へ縮小できる状態へし、成功 / failureのどちらでもfinallyでbuffer releaseを行う。
 
-以下をUndo / Redo可能にする。
+### Hidden Canvas release
 
-- photo add
-- photo remove
-- reorder buttons
-- Drag & Drop reorder
+写真が2枚未満、または有効layoutがない場合はmain preview Canvasを1×1へ縮小する。
 
-削除直後のToast Undoはhistory engineと同じUndo処理を利用する。
+Finish / Save用mobile preview Canvasも非表示時は1×1へ縮小する。
 
-Toast表示後に別の編集が行われた場合、古い削除Toastが後の別操作をUndoしないようhistory revisionを確認する。
+### Local file type robustness
 
-### Reset
+File.typeが空、または `application/octet-stream` の場合でも、filename extensionが `.jpg` / `.jpeg` / `.png` / `.webp` なら入力を許可する。
 
-「最初から」は即実行しない。
+明確な非画像MIMEが付いている場合はextensionだけで上書きしない。
 
-確認dialogを表示し、以下を初期値へ戻す。
+### Memory-pressure recovery
 
-- photos
-- photo edits
-- selected layout
-- canvas ratio / finish
-- export settings
-- output filename
+画像入力がresource pressureで全件失敗した場合は、破損画像と同じgeneric errorだけで終わらせず、枚数または画像サイズを下げる案内を表示する。
 
-Reset自体も1履歴として記録し、Reset後にUndoすれば直前の作業状態へ戻せる。
+exportがresource pressureで失敗した場合は出力解像度を下げる案内を表示する。
 
-Reset dialogはEscapeで閉じられ、Cancel / close buttonを持つ。
+### Extreme aspect robustness
 
-### Keyboard shortcuts
+photo aspect ratioはlayout scoring内部で安全範囲へclampし、0.01相当のextreme portraitや100相当のpanoramaでもNaN / Infinity / negative cellを生成しない。
 
-document-level:
+canvas custom ratioの正式範囲1:10〜10:1を維持する。
 
-- Ctrl / Cmd + Z: Undo
-- Ctrl / Cmd + Shift + Z: Redo
-- Ctrl / Cmd + Y: Redo
+### Rendering quality
 
-input / textarea / select / contenteditableにfocusがある場合、アプリ側shortcutでブラウザー標準のtext editing Undoを奪わない。
+thumbnail / high-resolution exportのCanvas 2Dではimage smoothingを有効にし、利用可能な場合はhigh qualityを指定する。
 
-### Canvas keyboard adjustment
+PNG thumbnailはJPEG thumbnailへflattenするため、thumbnail Canvasは白背景で初期化する。これはpreview用thumbnailのみで、最終PNG transparencyには影響しない。
 
-main preview Canvasをkeyboard focus可能にする。
+## 16. v0.8.0 acceptance criteria
 
-Fillの選択写真について:
-
-- Arrow Left / Right / Up / Down: position adjustment
-- Shift + Arrow: larger step
-
-各keyboard adjustmentはUndo可能。
-
-Canvasにはaccessible nameを与え、focus-visibleを維持する。
-
-### Focus / accessibility
-
-- Undo / Redo / Resetはbutton disabled stateを正しく反映する。
-- Undo / Redo buttonに `aria-keyshortcuts` を付与する。
-- Reset dialogは `aria-labelledby` / `aria-describedby` を持つ。
-- Reset dialog終了後はhistory toolbarへfocusを戻す。
-- 写真削除後は可能なら次の写真cardへfocusを移す。
-- 既存 `aria-live` / visible focus / reduced motionを維持する。
-- 色だけでactive / selectedを表現しない。
-
-### Thumbnail lifetime
-
-Undo / Redoで削除写真を復元できるよう、thumbnail Object URLを写真削除時に即revokeしない。
-
-session内で生成したthumbnail URLをSetで追跡し、pagehide時にまとめてrevokeする。
-
-## 16. v0.7.0 acceptance criteria
-
-- Undo historyは最大50件。
-- 51件目以降は最古履歴を破棄する。
-- Redo historyも最大50件。
-- 新規編集後にRedo historyを破棄する。
-- 写真追加をUndo / Redoできる。
-- 写真削除をUndo / Redoできる。
-- 写真並べ替えをUndo / Redoできる。
-- layout選択をUndo / Redoできる。
-- crop dragを1drag = 1履歴でUndo / Redoできる。
-- zoom sliderを1drag = 1履歴で扱う。
-- gap / outer margin / corner radiusを各1drag = 1履歴で扱う。
-- Fill / FitをUndo / Redoできる。
-- hero指定をUndo / Redoできる。
-- canvas ratio / custom ratioをUndo / Redoできる。
-- background / transparencyをUndo / Redoできる。
-- export format / resolution / qualityをUndo / Redoできる。
-- filename editをUndo / Redoできる。
-- Ctrl / Cmd + ZがUndoとして動作する。
-- Ctrl / Cmd + Shift + ZがRedoとして動作する。
-- Ctrl / Cmd + YがRedoとして動作する。
-- text input focus中はglobal Undo shortcutを奪わない。
-- Resetは確認dialogを表示する。
-- Reset後にUndoすると直前状態へ戻る。
-- main Canvasをkeyboard focusできる。
-- Fill写真を矢印キーでposition調整できる。
-- Shift + Arrowで大きくposition調整できる。
-- keyboard position調整をUndoできる。
-- Undo / Redo / Resetのdisabled stateが現在履歴と一致する。
-- 写真削除後に可能なら残存photo cardへfocusを移す。
-- Reset dialogにlabel / descriptionがある。
-- thumbnail URLを削除時に即revokeしない。
-- thumbnail URLをpagehideでrevokeする。
+- `createImageBitmap` 利用時に `imageOrientation: 'from-image'` を指定する。
+- ImageBitmap使用後に `close()` を呼ぶ。
+- createImageBitmap非対応時にHTMLImageElement fallbackがある。
+- memory pressure時は同じ画像をfallback decoderで再decodeしない。
+- thumbnail作成は1写真ずつ行う。
+- thumbnail描画後、encode待ち前に元decodeを解放する。
+- thumbnail Canvasを処理後1×1へ縮小する。
+- 写真間でUIへyieldする。
+- exportは元写真を1枚ずつdecodeする。
+- export各写真描画後にdecode resourceを解放する。
+- export encode後にCanvas bufferを早期解放する。
+- hidden main / mobile preview Canvasを1×1へ縮小する。
+- preview cacheから非current decoded imageを除去する。
+- Undo / Redoに必要なthumbnail URLは保持する。
+- historyから参照されなくなったthumbnail URLをrevokeする。
+- pagehideでpreview cacheとthumbnail URLを解放する。
+- MIMEなしJPEG / PNG / WebPをextension fallbackで受け入れる。
+- 明確な非画像MIMEはextensionだけで受け入れない。
+- input memory failureに回復案を表示する。
+- export memory failureに解像度を下げる案内を表示する。
+- 0.01〜100相当のphoto aspectを含むlayout回帰でfinite score / finite cellsを維持する。
+- canvas 1:10 / 10:1でlayout / export dimension計算が成立する。
+- 最大辺8192px / 最大32MP制限を維持する。
+- duplicate photosを別idとして扱える。
+- Unicode / long filenameをUIとexport filename処理で破綻させない。
 - Runtime CSPの `connect-src 'none'` を維持する。
 - `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
 - `StandaloneAssets`, `window.AppToast`, `AppMobileBottomBar`, `outputFilename` 契約を維持する。
+
+### Device stress targets for RC
+
+v0.8.0の構造上の目標は以下とするが、実機browserでの最終stress confirmationはv0.9.0 RCで実施する。
+
+- desktop: 20 × 12MP JPEG
+- smartphone: 10 × 12MP JPEG
+
+failureした端末では無反応・page破損にせず、部分失敗または解像度低下のrecoveryを提示する。
