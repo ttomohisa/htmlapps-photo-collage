@@ -1,8 +1,8 @@
 # Photo Collage
 
-A Browser Kitty tool for loading multiple photos in the browser and combining them into one collage.
+A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
 
-The current development release is **v0.1.0**. It establishes photo input, thumbnails, application states, and the Canvas preview foundation. Photo-aware automatic layouts are planned for v0.2.0.
+The current development release is **v0.2.0**. It adds deterministic photo-aware layout suggestions that prioritize lower crop loss while keeping the workflow fully local.
 
 ## Features
 
@@ -12,7 +12,9 @@ The current development release is **v0.1.0**. It establishes photo input, thumb
 - Add and remove photos
 - Thumbnails, filenames, and pixel dimensions
 - Partial-failure handling for invalid images
-- Temporary equal-grid Canvas preview for 2+ photos
+- Photo-aware automatic layout suggestions for 2–20 photos
+- Candidate scoring based on crop loss, extreme cell shapes, and area balance
+- Up to six visible suggestions at a time, with additional layout pages
 - Japanese / English UI
 - Desktop and smartphone layouts
 - No runtime network access
@@ -21,10 +23,11 @@ The current development release is **v0.1.0**. It establishes photo input, thumb
 
 1. Choose multiple photos with **Choose photos**.
 2. Review the loaded photos in the list.
-3. With two or more photos, the temporary Canvas preview is shown.
-4. Remove unwanted photos from their cards.
+3. With two or more photos, choose from the suggested layouts.
+4. Use **More layouts** to view additional candidates when available.
+5. Remove unwanted photos from their cards.
 
-Final image export is not available in v0.1.0 yet.
+Final image export is not available in v0.2.0 yet.
 
 ## Privacy
 
@@ -38,7 +41,15 @@ Current stable Chrome, Edge, Firefox, and Safari, including major mobile browser
 
 ## Limitations
 
-v0.1.0 does not yet include automatic photo-aware layouts, reordering, crop/zoom, hero photos, finish settings, or JPEG/PNG/WebP export. See `APP_SPEC.md` for the roadmap.
+v0.2.0 does not yet include:
+
+- Reordering
+- Crop / zoom controls
+- Hero photos
+- Gap / background / rounded-corner settings
+- JPEG / PNG / WebP export
+
+See `APP_SPEC.md` for the roadmap.
 
 ## Development
 

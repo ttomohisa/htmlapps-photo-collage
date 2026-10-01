@@ -44,6 +44,10 @@
     .empty-state{padding:56px 22px;text-align:center}.empty-illustration{width:76px;height:76px;margin:0 auto 15px;border-radius:20px;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}.empty-illustration svg{width:42px;height:42px}.empty-state h2{margin:0;font-size:18px}.empty-state p{max-width:480px;margin:7px auto 0;color:var(--muted);font-size:13px;line-height:1.65}
     .ready-area{display:none}.ready-area.show{display:block}.preview-wrap{padding:16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#f7f8f5,#f1f3ef)}.preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.preview-head h2{font-size:14px;margin:0}.preview-head span{font-size:11px;color:var(--muted)}
     .preview-stage{min-height:260px;display:grid;place-items:center;padding:12px;border-radius:13px;background:#e8ebe7;overflow:hidden}.preview-stage canvas{display:block;max-width:100%;max-height:480px;width:auto;height:auto;border-radius:3px;box-shadow:0 12px 30px rgba(24,38,31,.12);background:#fff}.preview-message{max-width:430px;text-align:center;color:var(--muted);font-size:13px;line-height:1.65}.preview-message strong{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+    .layout-picker{margin:12px 16px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.84)}
+    .layout-picker[hidden]{display:none}.layout-picker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.layout-picker-copy{min-width:0}.layout-picker-copy strong{display:block;font-size:13px}.layout-picker-copy span{display:block;margin-top:2px;color:var(--muted);font-size:11px;line-height:1.5}.layout-picker-head .secondary-button{min-height:36px;padding:6px 9px;font-size:11px;flex:none}
+    .layout-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.layout-option{min-width:0;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);text-align:left}.layout-option:hover{border-color:var(--line-strong);background:var(--surface-hover)}.layout-option[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 17%,transparent);background:var(--accent-soft)}
+    .layout-thumb{position:relative;width:100%;aspect-ratio:1;overflow:hidden;border-radius:6px;background:#e7ebe8}.layout-thumb-cell{position:absolute;background-position:center;background-size:cover;box-shadow:inset 0 0 0 1px rgba(255,255,255,.9)}.layout-option-label{display:block;margin-top:5px;color:var(--muted);font-size:10px;font-weight:800;text-align:center}.layout-option[aria-pressed="true"] .layout-option-label{color:var(--accent)}
     .photos-section{padding:16px}.photos-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}.photos-head h2{margin:0;font-size:14px}.photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.photo-card{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}.thumb{aspect-ratio:4/3;background:var(--surface-muted);display:grid;place-items:center;overflow:hidden}.thumb img{width:100%;height:100%;object-fit:cover}.photo-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:9px}.photo-name{min-width:0;font-size:11px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.photo-size{margin-top:2px;color:var(--muted);font-size:10px}.danger-icon-button{width:34px;height:34px;min-height:34px;padding:0;border:0;background:transparent;color:var(--muted)}.danger-icon-button:hover{background:#fff0ef;color:var(--danger)}.danger-icon-button svg{width:16px;height:16px}
     .loading-state{display:none;padding:46px 22px;text-align:center}.loading-state.show{display:block}.spinner{width:30px;height:30px;margin:0 auto 12px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}.loading-state strong{font-size:14px}.loading-state p{margin:5px 0 0;color:var(--muted);font-size:12px}@keyframes spin{to{transform:rotate(360deg)}}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -62,7 +66,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt=""></div>
         <div class="brand-copy">
-          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.1.0</span></p>
+          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.2.0</span></p>
           <p class="brand-meta" data-i18n="brandMeta">写真を選んで、1枚にまとめる</p>
         </div>
       </div>
@@ -77,7 +81,7 @@
 
   <main class="main">
     <section class="page-intro" aria-labelledby="heroTitle">
-      <div><h1 id="heroTitle" data-i18n="introTitle">写真を1枚のコラージュにまとめる</h1><p data-i18n="lead">複数の写真を追加すると、ブラウザー内でプレビューします。v0.1.0では写真入力とプレビュー基盤を先に整えています。</p></div>
+      <div><h1 id="heroTitle" data-i18n="introTitle">写真を1枚のコラージュにまとめる</h1><p data-i18n="lead">複数の写真を追加すると、写真の縦横比に合わせたレイアウト候補を自動で作成します。</p></div>
       <div class="privacy-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg><span data-i18n="privacyBadge">写真は外部送信しません</span></div>
     </section>
 
@@ -105,8 +109,15 @@
         <div class="empty-state" id="emptyState"><div class="empty-illustration"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="9" width="36" height="30" rx="6"/><circle cx="17" cy="20" r="4"/><path d="m9 34 9-9 7 7 5-5 9 7"/></svg></div><h2 data-i18n="emptyTitle">まだ写真がありません</h2><p data-i18n="emptyBody">2枚以上の写真を追加すると、ここにコラージュのプレビューが表示されます。</p></div>
         <div class="ready-area" id="readyArea">
           <div class="preview-wrap">
-            <div class="preview-head"><h2 id="previewTitle" data-i18n="previewTitle">プレビュー</h2><span data-i18n="previewNote">v0.1.0 暫定グリッド</span></div>
+            <div class="preview-head"><h2 id="previewTitle" data-i18n="previewTitle">プレビュー</h2><span data-i18n="previewNote">写真に合わせた配置</span></div>
             <div class="preview-stage" id="previewStage"><canvas id="previewCanvas" width="900" height="900" hidden></canvas><div class="preview-message" id="previewMessage"><strong data-i18n="onePhotoTitle">あと1枚追加してください</strong><span data-i18n="onePhotoBody">2枚以上でコラージュのプレビューを作成できます。</span></div></div>
+          </div>
+          <div class="layout-picker" id="layoutPicker" hidden>
+            <div class="layout-picker-head">
+              <div class="layout-picker-copy"><strong data-i18n="layoutsTitle">おすすめの配置</strong><span data-i18n="layoutsBody">写真を切り取りすぎない候補を優先しています。</span></div>
+              <button class="secondary-button" id="moreLayoutsButton" type="button" data-i18n="moreLayouts">別の配置を見る</button>
+            </div>
+            <div class="layout-options" id="layoutOptions" data-i18n-aria-label="layoutsTitle" aria-label="おすすめの配置"></div>
           </div>
           <div class="photos-section">
             <div class="photos-head"><h2 data-i18n="photosTitle">追加した写真</h2><button class="secondary-button" id="addMoreButton" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addMore">写真を追加</span></button></div>
@@ -128,9 +139,9 @@
     <div class="dialog-body">
       <!-- APP:HELP:BEGIN -->
       <h3 data-i18n="helpBasicsTitle">基本操作</h3>
-      <ol><li data-i18n="helpStep1">「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。</li><li data-i18n="helpStep2">追加した写真は一覧で確認でき、不要な写真は個別に削除できます。</li><li data-i18n="helpStep3">2枚以上追加すると、現在は暫定グリッドでCanvasプレビューを表示します。</li></ol>
+      <ol><li data-i18n="helpStep1">「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。</li><li data-i18n="helpStep2">追加した写真は一覧で確認でき、不要な写真は個別に削除できます。</li><li data-i18n="helpStep3">2枚以上追加すると、写真の縦横比を見ておすすめのレイアウト候補を作成します。</li></ol>
       <h3 data-i18n="helpPrivacyTitle">プライバシー</h3><p data-i18n="helpPrivacyBody">読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。</p>
-      <h3 data-i18n="helpNotesTitle">注意事項</h3><ul><li data-i18n="helpNoteSession">写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。</li><li data-i18n="helpNoteLimit">一度に扱える写真は20枚までです。</li><li data-i18n="helpNoteVersion">v0.1.0では自動レイアウト・crop・最終画像保存はまだ利用できません。</li></ul>
+      <h3 data-i18n="helpNotesTitle">注意事項</h3><ul><li data-i18n="helpNoteSession">写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。</li><li data-i18n="helpNoteLimit">一度に扱える写真は20枚までです。</li><li data-i18n="helpNoteVersion">v0.2.0ではcrop・並べ替え・主役写真・最終画像保存はまだ利用できません。</li></ul>
       <p class="dialog-note" data-i18n="helpLocal">対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。</p>
       <!-- APP:HELP:END -->
     </div>
@@ -151,16 +162,16 @@
     addEventListener('pagehide',()=>{blobUrls.forEach(URL.revokeObjectURL);blobUrls.clear()});
 
     const T={
-      ja:{brandMeta:'写真を選んで、1枚にまとめる',introTitle:'写真を1枚のコラージュにまとめる',lead:'複数の写真を追加すると、ブラウザー内でプレビューします。v0.1.0では写真入力とプレビュー基盤を先に整えています。',privacyBadge:'写真は外部送信しません',inputTitle:'写真を追加',inputDescription:'JPEG / PNG / WebP、最大20枚',dropTitle:'写真をここにドロップ',dropBody:'またはボタンから複数の写真を選択してください。',choosePhotos:'写真を選択',sessionNote:'写真はこのページを再読み込みすると消えます。ブラウザーへ自動保存しません。',loadingTitle:'写真を読み込んでいます',emptyTitle:'まだ写真がありません',emptyBody:'2枚以上の写真を追加すると、ここにコラージュのプレビューが表示されます。',previewTitle:'プレビュー',previewNote:'v0.1.0 暫定グリッド',onePhotoTitle:'あと1枚追加してください',onePhotoBody:'2枚以上でコラージュのプレビューを作成できます。',photosTitle:'追加した写真',addMore:'写真を追加',removePhoto:'写真を削除',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',helpStep1:'「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。',helpStep2:'追加した写真は一覧で確認でき、不要な写真は個別に削除できます。',helpStep3:'2枚以上追加すると、現在は暫定グリッドでCanvasプレビューを表示します。',helpPrivacyTitle:'プライバシー',helpPrivacyBody:'読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。',helpNotesTitle:'注意事項',helpNoteSession:'写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。',helpNoteLimit:'一度に扱える写真は20枚までです。',helpNoteVersion:'v0.1.0では自動レイアウト・crop・最終画像保存はまだ利用できません。',helpLocal:'対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。',footer:'写真はブラウザー内で処理されます',loaded:'{count}枚を追加しました',removed:'写真を削除しました',limit:'一度に使用できる写真は20枚までです。{count}枚は追加されませんでした。',partial:'{ok}枚を追加しました。{bad}枚は読み込めませんでした。',failed:'選択した写真を読み込めませんでした。対応形式か、ファイルが破損していないか確認してください。',unsupported:'対応していない形式です',decodeFailed:'画像を読み込めませんでした'},
-      en:{brandMeta:'Choose photos and combine them',introTitle:'Combine photos into one collage',lead:'Add multiple photos to preview them directly in your browser. v0.1.0 establishes the input and preview foundation first.',privacyBadge:'Photos are not uploaded',inputTitle:'Add photos',inputDescription:'JPEG / PNG / WebP, up to 20',dropTitle:'Drop photos here',dropBody:'Or choose multiple photos with the button.',choosePhotos:'Choose photos',sessionNote:'Photos are not saved by the app. Reloading this page clears the current session.',loadingTitle:'Loading photos',emptyTitle:'No photos yet',emptyBody:'Add two or more photos to show a collage preview here.',previewTitle:'Preview',previewNote:'v0.1.0 temporary grid',onePhotoTitle:'Add one more photo',onePhotoBody:'Two or more photos are needed to create a collage preview.',photosTitle:'Added photos',addMore:'Add photos',removePhoto:'Remove photo',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',helpStep1:'Use Choose photos or Drag & Drop to add JPEG, PNG, or WebP images.',helpStep2:'Review loaded photos in the list and remove individual photos you do not need.',helpStep3:'With two or more photos, v0.1.0 shows a temporary Canvas grid preview.',helpPrivacyTitle:'Privacy',helpPrivacyBody:'Photos are processed in this browser and are not sent to an external server by this app. The app makes no runtime network connections.',helpNotesTitle:'Notes',helpNoteSession:'Photos and edits are not automatically persisted. Reloading the page clears the current work.',helpNoteLimit:'Up to 20 photos can be used at once.',helpNoteVersion:'Automatic layouts, crop controls, and final image export are not available in v0.1.0 yet.',helpLocal:'Supported formats: JPEG / PNG / WebP. Files are processed on this device.',footer:'Photos are processed in your browser',loaded:'Added {count} photos',removed:'Photo removed',limit:'Up to 20 photos can be used at once. {count} photos were not added.',partial:'Added {ok} photos. {bad} could not be loaded.',failed:'The selected photos could not be loaded. Check the format or whether the files are damaged.',unsupported:'Unsupported image format',decodeFailed:'Could not decode image'}
+      ja:{brandMeta:'写真を選んで、1枚にまとめる',introTitle:'写真を1枚のコラージュにまとめる',lead:'複数の写真を追加すると、写真の縦横比に合わせたレイアウト候補を自動で作成します。',privacyBadge:'写真は外部送信しません',inputTitle:'写真を追加',inputDescription:'JPEG / PNG / WebP、最大20枚',dropTitle:'写真をここにドロップ',dropBody:'またはボタンから複数の写真を選択してください。',choosePhotos:'写真を選択',sessionNote:'写真はこのページを再読み込みすると消えます。ブラウザーへ自動保存しません。',loadingTitle:'写真を読み込んでいます',emptyTitle:'まだ写真がありません',emptyBody:'2枚以上の写真を追加すると、ここにコラージュのプレビューが表示されます。',previewTitle:'プレビュー',previewNote:'写真に合わせた配置',layoutsTitle:'おすすめの配置',layoutsBody:'写真を切り取りすぎない候補を優先しています。',moreLayouts:'別の配置を見る',layoutOption:'配置 {index}',onePhotoTitle:'あと1枚追加してください',onePhotoBody:'2枚以上でコラージュのプレビューを作成できます。',photosTitle:'追加した写真',addMore:'写真を追加',removePhoto:'写真を削除',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',helpStep1:'「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。',helpStep2:'追加した写真は一覧で確認でき、不要な写真は個別に削除できます。',helpStep3:'2枚以上追加すると、写真の縦横比を見ておすすめのレイアウト候補を作成します。',helpPrivacyTitle:'プライバシー',helpPrivacyBody:'読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。',helpNotesTitle:'注意事項',helpNoteSession:'写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。',helpNoteLimit:'一度に扱える写真は20枚までです。',helpNoteVersion:'v0.2.0ではcrop・並べ替え・主役写真・最終画像保存はまだ利用できません。',helpLocal:'対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。',footer:'写真はブラウザー内で処理されます',loaded:'{count}枚を追加しました',removed:'写真を削除しました',limit:'一度に使用できる写真は20枚までです。{count}枚は追加されませんでした。',partial:'{ok}枚を追加しました。{bad}枚は読み込めませんでした。',failed:'選択した写真を読み込めませんでした。対応形式か、ファイルが破損していないか確認してください。',unsupported:'対応していない形式です',decodeFailed:'画像を読み込めませんでした'},
+      en:{brandMeta:'Choose photos and combine them',introTitle:'Combine photos into one collage',lead:'Add multiple photos and the app automatically creates layout suggestions based on their aspect ratios.',privacyBadge:'Photos are not uploaded',inputTitle:'Add photos',inputDescription:'JPEG / PNG / WebP, up to 20',dropTitle:'Drop photos here',dropBody:'Or choose multiple photos with the button.',choosePhotos:'Choose photos',sessionNote:'Photos are not saved by the app. Reloading this page clears the current session.',loadingTitle:'Loading photos',emptyTitle:'No photos yet',emptyBody:'Add two or more photos to show a collage preview here.',previewTitle:'Preview',previewNote:'Photo-aware layout',layoutsTitle:'Suggested layouts',layoutsBody:'Candidates with less cropping are prioritized.',moreLayouts:'More layouts',layoutOption:'Layout {index}',onePhotoTitle:'Add one more photo',onePhotoBody:'Two or more photos are needed to create a collage preview.',photosTitle:'Added photos',addMore:'Add photos',removePhoto:'Remove photo',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',helpStep1:'Use Choose photos or Drag & Drop to add JPEG, PNG, or WebP images.',helpStep2:'Review loaded photos in the list and remove individual photos you do not need.',helpStep3:'With two or more photos, the app creates suggested layouts from the photos’ aspect ratios.',helpPrivacyTitle:'Privacy',helpPrivacyBody:'Photos are processed in this browser and are not sent to an external server by this app. The app makes no runtime network connections.',helpNotesTitle:'Notes',helpNoteSession:'Photos and edits are not automatically persisted. Reloading the page clears the current work.',helpNoteLimit:'Up to 20 photos can be used at once.',helpNoteVersion:'Crop controls, reordering, hero photos, and final image export are not available in v0.2.0 yet.',helpLocal:'Supported formats: JPEG / PNG / WebP. Files are processed on this device.',footer:'Photos are processed in your browser',loaded:'Added {count} photos',removed:'Photo removed',limit:'Up to 20 photos can be used at once. {count} photos were not added.',partial:'Added {ok} photos. {bad} could not be loaded.',failed:'The selected photos could not be loaded. Check the format or whether the files are damaged.',unsupported:'Unsupported image format',decodeFailed:'Could not decode image'}
     };
-    const els={languageButton:document.getElementById('languageButton'),helpButton:document.getElementById('helpButton'),helpDialog:document.getElementById('helpDialog'),closeHelpButton:document.getElementById('closeHelpButton'),fileInput:document.getElementById('fileInput'),chooseButton:document.getElementById('chooseButton'),addMoreButton:document.getElementById('addMoreButton'),dropZone:document.getElementById('dropZone'),photoCountPill:document.getElementById('photoCountPill'),statusStrip:document.getElementById('statusStrip'),statusText:document.getElementById('statusText'),loadingState:document.getElementById('loadingState'),loadingProgress:document.getElementById('loadingProgress'),emptyState:document.getElementById('emptyState'),readyArea:document.getElementById('readyArea'),photoGrid:document.getElementById('photoGrid'),previewCanvas:document.getElementById('previewCanvas'),previewMessage:document.getElementById('previewMessage'),appToast:document.getElementById('appToast'),appToastMessage:document.getElementById('appToastMessage'),appToastAction:document.getElementById('appToastAction'),outputFilename:document.getElementById('outputFilename')};
-    const state={lang:(navigator.language||'ja').toLowerCase().startsWith('ja')?'ja':'en',photos:[],phase:'empty',generation:0,outputFilename:'photo-collage'};
+    const els={languageButton:document.getElementById('languageButton'),helpButton:document.getElementById('helpButton'),helpDialog:document.getElementById('helpDialog'),closeHelpButton:document.getElementById('closeHelpButton'),fileInput:document.getElementById('fileInput'),chooseButton:document.getElementById('chooseButton'),addMoreButton:document.getElementById('addMoreButton'),dropZone:document.getElementById('dropZone'),photoCountPill:document.getElementById('photoCountPill'),statusStrip:document.getElementById('statusStrip'),statusText:document.getElementById('statusText'),loadingState:document.getElementById('loadingState'),loadingProgress:document.getElementById('loadingProgress'),emptyState:document.getElementById('emptyState'),readyArea:document.getElementById('readyArea'),photoGrid:document.getElementById('photoGrid'),previewCanvas:document.getElementById('previewCanvas'),previewMessage:document.getElementById('previewMessage'),layoutPicker:document.getElementById('layoutPicker'),layoutOptions:document.getElementById('layoutOptions'),moreLayoutsButton:document.getElementById('moreLayoutsButton'),appToast:document.getElementById('appToast'),appToastMessage:document.getElementById('appToastMessage'),appToastAction:document.getElementById('appToastAction'),outputFilename:document.getElementById('outputFilename')};
+    const state={lang:(navigator.language||'ja').toLowerCase().startsWith('ja')?'ja':'en',photos:[],phase:'empty',generation:0,outputFilename:'photo-collage',layoutCandidates:[],selectedLayoutId:'',layoutPage:0,previewGeneration:0};
     let toastTimer=0;
     window.AppToast=Object.freeze({show({message,tone='default',actionLabel='',onAction=null,duration=3600}={}){clearTimeout(toastTimer);els.appToastMessage.textContent=message||'';els.appToast.dataset.tone=tone;if(actionLabel&&typeof onAction==='function'){els.appToastAction.hidden=false;els.appToastAction.textContent=actionLabel;els.appToastAction.onclick=()=>{onAction();hideToast()}}else{els.appToastAction.hidden=true;els.appToastAction.onclick=null}els.appToast.classList.add('show');toastTimer=setTimeout(hideToast,duration)}});
     function hideToast(){els.appToast.classList.remove('show');clearTimeout(toastTimer)}
     function tr(key,vars={}){let text=T[state.lang][key]??key;for(const[k,v]of Object.entries(vars))text=text.replace(`{${k}}`,String(v));return text}
-    function applyLanguage(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[state.lang][k]!=null)el.textContent=T[state.lang][k]});document.querySelectorAll('[data-i18n-title]').forEach(el=>el.title=tr(el.dataset.i18nTitle));document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAriaLabel)));els.languageButton.textContent=state.lang==='ja'?'EN':'JA';renderPhotos()}
+    function applyLanguage(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[state.lang][k]!=null)el.textContent=T[state.lang][k]});document.querySelectorAll('[data-i18n-title]').forEach(el=>el.title=tr(el.dataset.i18nTitle));document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAriaLabel)));els.languageButton.textContent=state.lang==='ja'?'EN':'JA';renderPhotos();renderLayoutChoices()}
     function setPhase(phase){state.phase=phase;els.loadingState.classList.toggle('show',phase==='loading');els.emptyState.hidden=phase!=='empty';els.readyArea.classList.toggle('show',phase!=='empty'&&phase!=='loading')}
     function setStatus(message,tone='warning'){if(!message){els.statusStrip.className='status-strip';els.statusText.textContent='';return}els.statusText.textContent=message;els.statusStrip.className=`status-strip show ${tone}`}
     function validType(file){return ['image/jpeg','image/png','image/webp'].includes(file.type)}
@@ -171,14 +182,154 @@
     function removePhoto(id){const index=state.photos.findIndex(p=>p.id===id);if(index<0)return;const [photo]=state.photos.splice(index,1);URL.revokeObjectURL(photo.thumbUrl);state.generation+=1;setStatus('');updateView();window.AppToast.show({message:tr('removed')})}
     function renderPhotos(){els.photoCountPill.textContent=`${state.photos.length} / 20`;els.photoGrid.replaceChildren();for(const photo of state.photos){const card=document.createElement('article');card.className='photo-card';const thumb=document.createElement('div');thumb.className='thumb';const img=document.createElement('img');img.src=photo.thumbUrl;img.alt=photo.name;thumb.append(img);const meta=document.createElement('div');meta.className='photo-meta';const copy=document.createElement('div');copy.style.minWidth='0';const name=document.createElement('div');name.className='photo-name';name.textContent=photo.name;name.title=photo.name;const size=document.createElement('div');size.className='photo-size';size.textContent=`${photo.width} × ${photo.height}`;copy.append(name,size);const remove=document.createElement('button');remove.className='danger-icon-button';remove.type='button';remove.setAttribute('aria-label',`${tr('removePhoto')}: ${photo.name}`);remove.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>';remove.addEventListener('click',()=>removePhoto(photo.id));meta.append(copy,remove);card.append(thumb,meta);els.photoGrid.append(card)}}
     function drawCover(ctx,img,x,y,w,h){const scale=Math.max(w/img.naturalWidth,h/img.naturalHeight);const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh)}
-    async function renderPreview(){const canvas=els.previewCanvas,message=els.previewMessage;if(state.photos.length<2){canvas.hidden=true;message.hidden=false;return}message.hidden=true;canvas.hidden=false;const generation=state.generation;const count=state.photos.length;const cols=Math.ceil(Math.sqrt(count));const rows=Math.ceil(count/cols);const size=900,gap=8;canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);const cw=(size-gap*(cols+1))/cols,ch=(size-gap*(rows+1))/rows;for(let i=0;i<count;i+=1){const photo=state.photos[i];const row=Math.floor(i/cols),col=i%cols;const x=gap+col*(cw+gap),y=gap+row*(ch+gap);const url=URL.createObjectURL(photo.file);try{const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url});if(generation!==state.generation)return;ctx.save();ctx.beginPath();ctx.rect(x,y,cw,ch);ctx.clip();drawCover(ctx,img,x,y,cw,ch);ctx.restore()}finally{URL.revokeObjectURL(url)}}}
-    function updateView(){renderPhotos();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');renderPreview().catch(()=>setStatus(tr('failed'),'error'))}
+    function generatePartitions(total){
+      const results=[],maxGroups=Math.min(5,total);
+      function walk(remaining,parts){
+        if(remaining===0){
+          if(!parts.length||parts.length>maxGroups)return;
+          const min=Math.min(...parts),max=Math.max(...parts);
+          if(max-min<=3)results.push(parts.slice());
+          return;
+        }
+        if(parts.length>=maxGroups)return;
+        const maxPart=Math.min(6,remaining);
+        for(let part=1;part<=maxPart;part+=1)walk(remaining-part,[...parts,part]);
+      }
+      walk(total,[]);
+      return results;
+    }
+    function makeLayout(groups,mode,photos){
+      let photoIndex=0;
+      const ideals=groups.map(group=>{
+        let total=0;
+        for(let i=0;i<group;i+=1){
+          const aspect=Math.max(.05,photos[photoIndex+i]?.aspect||1);
+          total+=mode==='rows'?1/aspect:aspect;
+        }
+        photoIndex+=group;
+        return Math.max(.03,total/(group*group));
+      });
+      const idealTotal=ideals.reduce((a,b)=>a+b,0)||1;
+      const tracks=ideals.map(v=>v/idealTotal);
+      const cells=[];
+      photoIndex=0;
+      let offset=0;
+      groups.forEach((group,groupIndex)=>{
+        const track=tracks[groupIndex];
+        for(let i=0;i<group;i+=1){
+          if(mode==='rows')cells.push({x:i/group,y:offset,w:1/group,h:track});
+          else cells.push({x:offset,y:i/group,w:track,h:1/group});
+          photoIndex+=1;
+        }
+        offset+=track;
+      });
+      return{id:`${mode[0]}:${groups.join('-')}`,mode,groups:groups.slice(),cells,score:0};
+    }
+    function scoreLayout(layout,photos){
+      const areas=[];
+      let crop=0,extreme=0;
+      for(let i=0;i<layout.cells.length;i+=1){
+        const cell=layout.cells[i],photo=photos[i];
+        const cellAspect=Math.max(.03,cell.w/cell.h),photoAspect=Math.max(.03,photo.aspect);
+        const visible=Math.min(1,photoAspect/cellAspect,cellAspect/photoAspect);
+        crop+=1-visible;
+        if(cellAspect>3.2)extreme+=(cellAspect-3.2)*.06;
+        else if(cellAspect<1/3.2)extreme+=(1/cellAspect-3.2)*.06;
+        areas.push(cell.w*cell.h);
+      }
+      const mean=1/Math.max(1,areas.length);
+      const balance=Math.sqrt(areas.reduce((sum,area)=>sum+Math.pow((area-mean)/mean,2),0)/Math.max(1,areas.length));
+      const singletons=layout.groups.filter(v=>v===1).length;
+      return crop/Math.max(1,photos.length)+extreme+balance*.055+singletons*.008;
+    }
+    function generateLayouts(photos){
+      if(photos.length<2)return[];
+      const candidates=[];
+      for(const groups of generatePartitions(photos.length)){
+        for(const mode of ['rows','columns']){
+          const layout=makeLayout(groups,mode,photos);
+          layout.score=scoreLayout(layout,photos);
+          candidates.push(layout);
+        }
+      }
+      candidates.sort((a,b)=>a.score-b.score||a.id.localeCompare(b.id));
+      const deduped=[],seen=new Set(),modeCount={rows:0,columns:0};
+      for(const candidate of candidates){
+        const forward=candidate.groups.join('-'),reverse=candidate.groups.slice().reverse().join('-');
+        const key=`${candidate.mode}:${forward<reverse?forward:reverse}`;
+        if(seen.has(key))continue;
+        if(modeCount[candidate.mode]>=12)continue;
+        seen.add(key);deduped.push(candidate);modeCount[candidate.mode]+=1;
+        if(deduped.length>=18)break;
+      }
+      return deduped;
+    }
+    function getSelectedLayout(){return state.layoutCandidates.find(layout=>layout.id===state.selectedLayoutId)||state.layoutCandidates[0]||null}
+    function renderLayoutChoices(){
+      if(!els.layoutPicker||!els.layoutOptions)return;
+      const available=state.photos.length>=2&&state.layoutCandidates.length>0;
+      els.layoutPicker.hidden=!available;
+      els.layoutOptions.replaceChildren();
+      if(!available)return;
+      const pageSize=6,pages=Math.max(1,Math.ceil(state.layoutCandidates.length/pageSize));
+      if(state.layoutPage>=pages)state.layoutPage=0;
+      const start=state.layoutPage*pageSize;
+      const page=state.layoutCandidates.slice(start,start+pageSize);
+      page.forEach((layout,pageIndex)=>{
+        const button=document.createElement('button');
+        button.type='button';button.className='layout-option';button.setAttribute('aria-pressed',layout.id===state.selectedLayoutId?'true':'false');
+        button.setAttribute('aria-label',tr('layoutOption',{index:start+pageIndex+1}));
+        const thumb=document.createElement('span');thumb.className='layout-thumb';thumb.setAttribute('aria-hidden','true');
+        layout.cells.forEach((cell,index)=>{
+          const part=document.createElement('span');part.className='layout-thumb-cell';
+          part.style.left=`${cell.x*100}%`;part.style.top=`${cell.y*100}%`;part.style.width=`${cell.w*100}%`;part.style.height=`${cell.h*100}%`;
+          const photo=state.photos[index];if(photo)part.style.backgroundImage=`url("${photo.thumbUrl}")`;
+          thumb.append(part);
+        });
+        const label=document.createElement('span');label.className='layout-option-label';label.textContent=String(start+pageIndex+1);
+        button.append(thumb,label);
+        button.addEventListener('click',()=>{state.selectedLayoutId=layout.id;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+        els.layoutOptions.append(button);
+      });
+      els.moreLayoutsButton.hidden=state.layoutCandidates.length<=pageSize;
+    }
+    async function renderPreview(){
+      const canvas=els.previewCanvas,message=els.previewMessage;
+      const renderToken=++state.previewGeneration;
+      if(state.photos.length<2){canvas.hidden=true;message.hidden=false;return}
+      const layout=getSelectedLayout();
+      if(!layout){canvas.hidden=true;message.hidden=false;return}
+      message.hidden=true;canvas.hidden=false;
+      const generation=state.generation,size=900,gap=8,inner=size-gap*2;
+      canvas.width=size;canvas.height=size;
+      const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+      for(let i=0;i<state.photos.length;i+=1){
+        const photo=state.photos[i],cell=layout.cells[i];
+        if(!cell)continue;
+        const x=gap+cell.x*inner+gap/2,y=gap+cell.y*inner+gap/2,w=Math.max(1,cell.w*inner-gap),h=Math.max(1,cell.h*inner-gap);
+        const url=URL.createObjectURL(photo.file);
+        try{
+          const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url});
+          if(generation!==state.generation||renderToken!==state.previewGeneration)return;
+          ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();drawCover(ctx,img,x,y,w,h);ctx.restore();
+        }finally{URL.revokeObjectURL(url)}
+      }
+    }
+    async function rebuildLayouts(){
+      if(state.photos.length<2){state.layoutCandidates=[];state.selectedLayoutId='';state.layoutPage=0;renderLayoutChoices();await renderPreview();return}
+      const previous=state.selectedLayoutId;
+      state.layoutCandidates=generateLayouts(state.photos);
+      state.selectedLayoutId=state.layoutCandidates.some(layout=>layout.id===previous)?previous:(state.layoutCandidates[0]?.id||'');
+      state.layoutPage=0;renderLayoutChoices();await renderPreview();
+    }
+    function updateView(){renderPhotos();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))}
     function openPicker(){if(state.photos.length>=20){window.AppToast.show({message:tr('limit',{count:1}),tone:'warning'});return}els.fileInput.click()}
     els.chooseButton.addEventListener('click',openPicker);els.addMoreButton.addEventListener('click',openPicker);els.fileInput.addEventListener('change',()=>addFiles(els.fileInput.files));
+    els.moreLayoutsButton.addEventListener('click',()=>{const pages=Math.max(1,Math.ceil(state.layoutCandidates.length/6));state.layoutPage=(state.layoutPage+1)%pages;renderLayoutChoices()});
     ['dragenter','dragover'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.add('dragover')}));['dragleave','drop'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.remove('dragover')}));els.dropZone.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
     els.languageButton.addEventListener('click',()=>{state.lang=state.lang==='ja'?'en':'ja';applyLanguage()});els.helpButton.addEventListener('click',()=>els.helpDialog.showModal());els.closeHelpButton.addEventListener('click',()=>els.helpDialog.close());els.helpDialog.addEventListener('click',e=>{if(e.target===els.helpDialog)els.helpDialog.close()});
     els.outputFilename.value=state.outputFilename;
-    applyLanguage();setPhase('empty');renderPhotos();
+    applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();
   })();
   </script>
 </body>

@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.1.0`
+- **Current development version:** `0.2.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,28 +297,42 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.1.0 implementation contract
+## 15. v0.2.0 implementation contract
 
-今回の実装範囲ではレイアウトエンジンを先取りしない。ただしCanvas描画基盤確認のため、2枚以上では均等グリッドの暫定プレビューを描画する。この暫定グリッドはv0.2.0で自動レイアウト候補へ置き換える。
+v0.2.0では、v0.1.0の均等グリッドを写真の縦横比に応じた自動レイアウト候補へ置き換える。
 
-v0.1.0で出力ファイル生成は提供しない。テンプレート契約上の出力ファイル名識別子は将来のexport状態としてコード内に保持するが、UI上の保存機能はv0.5.0まで公開しない。
+レイアウト生成は外部AIや固定テンプレート集へ依存せず、ブラウザー内で決定的に行う。写真順序はこの段階では変更せず、入力順のまま各候補セルへ割り当てる。
 
-## 16. v0.1.0 acceptance criteria
+候補評価では最低限以下を利用する。
 
-- JPEG / PNG / WebPを複数追加できる。
-- Drag & Dropが動く。
-- 最大20枚。
-- 超過件数を通知する。
-- 破損・非対応画像が混在しても正常画像は残る。
-- 写真サムネイル、ファイル名、pixel dimensionsを表示する。
-- 個別削除できる。
-- 2枚以上でCanvas基盤の暫定グリッドプレビューを描画する。
-- 1枚の場合はもう1枚追加する案内を表示する。
-- 写真は永続化しない。
-- JA / ENをページ再読み込みなしで切替できる。
-- ヘルプに実際のv0.1.0操作・privacy・制約を記載する。
-- 360px幅で横スクロールしない。
-- Runtime CSPに `connect-src 'none'` がある。
-- `__APP_ICON_DATA_URI__` はfaviconとheader iconにのみ利用する。
+- 写真aspect ratioとセルaspect ratioから推定するcrop loss
+- 極端に細長いセルへのpenalty
+- セル面積のbalance penalty
+- 上下反転・左右反転に近い類似構成のdeduplication
+- rows / columns双方の候補多様性
+
+内部では複数候補を保持してよいが、ユーザーへ一度に表示する候補は最大6件とする。「別の配置を見る」で次候補群へ切り替える。
+
+v0.2.0ではキャンバス比率は1:1のままとし、比率プリセットはv0.4.0で追加する。crop位置・zoom・並べ替え・主役写真はv0.3.0、最終画像exportはv0.5.0で追加する。
+
+## 16. v0.2.0 acceptance criteria
+
+- 2〜20枚について自動レイアウト候補を生成できる。
+- 各写真の実aspect ratioを候補生成と評価に使用する。
+- 単純な均等グリッド以外のrows / columns構成を生成する。
+- crop lossを候補scoreへ含める。
+- 極端なセルと面積の偏りをscoreで抑制する。
+- 逆順に近い類似レイアウトを重複候補として間引く。
+- 上位候補が片方向だけになりすぎないようrows / columnsの多様性を確保する。
+- 一度に表示する候補は最大6件。
+- 候補が6件を超える場合「別の配置を見る」で次候補群を表示する。
+- 選択した候補がメインCanvasへ反映される。
+- 候補サムネイルには実際に読み込んだ写真を表示する。
+- 同一写真・同一順序では候補生成が決定的である。
+- 写真追加・削除時に候補を再生成する。
+- 1枚以下ではレイアウト候補を表示しない。
+- JA / EN双方で候補UIとヘルプが自然に表示される。
+- Runtime CSPの `connect-src 'none'` を維持する。
+- `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
-- テンプレートの `StandaloneAssets` APIと `window.AppToast` 契約を維持する。
+- テンプレートの `StandaloneAssets` API、`window.AppToast`、将来export向け `outputFilename` 契約を維持する。

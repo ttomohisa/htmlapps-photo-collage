@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 - 2026-10-01
+
+### Added
+
+- Deterministic automatic layout generation for 2–20 photos.
+- Row- and column-based candidate layouts derived from actual photo aspect ratios.
+- Candidate scoring based on estimated crop loss, extreme cell shapes, and area balance.
+- Similar-layout deduplication and row / column diversity.
+- Up to six visible layout suggestions with a “More layouts” / 「別の配置を見る」 control.
+- Photo-backed candidate thumbnails and selectable main Canvas preview.
+- Automatic candidate regeneration after photo addition or removal.
+
 ## 0.1.0 - 2026-10-01
 
 ### Added
