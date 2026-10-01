@@ -154,9 +154,9 @@
               <button class="ratio-button" type="button" data-ratio-key="custom" aria-pressed="false" data-i18n="customRatio">カスタム</button>
             </div>
             <div class="custom-ratio" id="customRatioRow">
-              <input id="customRatioWidth" type="number" min="1" max="100" step="1" value="1" data-i18n-aria-label="customWidth" aria-label="幅">
+              <input id="customRatioWidth" type="number" min="1" max="10" step="1" value="1" data-i18n-aria-label="customWidth" aria-label="幅">
               <span>:</span>
-              <input id="customRatioHeight" type="number" min="1" max="100" step="1" value="1" data-i18n-aria-label="customHeight" aria-label="高さ">
+              <input id="customRatioHeight" type="number" min="1" max="10" step="1" value="1" data-i18n-aria-label="customHeight" aria-label="高さ">
             </div>
             <div class="finish-controls">
               <label class="finish-field" for="gapRange"><span class="finish-field-label"><span data-i18n="gap">写真の間隔</span><output id="gapValue">8</output></span><input id="gapRange" type="range" min="0" max="40" step="1" value="8"></label>
@@ -279,6 +279,29 @@
       if(!visible){els.previewCanvas.classList.remove('can-adjust');return}
       els.selectedPhotoName.textContent=photo.name;els.fillButton.setAttribute('aria-pressed',photo.fit==='fill'?'true':'false');els.fitButton.setAttribute('aria-pressed',photo.fit==='fit'?'true':'false');
       els.zoomRange.value=String(photo.zoom);els.zoomRange.disabled=photo.fit==='fit';els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';els.heroButton.setAttribute('aria-pressed',photo.hero?'true':'false');els.heroButton.textContent=tr(photo.hero?'normalSize':'makeHero');els.previewCanvas.classList.toggle('can-adjust',photo.fit==='fill');
+    }
+    const ratioPresets=Object.freeze({'1:1':1,'4:5':4/5,'9:16':9/16,'16:9':16/9,'3:2':3/2,'4:3':4/3});
+    function renderFinishPanel(){
+      els.ratioGrid.querySelectorAll('[data-ratio-key]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.ratioKey===state.canvasRatioKey?'true':'false'));
+      els.customRatioRow.classList.toggle('show',state.canvasRatioKey==='custom');
+      els.customRatioWidth.value=String(state.customRatioWidth);els.customRatioHeight.value=String(state.customRatioHeight);
+      els.gapRange.value=String(state.gap);els.gapValue.textContent=String(state.gap);
+      els.marginRange.value=String(state.outerMargin);els.marginValue.textContent=String(state.outerMargin);
+      els.radiusRange.value=String(state.cornerRadius);els.radiusValue.textContent=String(state.cornerRadius);
+      els.backgroundColor.value=state.background;els.backgroundHex.value=state.background;els.backgroundColor.disabled=state.transparentBackground;els.backgroundHex.disabled=state.transparentBackground;els.transparentBackground.checked=state.transparentBackground;
+    }
+    function setCanvasRatio(key){
+      if(key==='custom')state.canvasAspect=state.customRatioWidth/state.customRatioHeight;
+      else if(ratioPresets[key])state.canvasAspect=ratioPresets[key];
+      else return;
+      state.canvasRatioKey=key;state.selectedLayoutId='';renderFinishPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'));
+    }
+    function applyCustomRatio(){
+      const width=Math.max(1,Math.min(10,Math.round(Number(els.customRatioWidth.value)||1))),height=Math.max(1,Math.min(10,Math.round(Number(els.customRatioHeight.value)||1)));
+      state.customRatioWidth=width;state.customRatioHeight=height;els.customRatioWidth.value=String(width);els.customRatioHeight.value=String(height);if(state.canvasRatioKey==='custom')setCanvasRatio('custom');
+    }
+    function normalizeHex(value){
+      const text=String(value||'').trim();if(/^#[0-9a-f]{6}$/i.test(text))return text.toLowerCase();return null;
     }
     function loadPreviewImage(photo){
       if(previewImageCache.has(photo.id))return previewImageCache.get(photo.id);
@@ -439,6 +462,14 @@
     }
     function updateView(){if(state.photos.length&&!state.photos.some(photo=>photo.id===state.selectedPhotoId))state.selectedPhotoId=state.photos[0].id;renderPhotos();renderAdjustPanel();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))}
     function openPicker(){if(state.photos.length>=20){window.AppToast.show({message:tr('limit',{count:1}),tone:'warning'});return}els.fileInput.click()}
+    els.ratioGrid.addEventListener('click',event=>{const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
+    els.customRatioWidth.addEventListener('change',applyCustomRatio);els.customRatioHeight.addEventListener('change',applyCustomRatio);
+    els.gapRange.addEventListener('input',()=>{state.gap=Number(els.gapRange.value)||0;els.gapValue.textContent=String(state.gap);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.marginRange.addEventListener('input',()=>{state.outerMargin=Number(els.marginRange.value)||0;els.marginValue.textContent=String(state.outerMargin);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.radiusRange.addEventListener('input',()=>{state.cornerRadius=Number(els.radiusRange.value)||0;els.radiusValue.textContent=String(state.cornerRadius);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.backgroundColor.addEventListener('input',()=>{state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.transparentBackground.addEventListener('change',()=>{state.transparentBackground=els.transparentBackground.checked;renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fill';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fit';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.zoomRange.addEventListener('input',()=>{const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;photo.zoom=Math.max(1,Math.min(3,Number(els.zoomRange.value)||1));els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
@@ -462,7 +493,7 @@
     ['dragenter','dragover'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.add('dragover')}));['dragleave','drop'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.remove('dragover')}));els.dropZone.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
     els.languageButton.addEventListener('click',()=>{state.lang=state.lang==='ja'?'en':'ja';applyLanguage()});els.helpButton.addEventListener('click',()=>els.helpDialog.showModal());els.closeHelpButton.addEventListener('click',()=>els.helpDialog.close());els.helpDialog.addEventListener('click',e=>{if(e.target===els.helpDialog)els.helpDialog.close()});
     els.outputFilename.value=state.outputFilename;
-    applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();renderAdjustPanel();
+    applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();renderAdjustPanel();renderFinishPanel();
   })();
   </script>
 </body>
