@@ -2,62 +2,50 @@
 
 A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
 
-The current development release is **v0.5.0**. The complete desktop editing flow now ends with high-resolution JPEG, PNG, or WebP export rendered from the original source photos.
+The current development release is **v0.6.0**. It adds a dedicated smartphone workflow with four bottom-bar pages instead of stacking the complete desktop editor into one long mobile screen.
 
 ## Features
 
-- JPEG / PNG / WebP input
+- JPEG / PNG / WebP input and export
 - 2–20 photo workflow
-- Multi-select and Drag & Drop input
 - Photo-aware automatic layout suggestions
-- Reorder, crop position, zoom, Fill / Fit, and one featured photo
-- Canvas ratios: 1:1, 4:5, 9:16, 16:9, 3:2, 4:3, and custom
-- Photo spacing, outer margin, background, transparency, and rounded corners
-- JPEG / PNG / WebP export
-- JPEG / WebP quality from 10–100
-- Long-side presets: 1080 / 2160 / 4096px plus custom
-- 8192px edge and 32MP safety limits
-- Editable and sanitized output filename
-- Export rendered sequentially from original source photos
-- Export progress and completion details
-- Source EXIF / GPS metadata is not copied to the exported Canvas image
+- Reorder, crop, zoom, Fill / Fit, and featured photo
+- Canvas ratio, spacing, background, transparency, and rounded corners
+- High-resolution export from original source photos
+- 1080 / 2160 / 4096px and custom output resolution
+- Editable sanitized filename
+- Smartphone pages: Photos / Layout / Finish / Save
+- Template-based fixed mobile bottom navigation
+- Safe-area-aware mobile layout and Toast positioning
+- Compact preview on Finish and Save pages
+- Portrait and coarse-pointer landscape smartphone workflow
 - Japanese / English UI
 - No runtime network access
 
-## How to use
+## Smartphone workflow
 
-1. Add two or more photos.
-2. Choose a suggested layout.
-3. Adjust individual photos and the canvas finish.
-4. Choose JPEG, PNG, or WebP.
-5. Choose output resolution and quality.
-6. Edit the filename if needed.
-7. Select **Save image**.
+On supported smartphone layouts, use the bottom bar:
 
-Transparent background is available for PNG export.
+1. **Photos** — add, review, reorder, or remove photos.
+2. **Layout** — choose a layout and adjust individual photos.
+3. **Finish** — adjust ratio, spacing, background, transparency, and corners.
+4. **Save** — choose export settings and save the image.
+
+Layout, Finish, and Save stay disabled until at least two photos are loaded.
+
+Desktop keeps the full editor visible in normal document flow.
 
 ## Privacy
 
-Photos are processed in the browser and are not sent to an external server by this app.
-
-The exported image is newly encoded from Canvas. The app does not copy EXIF, GPS, camera metadata, or the original filenames into the output image.
-
-The app does not automatically persist your photos. Reloading the page clears the current session.
+Photos are processed in the browser and are not sent to an external server by this app. Export is rendered from Canvas and source EXIF / GPS metadata is not copied into the output image.
 
 ## Supported browsers
 
-Current stable Chrome, Edge, Firefox, and Safari, including major mobile browsers. WebP export is enabled only when supported by the browser. Direct `file://` opening is a release requirement.
-
-## Export limits
-
-- Maximum edge: 8192px
-- Maximum total pixels: 32MP
-- JPEG / WebP quality: 10–100
-- PNG transparency: supported
+Current stable Chrome, Edge, Firefox, and Safari, including major mobile browsers. Direct `file://` opening remains a release requirement.
 
 ## Development
 
-This app follows `ttomohisa/htmlapps-template`. `AGENTS.md` and `APP_SPEC.md` are the implementation contract.
+This app follows `ttomohisa/htmlapps-template`. The smartphone navigation copies/adapts the current template `components/mobile-bottom-bar.html` pattern.
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-powershell-syntax.ps1
