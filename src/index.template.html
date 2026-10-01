@@ -348,7 +348,7 @@
     const exportFormats=Object.freeze({jpeg:{mime:'image/jpeg',ext:'.jpg',label:'JPEG'},png:{mime:'image/png',ext:'.png',label:'PNG'},webp:{mime:'image/webp',ext:'.webp',label:'WebP'}});
     const webpExportSupported=(()=>{try{return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp')}catch(error){return false}})();
     function maxLongSideForAspect(aspect){
-      const safe=Math.max(.1,Math.min(10,Number(aspect)||1)),shortRatio=Math.min(safe,1/safe),byPixels=Math.floor(Math.sqrt(32000000/shortRatio));return Math.max(256,Math.min(8192,byPixels));
+      const safe=Math.max(.1,Math.min(10,Number(aspect)||1)),shortRatio=Math.min(safe,1/safe),byPixels=Math.floor(Math.sqrt(32000000/shortRatio));let candidate=Math.max(256,Math.min(8192,byPixels)),dimensions=dimensionsForLongSide(candidate,safe);while(dimensions.width*dimensions.height>32000000&&candidate>256){candidate-=1;dimensions=dimensionsForLongSide(candidate,safe)}return candidate;
     }
     function requestedLongSide(){return state.exportLongSideKey==='custom'?state.customLongSide:Number(state.exportLongSideKey)}
     function dimensionsForLongSide(longSide,aspect){
@@ -360,7 +360,7 @@
       return{...dimensions,longSide,max,limited:requested>longSide};
     }
     function sanitizeFilename(value){
-      let name=String(value||'').replace(/[<>:"/\\|?*\x00-\x1F]/g,'-').replace(/[. ]+$/g,'').trim().replace(/-{2,}/g,'-');
+      let name=String(value||'').replace(/[<>:"/\\|?*\x00-\x1F]/g,'-').replace(/[. ]+$/g,'').trim().replace(/-{2,}/g,'-').replace(/\.(?:jpe?g|png|webp)$/i,'');
       if(!name)name='photo-collage';if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(name))name='photo-collage-'+name.toLowerCase();return name.slice(0,120);
     }
     function formatBytes(bytes){
