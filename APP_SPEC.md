@@ -291,6 +291,11 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - desktop Drag & Dropを維持
 - touch / pen向けdrag handleを追加
 - drag reorderもUndo / Redo対象として維持
+- current htmlapps-template header UIへ同期
+- photo cardはgrid rowへstretchせずcontent heightで表示
+- photo action rowは横並びを維持し、不要な縦余白を作らない
+- desktopでは専用drag gripを表示せずcard Drag & Dropを利用
+- coarse pointerではthumbnail上のcompact gripを表示
 
 ### v0.9.0 — Release Candidate
 
