@@ -365,7 +365,7 @@
       state.canvasRatioKey=snapshot.canvasRatioKey;state.canvasAspect=snapshot.canvasAspect;state.customRatioWidth=snapshot.customRatioWidth;state.customRatioHeight=snapshot.customRatioHeight;
       state.gap=snapshot.gap;state.outerMargin=snapshot.outerMargin;state.cornerRadius=snapshot.cornerRadius;state.background=snapshot.background;state.transparentBackground=snapshot.transparentBackground;
       state.exportFormat=snapshot.exportFormat;state.exportLongSideKey=snapshot.exportLongSideKey;state.customLongSide=snapshot.customLongSide;state.exportQuality=snapshot.exportQuality;state.outputFilename=snapshot.outputFilename;
-      state.layoutCandidates=[];state.layoutPage=0;state.cropDrag=null;state.dragPhotoId='';setStatus('');hideToast();historyApplying=false;updateView();updateHistoryControls();
+      state.layoutCandidates=[];state.layoutPage=0;state.cropDrag=null;state.dragPhotoId='';setStatus('');hideToast();historyApplying=false;renderFinishPanel();updateView();updateHistoryControls();
     }
     function undoHistory(){
       if(state.exporting||!undoStack.length)return;const target=undoStack.pop(),current=captureHistoryState();redoStack.push(current);if(redoStack.length>HISTORY_LIMIT)redoStack.shift();historyRevision+=1;restoreHistorySnapshot(target);window.AppToast.show({message:tr('undone'),tone:'success'});
@@ -374,7 +374,7 @@
       if(state.exporting||!redoStack.length)return;const target=redoStack.pop(),current=captureHistoryState();undoStack.push(current);if(undoStack.length>HISTORY_LIMIT)undoStack.shift();historyRevision+=1;restoreHistorySnapshot(target);window.AppToast.show({message:tr('redone'),tone:'success'});
     }
     function resetEditor(){
-      const before=captureHistoryState();state.generation+=1;state.photos=[];state.selectedPhotoId='';state.selectedLayoutId='';state.layoutCandidates=[];state.layoutPage=0;state.canvasRatioKey='1:1';state.canvasAspect=1;state.customRatioWidth=1;state.customRatioHeight=1;state.gap=8;state.outerMargin=8;state.cornerRadius=0;state.background='#ffffff';state.transparentBackground=false;state.exportFormat='jpeg';state.exportLongSideKey='2160';state.customLongSide=2160;state.exportQuality=90;state.outputFilename='photo-collage';setStatus('');commitHistory(before);updateView();window.AppToast.show({message:tr('resetDone'),tone:'success'});
+      const before=captureHistoryState();state.generation+=1;state.photos=[];state.selectedPhotoId='';state.selectedLayoutId='';state.layoutCandidates=[];state.layoutPage=0;state.canvasRatioKey='1:1';state.canvasAspect=1;state.customRatioWidth=1;state.customRatioHeight=1;state.gap=8;state.outerMargin=8;state.cornerRadius=0;state.background='#ffffff';state.transparentBackground=false;state.exportFormat='jpeg';state.exportLongSideKey='2160';state.customLongSide=2160;state.exportQuality=90;state.outputFilename='photo-collage';setStatus('');els.exportResult.classList.remove('show');els.exportResult.textContent='';els.exportProgress.classList.remove('show');els.exportProgress.textContent='';commitHistory(before);renderFinishPanel();updateView();window.AppToast.show({message:tr('resetDone'),tone:'success'});
     }
     let toastTimer=0;
     window.AppToast=Object.freeze({show({message,tone='default',actionLabel='',onAction=null,duration=3600}={}){clearTimeout(toastTimer);els.appToastMessage.textContent=message||'';els.appToast.dataset.tone=tone;if(actionLabel&&typeof onAction==='function'){els.appToastAction.hidden=false;els.appToastAction.textContent=actionLabel;els.appToastAction.onclick=()=>{onAction();hideToast()}}else{els.appToastAction.hidden=true;els.appToastAction.onclick=null}els.appToast.classList.add('show');toastTimer=setTimeout(hideToast,duration)}});
@@ -699,12 +699,12 @@
     els.formatGrid.addEventListener('click',event=>{const button=event.target.closest('[data-format]');if(button)setExportFormat(button.dataset.format)});
     els.resolutionGrid.addEventListener('click',event=>{const button=event.target.closest('[data-long-side]');if(button)setResolutionKey(button.dataset.longSide)});
     els.customLongSide.addEventListener('change',applyCustomLongSide);
-    for(const [control,key] of [[els.qualityRange,'quality'],[els.gapRange,'gap'],[els.marginRange,'margin'],[els.radiusRange,'radius'],[els.zoomRange,'zoom'],[els.backgroundColor,'backgroundColor'],[els.backgroundHex,'backgroundHex'],[els.outputFilename,'filename']]){
+    for(const [control,key] of [[els.qualityRange,'quality'],[els.gapRange,'gap'],[els.marginRange,'margin'],[els.radiusRange,'radius'],[els.zoomRange,'zoom'],[els.backgroundColor,'backgroundColor']]){
       control.addEventListener('focus',()=>beginHistoryGesture(key));control.addEventListener('pointerdown',()=>beginHistoryGesture(key));control.addEventListener('blur',()=>endHistoryGesture(key));
     }
     els.qualityRange.addEventListener('input',()=>{state.exportQuality=Math.max(10,Math.min(100,Number(els.qualityRange.value)||90));els.qualityValue.textContent=String(state.exportQuality)});
     els.qualityRange.addEventListener('change',()=>endHistoryGesture('quality'));
-    els.outputFilename.addEventListener('input',()=>{state.outputFilename=els.outputFilename.value});
+    els.outputFilename.addEventListener('focus',()=>beginHistoryGesture('filename'));els.outputFilename.addEventListener('pointerdown',()=>beginHistoryGesture('filename'));els.outputFilename.addEventListener('input',()=>{state.outputFilename=els.outputFilename.value});
     els.outputFilename.addEventListener('blur',()=>{state.outputFilename=sanitizeFilename(els.outputFilename.value);els.outputFilename.value=state.outputFilename;endHistoryGesture('filename')});
     els.exportButton.addEventListener('click',exportImage);
     els.ratioGrid.addEventListener('click',event=>{const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
@@ -717,7 +717,7 @@
     els.radiusRange.addEventListener('change',()=>endHistoryGesture('radius'));
     els.backgroundColor.addEventListener('input',()=>{state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.backgroundColor.addEventListener('change',()=>endHistoryGesture('backgroundColor'));
-    els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;endHistoryGesture('backgroundHex');return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));endHistoryGesture('backgroundHex')});
+    els.backgroundHex.addEventListener('focus',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('pointerdown',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;endHistoryGesture('backgroundHex');return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));endHistoryGesture('backgroundHex')});els.backgroundHex.addEventListener('blur',()=>endHistoryGesture('backgroundHex'));
     els.transparentBackground.addEventListener('change',()=>{const historyBefore=captureHistoryState();state.transparentBackground=els.transparentBackground.checked;commitHistory(historyBefore);renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fill')return;const historyBefore=captureHistoryState();photo.fit='fill';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fit')return;const historyBefore=captureHistoryState();photo.fit='fit';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
