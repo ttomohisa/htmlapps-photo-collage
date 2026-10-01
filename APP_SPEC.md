@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.4.0`
+- **Current development version:** `0.5.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,88 +297,159 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.4.0 implementation contract
+## 15. v0.5.0 implementation contract
 
-v0.4.0では、写真ごとの編集に加えて、完成画像全体の比率と仕上げを調整できるようにする。
+v0.5.0では、現在のプレビュー・写真編集・仕上げ設定を元画像へ適用し、実用解像度の1枚画像として端末へ保存できるようにする。
 
-### Canvas ratio
+### Export formats
 
-正式プリセット:
+正式対応:
 
-- 1:1
-- 4:5
-- 9:16
-- 16:9
-- 3:2
-- 4:3
+- JPEG
+- PNG
+- WebP
+
+JPEGを初期値とする。
+
+WebPはブラウザーのCanvas encode対応をfeature detectionし、未対応ブラウザーでは選択不可とする。
+
+透明背景はPNGのみ正式対応する。JPEG / WebP選択時はtransparent backgroundを無効化し、現在の背景色でflattenする。
+
+### Resolution
+
+長辺プリセット:
+
+- 1080px
+- 2160px
+- 4096px
 - custom
 
-customは幅 / 高さを1〜10の整数で指定する。内部では `canvasAspect = width / height` として保持する。
+初期値は2160px。
 
-比率変更時は単純にCanvasを伸縮するだけではなく、レイアウト候補のcrop loss評価にも実際のcanvas aspect ratioを反映し、候補を再生成する。
+customは256〜8192pxの範囲で指定する。
 
-### Finish parameters
+安全上限:
 
-仕上げ値は将来の高解像度書き出しでも再利用できるよう、プレビュー解像度へ直接固定した値ではなく、短辺900を基準としたdesign unitとして保持する。
+- 最大辺 8192px
+- 最大総画素数 32,000,000px
 
-- gap: 0〜40
-- outer margin: 0〜60
-- corner radius: 0〜60
-- background: 6桁hex color
-- transparent background: boolean
+aspect ratioと整数丸めを反映した最終width × heightでも32MPを超えないこと。境界では計算上の理論値だけでなく、丸め後の実画素数を再検証して長辺を縮小する。
 
-プレビュー時はcanvas短辺に応じてdesign unitをscaleする。
+### High-resolution rendering
 
-### Background / transparency
+プレビューの縮小サムネイルを高解像度保存へ流用しない。
 
-通常は背景色でCanvas全体を塗る。
+保存開始時に以下をsnapshotする。
 
-transparent background有効時はCanvasをclearしたまま写真のみ描画する。プレビューの透明部分はcheckerboardで識別できる。
+- photo order
+- File references
+- crop x / y
+- zoom
+- Fill / Fit
+- hero-derived selected layout cells
+- canvas aspect ratio
+- gap
+- outer margin
+- corner radius
+- background / transparency
+- format / quality
+- output dimensions
+- filename
 
-透明背景はv0.5.0のPNG書き出しで利用する。JPEGではv0.5.0実装時に無効化する。
+保存処理中にUI設定が変更されても、実行中の1回のexport内容は変化しない。
 
-### Rounded corners
+元画像は1枚ずつObject URLからdecodeし、Canvasへ描画後にURLをrevokeする。20枚の元画像を同時decodeしたまま保持しない。
 
-角丸は各写真セルのclipへ適用する。
+### Preview / export consistency
 
-ブラウザ固有の `CanvasRenderingContext2D.roundRect()` へ依存せず、pathを自前構築して対象ブラウザで一貫して動作させる。
+gap / outer margin / corner radiusはv0.4.0と同じshort-side 900基準のdesign unitを使用し、高解像度Canvasの短辺へscaleする。
 
-### Fit behavior
+crop x / yは0〜1正規化値を利用するため、previewとexportの解像度差に依存しない。
 
-Fit時に画像外側へ余白ができる場合、通常背景では現在のCanvas背景色が見える。transparent backgroundでは透明になる。
+Fill / Fit / zoom / background / transparency / rounded cornersはpreviewと同じ描画関数を使用する。
 
-### Layout candidate scoring
+選択写真を示す編集用outlineはexport画像へ描画しない。
 
-実際のセルaspect ratioは、
+### Quality
 
-`canvasAspect * normalizedCellWidth / normalizedCellHeight`
+JPEG / WebP:
 
-として計算し、crop loss / extreme cell penaltyへ利用する。
+- 10〜100
+- 初期値90
+- Canvas encode時は0.10〜1.00へ変換
 
-v0.4.0では最終画像exportはまだ提供しない。v0.5.0でこの同じ描画パラメータを高解像度Canvasへ適用する。
+PNGではquality UIを無効化し、可逆PNG encodeとする。
 
-## 16. v0.4.0 acceptance criteria
+### Filename
 
-- 1:1 / 4:5 / 9:16 / 16:9 / 3:2 / 4:3へ切り替えられる。
-- custom比率を1〜10 : 1〜10で指定できる。
-- 比率変更時にCanvas dimensionsが実際の比率へ変わる。
-- 比率変更時にlayout scoreがcanvas aspect ratioを利用する。
-- 比率変更時に候補を再生成する。
-- 写真間隔を0〜40で変更できる。
-- 外側余白を0〜60で変更できる。
-- 写真角丸を0〜60で変更できる。
-- 背景色をcolor pickerまたは6桁hexで変更できる。
-- 不正なhex入力は現在値へ戻す。
-- transparent backgroundを切り替えられる。
-- transparent background時はCanvas alphaを保持する。
-- 透明部分はcheckerboard previewで視認できる。
-- Fit時の余白は現在のbackground / transparencyを反映する。
-- 角丸は写真ごとのCanvas clipへ反映する。
-- 選択写真のoutlineは角丸形状に沿う。
-- 1:10 / 10:1相当のcustom極端比率でも描画ロジックが破綻しない。
-- JA / EN双方でfinish UIが成立する。
-- 360px幅ではratio / finish controlsが1列または3列へ縮退し、横スクロールしない。
+保存前にbase filenameを編集できる。
+
+- 初期値: `photo-collage`
+- Windows等で無効な文字を `-` へ置換
+- control characters除去
+- 末尾のdot / space除去
+- JPEG / PNG / WebP拡張子が入力されていた場合はbase nameから除去
+- Windows reserved nameは安全な名前へ変換
+- 空文字等は `photo-collage` へfallback
+- 選択形式に応じて `.jpg` / `.png` / `.webp` を自動付与
+
+### Metadata
+
+出力画像はCanvasから新規encodeする。
+
+元画像のEXIF / GPS / camera metadataをコピーする処理は行わない。
+
+### Export state
+
+保存中は少なくとも以下を表示する。
+
+- 現在処理中の写真番号 / 総枚数
+- encode中状態
+
+多重exportを防止する。
+
+成功時はwidth × height / format / file sizeを表示する。
+
+失敗時は無反応にせず、解像度を下げて再試行できる文言を表示する。
+
+### Memory release
+
+encode完了後は一時export Canvasを1×1へ縮小して描画bufferを解放可能な状態にする。
+
+download用Blob URLは利用後にrevokeする。
+
+## 16. v0.5.0 acceptance criteria
+
+- JPEG / PNG / WebPを選択できる。
+- WebP未対応ブラウザーではWebPを無効化する。
+- JPEGを初期形式とする。
+- PNGのみtransparent backgroundを利用できる。
+- JPEG / WebPへ切り替えるとtransparent backgroundを無効化する。
+- 長辺1080 / 2160 / 4096pxを選択できる。
+- custom長辺を256〜8192pxで指定できる。
+- 最終width / heightのどちらも8192pxを超えない。
+- 最終総画素数が32,000,000pxを超えない。
+- 1:1 / 4:5 / 9:16 / 16:9 / 3:2 / 4:3 / 1:10 / 10:1で安全上限計算が成立する。
+- プレビュー用thumbnailではなく元Fileからexportする。
+- 元画像を1枚ずつ逐次decodeする。
+- 保存開始時の設定snapshotを利用する。
+- crop / zoom / Fill / Fitを高解像度出力へ反映する。
+- gap / outer margin / background / transparency / corner radiusを出力へ反映する。
+- 編集中の選択outlineを出力へ含めない。
+- JPEG / WebPのqualityを10〜100で指定できる。
+- PNGではquality controlを無効化する。
+- output filenameを保存前に編集できる。
+- 無効ファイル名文字をsanitizeする。
+- 入力された既知画像拡張子をbase filenameから除去する。
+- 拡張子をformatから自動付与する。
+- Canvas re-encodeにより元写真metadataをコピーしない。
+- export中の多重実行を防止する。
+- export progressを表示する。
+- 成功時にdimensions / format / file sizeを表示する。
+- failure時に解像度を下げる案内を表示する。
+- download Blob URLをrevokeする。
+- export Canvasを完了後に縮小してmemory release可能な状態にする。
 - Runtime CSPの `connect-src 'none'` を維持する。
 - `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
-- テンプレートの `StandaloneAssets` API、`window.AppToast`、将来export向け `outputFilename` 契約を維持する。
+- テンプレートの `StandaloneAssets` API、`window.AppToast`、`outputFilename` 契約を維持する。
