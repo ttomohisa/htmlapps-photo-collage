@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1 - 2026-10-02
+
+### Changed
+
+- Changed the privacy badge to `完全ローカル処理 / Fully local processing`.
+- Changed the default canvas ratio from 1:1 to 4:3.
+- Made More layouts immediately apply the first layout from the next candidate page.
+- Added a page indicator to the More layouts button.
+- Added a touch / pen drag handle for photo reordering while keeping desktop Drag & Drop and arrow controls.
+
 ## 0.8.0 - 2026-10-01
 
 ### Added
