@@ -449,15 +449,14 @@
       els.radiusRange.value=String(state.cornerRadius);els.radiusValue.textContent=String(state.cornerRadius);
       const transparencyAllowed=state.exportFormat==='png';if(!transparencyAllowed)state.transparentBackground=false;els.backgroundColor.value=state.background;els.backgroundHex.value=state.background;els.backgroundColor.disabled=state.transparentBackground;els.backgroundHex.disabled=state.transparentBackground;els.transparentBackground.disabled=!transparencyAllowed;els.transparentBackground.checked=state.transparentBackground;
     }
-    function setCanvasRatio(key){
-      if(key==='custom')state.canvasAspect=state.customRatioWidth/state.customRatioHeight;
-      else if(ratioPresets[key])state.canvasAspect=ratioPresets[key];
-      else return;
-      state.canvasRatioKey=key;state.selectedLayoutId='';state.customLongSide=Math.min(state.customLongSide,maxLongSideForAspect(state.canvasAspect));renderFinishPanel();renderExportPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'));
+    function setCanvasRatio(key,{record=true}={}){
+      if(key!=='custom'&&!ratioPresets[key])return;const historyBefore=record?captureHistoryState():null;
+      if(key==='custom')state.canvasAspect=state.customRatioWidth/state.customRatioHeight;else state.canvasAspect=ratioPresets[key];
+      state.canvasRatioKey=key;state.selectedLayoutId='';state.customLongSide=Math.min(state.customLongSide,maxLongSideForAspect(state.canvasAspect));if(record)commitHistory(historyBefore);renderFinishPanel();renderExportPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'));
     }
     function applyCustomRatio(){
-      const width=Math.max(1,Math.min(10,Math.round(Number(els.customRatioWidth.value)||1))),height=Math.max(1,Math.min(10,Math.round(Number(els.customRatioHeight.value)||1)));
-      state.customRatioWidth=width;state.customRatioHeight=height;els.customRatioWidth.value=String(width);els.customRatioHeight.value=String(height);if(state.canvasRatioKey==='custom')setCanvasRatio('custom');
+      const historyBefore=captureHistoryState(),width=Math.max(1,Math.min(10,Math.round(Number(els.customRatioWidth.value)||1))),height=Math.max(1,Math.min(10,Math.round(Number(els.customRatioHeight.value)||1)));
+      state.customRatioWidth=width;state.customRatioHeight=height;els.customRatioWidth.value=String(width);els.customRatioHeight.value=String(height);if(state.canvasRatioKey==='custom')setCanvasRatio('custom',{record:false});commitHistory(historyBefore);renderFinishPanel();renderExportPanel();
     }
     function normalizeHex(value){
       const text=String(value||'').trim();if(/^#[0-9a-f]{6}$/i.test(text))return text.toLowerCase();return null;
@@ -492,13 +491,13 @@
       els.filenameExtension.textContent=format.ext;els.outputFilename.value=state.outputFilename;els.exportButton.disabled=state.photos.length<2||state.exporting;
     }
     function setExportFormat(format){
-      if(!exportFormats[format]||(format==='webp'&&!webpExportSupported))return;state.exportFormat=format;if(format!=='png')state.transparentBackground=false;renderFinishPanel();renderExportPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));
+      if(!exportFormats[format]||(format==='webp'&&!webpExportSupported)||format===state.exportFormat)return;const historyBefore=captureHistoryState();state.exportFormat=format;if(format!=='png')state.transparentBackground=false;commitHistory(historyBefore);renderFinishPanel();renderExportPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));
     }
     function setResolutionKey(key){
-      if(!['1080','2160','4096','custom'].includes(key))return;state.exportLongSideKey=key;renderExportPanel();
+      if(!['1080','2160','4096','custom'].includes(key)||key===state.exportLongSideKey)return;const historyBefore=captureHistoryState();state.exportLongSideKey=key;commitHistory(historyBefore);renderExportPanel();
     }
     function applyCustomLongSide(){
-      const max=maxLongSideForAspect(state.canvasAspect),raw=Math.max(256,Math.min(8192,Math.round(Number(els.customLongSide.value)||2160))),next=Math.min(raw,max);state.customLongSide=next;els.customLongSide.value=String(next);if(raw>max)window.AppToast.show({message:tr('resolutionLimited',{max}),tone:'warning'});renderExportPanel();
+      const historyBefore=captureHistoryState(),max=maxLongSideForAspect(state.canvasAspect),raw=Math.max(256,Math.min(8192,Math.round(Number(els.customLongSide.value)||2160))),next=Math.min(raw,max);state.customLongSide=next;els.customLongSide.value=String(next);commitHistory(historyBefore);if(raw>max)window.AppToast.show({message:tr('resolutionLimited',{max}),tone:'warning'});renderExportPanel();
     }
     function loadSourceImage(photo){
       const url=URL.createObjectURL(photo.file);return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve({image,url});image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Source image decode failed'))};image.src=url});
@@ -653,7 +652,7 @@
         });
         const label=document.createElement('span');label.className='layout-option-label';label.textContent=String(start+pageIndex+1);
         button.append(thumb,label);
-        button.addEventListener('click',()=>{state.selectedLayoutId=layout.id;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+        button.addEventListener('click',()=>{if(state.selectedLayoutId===layout.id)return;const historyBefore=captureHistoryState();state.selectedLayoutId=layout.id;commitHistory(historyBefore);renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
         els.layoutOptions.append(button);
       });
       els.moreLayoutsButton.hidden=state.layoutCandidates.length<=pageSize;
