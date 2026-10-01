@@ -56,6 +56,13 @@
     .photo-card{position:relative;transition:border-color .14s ease,box-shadow .14s ease,opacity .14s ease}.photo-card[data-selected="true"]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}.photo-card.dragging{opacity:.48}.photo-card.drop-target{border-color:var(--accent)}
     .photo-card-badge{position:absolute;top:7px;left:7px;z-index:2;padding:4px 6px;border-radius:999px;background:rgba(22,98,79,.92);color:#fff;font-size:9px;font-weight:850;box-shadow:0 2px 8px rgba(0,0,0,.15)}
     .photo-actions{display:flex;align-items:center;gap:2px}.order-button{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--muted)}.order-button:hover:not(:disabled){background:var(--surface-hover);color:var(--text)}.order-button:disabled{opacity:.28;cursor:default}.order-button svg{width:15px;height:15px}
+    .finish-panel{margin:12px 16px 0;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+    .finish-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.finish-head strong{font-size:13px}.finish-head span{color:var(--muted);font-size:11px;line-height:1.5}
+    .ratio-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.ratio-button{min-height:38px;padding:6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--muted);font-size:10px;font-weight:800}.ratio-button:hover{background:var(--surface-hover);color:var(--text)}.ratio-button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+    .custom-ratio{display:none;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:7px;align-items:center;margin-top:8px}.custom-ratio.show{display:grid}.custom-ratio input,.hex-input{width:100%;min-height:38px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);padding:7px 9px}.custom-ratio span{text-align:center;color:var(--muted);font-weight:800}
+    .finish-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.finish-field{display:grid;gap:6px}.finish-field-label{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:10px;font-weight:800}.finish-field-label output{font-variant-numeric:tabular-nums;color:var(--text)}.finish-field input[type="range"]{width:100%;accent-color:var(--accent)}
+    .background-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center}.color-input{width:44px;height:38px;padding:2px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.transparency-toggle{display:flex;align-items:center;gap:8px;min-height:38px;color:var(--text);font-size:11px;font-weight:750}.transparency-toggle input{width:18px;height:18px;accent-color:var(--accent)}
+    .preview-stage{background-color:#e8ebe7;background-image:linear-gradient(45deg,#dfe4e1 25%,transparent 25%),linear-gradient(-45deg,#dfe4e1 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dfe4e1 75%),linear-gradient(-45deg,transparent 75%,#dfe4e1 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0}.preview-stage canvas{background:transparent}
     .photos-section{padding:16px}.photos-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}.photos-head h2{margin:0;font-size:14px}.photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.photo-card{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}.thumb{aspect-ratio:4/3;background:var(--surface-muted);display:grid;place-items:center;overflow:hidden}.thumb img{width:100%;height:100%;object-fit:cover}.photo-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:9px}.photo-name{min-width:0;font-size:11px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.photo-size{margin-top:2px;color:var(--muted);font-size:10px}.danger-icon-button{width:34px;height:34px;min-height:34px;padding:0;border:0;background:transparent;color:var(--muted)}.danger-icon-button:hover{background:#fff0ef;color:var(--danger)}.danger-icon-button svg{width:16px;height:16px}
     .loading-state{display:none;padding:46px 22px;text-align:center}.loading-state.show{display:block}.spinner{width:30px;height:30px;margin:0 auto 12px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}.loading-state strong{font-size:14px}.loading-state p{margin:5px 0 0;color:var(--muted);font-size:12px}@keyframes spin{to{transform:rotate(360deg)}}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -63,7 +70,7 @@
     dialog{width:min(640px,calc(100% - 28px));max-height:min(760px,calc(100dvh - 28px));padding:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-md)}dialog::backdrop{background:rgba(15,17,14,.52);backdrop-filter:blur(4px)}#helpDialog[open]{display:flex;flex-direction:column;max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}.dialog-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex:none}.dialog-header h2{margin:0;font-size:17px}.dialog-body{min-height:0;overflow:auto;padding:20px 20px calc(28px + env(safe-area-inset-bottom));overscroll-behavior:contain}.dialog-body h3{margin:25px 0 8px;padding-top:19px;border-top:1px solid var(--line);font-size:14px}.dialog-body h3:first-child{margin-top:0;padding-top:0;border-top:0}.dialog-body p,.dialog-body li{color:var(--muted);font-size:13px;line-height:1.7}.dialog-body ul,.dialog-body ol{padding-left:21px}.dialog-note{padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));border-radius:10px;background:var(--accent-soft);color:var(--text)!important}
     footer{width:min(1240px,100%);margin:auto;padding:0 clamp(14px,2.8vw,30px) 30px;color:var(--muted);font-size:11px}
     @media(max-width:920px){.workspace{grid-template-columns:1fr}.input-panel{position:static}.photo-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-    @media(max-width:680px){.adjust-grid{grid-template-columns:1fr}.adjust-head{display:block}.hero-button{width:100%}:root{--header-height:58px}.header-inner{padding-block:8px}.brand-mark{width:34px;height:34px;border-radius:10px}.brand-name{font-size:15px}.brand-meta{display:none}.main{padding-top:17px}.page-intro{display:block}.privacy-badge{margin-top:10px}.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-stage{min-height:220px;padding:8px}.preview-stage canvas{max-height:360px}.panel{border-radius:14px}.app-toast{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none}#helpDialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
+    @media(max-width:680px){.adjust-grid{grid-template-columns:1fr}.adjust-head{display:block}.hero-button{width:100%}.ratio-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.finish-controls{grid-template-columns:1fr}:root{--header-height:58px}.header-inner{padding-block:8px}.brand-mark{width:34px;height:34px;border-radius:10px}.brand-name{font-size:15px}.brand-meta{display:none}.main{padding-top:17px}.page-intro{display:block}.privacy-badge{margin-top:10px}.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-stage{min-height:220px;padding:8px}.preview-stage canvas{max-height:360px}.panel{border-radius:14px}.app-toast{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none}#helpDialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
     @media(max-width:380px){.photo-grid{grid-template-columns:1fr}.drop-zone{padding-inline:14px}.header-actions{gap:2px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
   </style>
@@ -74,7 +81,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt=""></div>
         <div class="brand-copy">
-          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.3.0</span></p>
+          <p class="brand-name"><span>Photo Collage</span><span class="version-badge">v0.4.0</span></p>
           <p class="brand-meta" data-i18n="brandMeta">写真を選んで、1枚にまとめる</p>
         </div>
       </div>
@@ -89,7 +96,7 @@
 
   <main class="main">
     <section class="page-intro" aria-labelledby="heroTitle">
-      <div><h1 id="heroTitle" data-i18n="introTitle">写真を1枚のコラージュにまとめる</h1><p data-i18n="lead">写真を選んで配置を選び、位置・拡大・表示方法を調整できます。</p></div>
+      <div><h1 id="heroTitle" data-i18n="introTitle">写真を1枚のコラージュにまとめる</h1><p data-i18n="lead">写真を配置して、比率・余白・背景・角丸まで整えられます。</p></div>
       <div class="privacy-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg><span data-i18n="privacyBadge">写真は外部送信しません</span></div>
     </section>
 
@@ -135,6 +142,30 @@
             </div>
             <div class="layout-options" id="layoutOptions" data-i18n-aria-label="layoutsTitle" aria-label="おすすめの配置"></div>
           </div>
+          <div class="finish-panel" id="finishPanel">
+            <div class="finish-head"><div><strong data-i18n="finishTitle">キャンバスと仕上げ</strong><br><span data-i18n="finishBody">比率・余白・背景・角丸を調整します。</span></div></div>
+            <div class="ratio-grid" id="ratioGrid" data-i18n-aria-label="canvasRatio" aria-label="キャンバス比率">
+              <button class="ratio-button" type="button" data-ratio-key="1:1" aria-pressed="true">1:1</button>
+              <button class="ratio-button" type="button" data-ratio-key="4:5" aria-pressed="false">4:5</button>
+              <button class="ratio-button" type="button" data-ratio-key="9:16" aria-pressed="false">9:16</button>
+              <button class="ratio-button" type="button" data-ratio-key="16:9" aria-pressed="false">16:9</button>
+              <button class="ratio-button" type="button" data-ratio-key="3:2" aria-pressed="false">3:2</button>
+              <button class="ratio-button" type="button" data-ratio-key="4:3" aria-pressed="false">4:3</button>
+              <button class="ratio-button" type="button" data-ratio-key="custom" aria-pressed="false" data-i18n="customRatio">カスタム</button>
+            </div>
+            <div class="custom-ratio" id="customRatioRow">
+              <input id="customRatioWidth" type="number" min="1" max="10" step="1" value="1" data-i18n-aria-label="customWidth" aria-label="幅">
+              <span>:</span>
+              <input id="customRatioHeight" type="number" min="1" max="10" step="1" value="1" data-i18n-aria-label="customHeight" aria-label="高さ">
+            </div>
+            <div class="finish-controls">
+              <label class="finish-field" for="gapRange"><span class="finish-field-label"><span data-i18n="gap">写真の間隔</span><output id="gapValue">8</output></span><input id="gapRange" type="range" min="0" max="40" step="1" value="8"></label>
+              <label class="finish-field" for="marginRange"><span class="finish-field-label"><span data-i18n="outerMargin">外側の余白</span><output id="marginValue">8</output></span><input id="marginRange" type="range" min="0" max="60" step="1" value="8"></label>
+              <label class="finish-field" for="radiusRange"><span class="finish-field-label"><span data-i18n="cornerRadius">写真の角丸</span><output id="radiusValue">0</output></span><input id="radiusRange" type="range" min="0" max="60" step="1" value="0"></label>
+              <div class="finish-field"><span class="finish-field-label"><span data-i18n="background">背景</span></span><div class="background-row"><input class="color-input" id="backgroundColor" type="color" value="#ffffff" data-i18n-aria-label="background"><input class="hex-input" id="backgroundHex" type="text" value="#ffffff" maxlength="7" spellcheck="false" data-i18n-aria-label="backgroundHex" aria-label="背景色の16進数"></div></div>
+              <label class="transparency-toggle"><input id="transparentBackground" type="checkbox"><span data-i18n="transparentBackground">背景を透明にする</span></label>
+            </div>
+          </div>
           <div class="photos-section">
             <div class="photos-head"><h2 data-i18n="photosTitle">追加した写真</h2><button class="secondary-button" id="addMoreButton" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addMore">写真を追加</span></button></div>
             <div class="photo-grid" id="photoGrid"></div>
@@ -155,9 +186,9 @@
     <div class="dialog-body">
       <!-- APP:HELP:BEGIN -->
       <h3 data-i18n="helpBasicsTitle">基本操作</h3>
-      <ol><li data-i18n="helpStep1">「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。</li><li data-i18n="helpStep2">追加した写真は一覧で確認でき、不要な写真は個別に削除できます。</li><li data-i18n="helpStep3">2枚以上追加すると、写真の縦横比を見ておすすめのレイアウト候補を作成します。</li></ol>
+      <ol><li data-i18n="helpStep1">「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。</li><li data-i18n="helpStep2">追加した写真は並べ替えでき、不要な写真は削除して元に戻せます。</li><li data-i18n="helpStep3">配置を選んだ後、写真の見せ方とキャンバスの比率・余白・背景・角丸を調整できます。</li></ol>
       <h3 data-i18n="helpPrivacyTitle">プライバシー</h3><p data-i18n="helpPrivacyBody">読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。</p>
-      <h3 data-i18n="helpNotesTitle">注意事項</h3><ul><li data-i18n="helpNoteSession">写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。</li><li data-i18n="helpNoteLimit">一度に扱える写真は20枚までです。</li><li data-i18n="helpNoteVersion">v0.2.0ではcrop・並べ替え・主役写真・最終画像保存はまだ利用できません。</li></ul>
+      <h3 data-i18n="helpNotesTitle">注意事項</h3><ul><li data-i18n="helpNoteSession">写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。</li><li data-i18n="helpNoteLimit">一度に扱える写真は20枚までです。</li><li data-i18n="helpNoteVersion">v0.4.0では最終画像保存はまだ利用できません。透明背景はv0.5.0のPNG書き出しで使用します。</li></ul>
       <p class="dialog-note" data-i18n="helpLocal">対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。</p>
       <!-- APP:HELP:END -->
     </div>
@@ -178,17 +209,17 @@
     addEventListener('pagehide',()=>{blobUrls.forEach(URL.revokeObjectURL);blobUrls.clear()});
 
     const T={
-      ja:{brandMeta:'写真を選んで、1枚にまとめる',introTitle:'写真を1枚のコラージュにまとめる',lead:'写真を選んで配置を選び、位置・拡大・表示方法を調整できます。',privacyBadge:'写真は外部送信しません',inputTitle:'写真を追加',inputDescription:'JPEG / PNG / WebP、最大20枚',dropTitle:'写真をここにドロップ',dropBody:'またはボタンから複数の写真を選択してください。',choosePhotos:'写真を選択',sessionNote:'写真はこのページを再読み込みすると消えます。ブラウザーへ自動保存しません。',loadingTitle:'写真を読み込んでいます',emptyTitle:'まだ写真がありません',emptyBody:'2枚以上の写真を追加すると、ここにコラージュのプレビューが表示されます。',previewTitle:'プレビュー',previewNote:'写真に合わせた配置',adjustTitle:'写真を調整',adjustHint:'プレビュー上で写真をドラッグすると表示位置を変えられます。',displayMode:'表示方法',fill:'枠いっぱい',fit:'全体を表示',zoom:'拡大',makeHero:'この写真を大きく',normalSize:'通常サイズに戻す',heroBadge:'主役',moveEarlier:'前へ移動',moveLater:'後ろへ移動',selectPhoto:'写真を選択',undo:'元に戻す',restored:'写真を元に戻しました',layoutsTitle:'おすすめの配置',layoutsBody:'写真を切り取りすぎない候補を優先しています。',moreLayouts:'別の配置を見る',layoutOption:'配置 {index}',onePhotoTitle:'あと1枚追加してください',onePhotoBody:'2枚以上でコラージュのプレビューを作成できます。',photosTitle:'追加した写真',addMore:'写真を追加',removePhoto:'写真を削除',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',helpStep1:'「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。',helpStep2:'追加した写真は並べ替えでき、不要な写真は削除して元に戻せます。',helpStep3:'配置を選んだ後、写真を選択して位置・拡大・枠いっぱい / 全体表示・主役写真を調整できます。',helpPrivacyTitle:'プライバシー',helpPrivacyBody:'読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。',helpNotesTitle:'注意事項',helpNoteSession:'写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。',helpNoteLimit:'一度に扱える写真は20枚までです。',helpNoteVersion:'v0.3.0では余白・背景・角丸・最終画像保存はまだ利用できません。',helpLocal:'対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。',footer:'写真はブラウザー内で処理されます',loaded:'{count}枚を追加しました',removed:'写真を削除しました',limit:'一度に使用できる写真は20枚までです。{count}枚は追加されませんでした。',partial:'{ok}枚を追加しました。{bad}枚は読み込めませんでした。',failed:'選択した写真を読み込めませんでした。対応形式か、ファイルが破損していないか確認してください。',unsupported:'対応していない形式です',decodeFailed:'画像を読み込めませんでした'},
-      en:{brandMeta:'Choose photos and combine them',introTitle:'Combine photos into one collage',lead:'Choose photos and a layout, then adjust position, zoom, display mode, and the featured photo.',privacyBadge:'Photos are not uploaded',inputTitle:'Add photos',inputDescription:'JPEG / PNG / WebP, up to 20',dropTitle:'Drop photos here',dropBody:'Or choose multiple photos with the button.',choosePhotos:'Choose photos',sessionNote:'Photos are not saved by the app. Reloading this page clears the current session.',loadingTitle:'Loading photos',emptyTitle:'No photos yet',emptyBody:'Add two or more photos to show a collage preview here.',previewTitle:'Preview',previewNote:'Photo-aware layout',adjustTitle:'Adjust photo',adjustHint:'Drag the selected photo in the preview to change its visible position.',displayMode:'Display',fill:'Fill frame',fit:'Show all',zoom:'Zoom',makeHero:'Make this photo larger',normalSize:'Return to normal size',heroBadge:'Featured',moveEarlier:'Move earlier',moveLater:'Move later',selectPhoto:'Select photo',undo:'Undo',restored:'Photo restored',layoutsTitle:'Suggested layouts',layoutsBody:'Candidates with less cropping are prioritized.',moreLayouts:'More layouts',layoutOption:'Layout {index}',onePhotoTitle:'Add one more photo',onePhotoBody:'Two or more photos are needed to create a collage preview.',photosTitle:'Added photos',addMore:'Add photos',removePhoto:'Remove photo',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',helpStep1:'Use Choose photos or Drag & Drop to add JPEG, PNG, or WebP images.',helpStep2:'Reorder loaded photos, or remove a photo and undo the removal if needed.',helpStep3:'After choosing a layout, select a photo to adjust its position, zoom, Fill / Fit mode, or featured-photo state.',helpPrivacyTitle:'Privacy',helpPrivacyBody:'Photos are processed in this browser and are not sent to an external server by this app. The app makes no runtime network connections.',helpNotesTitle:'Notes',helpNoteSession:'Photos and edits are not automatically persisted. Reloading the page clears the current work.',helpNoteLimit:'Up to 20 photos can be used at once.',helpNoteVersion:'Gap, background, rounded-corner settings, and final image export are not available in v0.3.0 yet.',helpLocal:'Supported formats: JPEG / PNG / WebP. Files are processed on this device.',footer:'Photos are processed in your browser',loaded:'Added {count} photos',removed:'Photo removed',limit:'Up to 20 photos can be used at once. {count} photos were not added.',partial:'Added {ok} photos. {bad} could not be loaded.',failed:'The selected photos could not be loaded. Check the format or whether the files are damaged.',unsupported:'Unsupported image format',decodeFailed:'Could not decode image'}
+      ja:{brandMeta:'写真を選んで、1枚にまとめる',introTitle:'写真を1枚のコラージュにまとめる',lead:'写真を配置して、比率・余白・背景・角丸まで整えられます。',privacyBadge:'写真は外部送信しません',inputTitle:'写真を追加',inputDescription:'JPEG / PNG / WebP、最大20枚',dropTitle:'写真をここにドロップ',dropBody:'またはボタンから複数の写真を選択してください。',choosePhotos:'写真を選択',sessionNote:'写真はこのページを再読み込みすると消えます。ブラウザーへ自動保存しません。',loadingTitle:'写真を読み込んでいます',emptyTitle:'まだ写真がありません',emptyBody:'2枚以上の写真を追加すると、ここにコラージュのプレビューが表示されます。',previewTitle:'プレビュー',previewNote:'写真に合わせた配置',finishTitle:'キャンバスと仕上げ',canvasRatio:'キャンバス比率',backgroundHex:'背景色の16進数',finishBody:'比率・余白・背景・角丸を調整します。',customRatio:'カスタム',customWidth:'幅',customHeight:'高さ',gap:'写真の間隔',outerMargin:'外側の余白',cornerRadius:'写真の角丸',background:'背景',transparentBackground:'背景を透明にする',adjustTitle:'写真を調整',adjustHint:'プレビュー上で写真をドラッグすると表示位置を変えられます。',displayMode:'表示方法',fill:'枠いっぱい',fit:'全体を表示',zoom:'拡大',makeHero:'この写真を大きく',normalSize:'通常サイズに戻す',heroBadge:'主役',moveEarlier:'前へ移動',moveLater:'後ろへ移動',selectPhoto:'写真を選択',undo:'元に戻す',restored:'写真を元に戻しました',layoutsTitle:'おすすめの配置',layoutsBody:'写真を切り取りすぎない候補を優先しています。',moreLayouts:'別の配置を見る',layoutOption:'配置 {index}',onePhotoTitle:'あと1枚追加してください',onePhotoBody:'2枚以上でコラージュのプレビューを作成できます。',photosTitle:'追加した写真',addMore:'写真を追加',removePhoto:'写真を削除',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',helpStep1:'「写真を選択」またはDrag & DropでJPEG / PNG / WebPを追加します。',helpStep2:'追加した写真は並べ替えでき、不要な写真は削除して元に戻せます。',helpStep3:'配置を選んだ後、写真の見せ方とキャンバスの比率・余白・背景・角丸を調整できます。',helpPrivacyTitle:'プライバシー',helpPrivacyBody:'読み込んだ写真はブラウザー内で処理され、このアプリから外部サーバーへ送信されません。ランタイム通信も行いません。',helpNotesTitle:'注意事項',helpNoteSession:'写真や編集内容はブラウザーへ自動保存しません。ページを再読み込みすると現在の作業は失われます。',helpNoteLimit:'一度に扱える写真は20枚までです。',helpNoteVersion:'v0.4.0では最終画像保存はまだ利用できません。透明背景はv0.5.0のPNG書き出しで使用します。',helpLocal:'対応形式: JPEG / PNG / WebP。ファイルは端末内だけで処理します。',footer:'写真はブラウザー内で処理されます',loaded:'{count}枚を追加しました',removed:'写真を削除しました',limit:'一度に使用できる写真は20枚までです。{count}枚は追加されませんでした。',partial:'{ok}枚を追加しました。{bad}枚は読み込めませんでした。',failed:'選択した写真を読み込めませんでした。対応形式か、ファイルが破損していないか確認してください。',unsupported:'対応していない形式です',decodeFailed:'画像を読み込めませんでした'},
+      en:{brandMeta:'Choose photos and combine them',introTitle:'Combine photos into one collage',lead:'Arrange photos, then finish the collage with ratio, spacing, background, and rounded corners.',privacyBadge:'Photos are not uploaded',inputTitle:'Add photos',inputDescription:'JPEG / PNG / WebP, up to 20',dropTitle:'Drop photos here',dropBody:'Or choose multiple photos with the button.',choosePhotos:'Choose photos',sessionNote:'Photos are not saved by the app. Reloading this page clears the current session.',loadingTitle:'Loading photos',emptyTitle:'No photos yet',emptyBody:'Add two or more photos to show a collage preview here.',previewTitle:'Preview',previewNote:'Photo-aware layout',finishTitle:'Canvas & finish',canvasRatio:'Canvas ratio',backgroundHex:'Background color hex value',finishBody:'Adjust ratio, spacing, background, and rounded corners.',customRatio:'Custom',customWidth:'Width',customHeight:'Height',gap:'Photo spacing',outerMargin:'Outer margin',cornerRadius:'Rounded corners',background:'Background',transparentBackground:'Transparent background',adjustTitle:'Adjust photo',adjustHint:'Drag the selected photo in the preview to change its visible position.',displayMode:'Display',fill:'Fill frame',fit:'Show all',zoom:'Zoom',makeHero:'Make this photo larger',normalSize:'Return to normal size',heroBadge:'Featured',moveEarlier:'Move earlier',moveLater:'Move later',selectPhoto:'Select photo',undo:'Undo',restored:'Photo restored',layoutsTitle:'Suggested layouts',layoutsBody:'Candidates with less cropping are prioritized.',moreLayouts:'More layouts',layoutOption:'Layout {index}',onePhotoTitle:'Add one more photo',onePhotoBody:'Two or more photos are needed to create a collage preview.',photosTitle:'Added photos',addMore:'Add photos',removePhoto:'Remove photo',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',helpStep1:'Use Choose photos or Drag & Drop to add JPEG, PNG, or WebP images.',helpStep2:'Reorder loaded photos, or remove a photo and undo the removal if needed.',helpStep3:'After choosing a layout, adjust each photo and finish the canvas with ratio, spacing, background, and rounded corners.',helpPrivacyTitle:'Privacy',helpPrivacyBody:'Photos are processed in this browser and are not sent to an external server by this app. The app makes no runtime network connections.',helpNotesTitle:'Notes',helpNoteSession:'Photos and edits are not automatically persisted. Reloading the page clears the current work.',helpNoteLimit:'Up to 20 photos can be used at once.',helpNoteVersion:'Final image export is not available in v0.4.0 yet. Transparent background will apply to PNG export in v0.5.0.',helpLocal:'Supported formats: JPEG / PNG / WebP. Files are processed on this device.',footer:'Photos are processed in your browser',loaded:'Added {count} photos',removed:'Photo removed',limit:'Up to 20 photos can be used at once. {count} photos were not added.',partial:'Added {ok} photos. {bad} could not be loaded.',failed:'The selected photos could not be loaded. Check the format or whether the files are damaged.',unsupported:'Unsupported image format',decodeFailed:'Could not decode image'}
     };
-    const els={languageButton:document.getElementById('languageButton'),helpButton:document.getElementById('helpButton'),helpDialog:document.getElementById('helpDialog'),closeHelpButton:document.getElementById('closeHelpButton'),fileInput:document.getElementById('fileInput'),chooseButton:document.getElementById('chooseButton'),addMoreButton:document.getElementById('addMoreButton'),dropZone:document.getElementById('dropZone'),photoCountPill:document.getElementById('photoCountPill'),statusStrip:document.getElementById('statusStrip'),statusText:document.getElementById('statusText'),loadingState:document.getElementById('loadingState'),loadingProgress:document.getElementById('loadingProgress'),emptyState:document.getElementById('emptyState'),readyArea:document.getElementById('readyArea'),photoGrid:document.getElementById('photoGrid'),previewCanvas:document.getElementById('previewCanvas'),previewMessage:document.getElementById('previewMessage'),layoutPicker:document.getElementById('layoutPicker'),layoutOptions:document.getElementById('layoutOptions'),moreLayoutsButton:document.getElementById('moreLayoutsButton'),adjustPanel:document.getElementById('adjustPanel'),selectedPhotoName:document.getElementById('selectedPhotoName'),fillButton:document.getElementById('fillButton'),fitButton:document.getElementById('fitButton'),zoomRange:document.getElementById('zoomRange'),zoomValue:document.getElementById('zoomValue'),heroButton:document.getElementById('heroButton'),previewStage:document.getElementById('previewStage'),appToast:document.getElementById('appToast'),appToastMessage:document.getElementById('appToastMessage'),appToastAction:document.getElementById('appToastAction'),outputFilename:document.getElementById('outputFilename')};
-    const state={lang:(navigator.language||'ja').toLowerCase().startsWith('ja')?'ja':'en',photos:[],phase:'empty',generation:0,outputFilename:'photo-collage',layoutCandidates:[],selectedLayoutId:'',layoutPage:0,previewGeneration:0,selectedPhotoId:'',dragPhotoId:'',previewCells:[],cropDrag:null};
+    const els={languageButton:document.getElementById('languageButton'),helpButton:document.getElementById('helpButton'),helpDialog:document.getElementById('helpDialog'),closeHelpButton:document.getElementById('closeHelpButton'),fileInput:document.getElementById('fileInput'),chooseButton:document.getElementById('chooseButton'),addMoreButton:document.getElementById('addMoreButton'),dropZone:document.getElementById('dropZone'),photoCountPill:document.getElementById('photoCountPill'),statusStrip:document.getElementById('statusStrip'),statusText:document.getElementById('statusText'),loadingState:document.getElementById('loadingState'),loadingProgress:document.getElementById('loadingProgress'),emptyState:document.getElementById('emptyState'),readyArea:document.getElementById('readyArea'),photoGrid:document.getElementById('photoGrid'),previewCanvas:document.getElementById('previewCanvas'),previewMessage:document.getElementById('previewMessage'),layoutPicker:document.getElementById('layoutPicker'),layoutOptions:document.getElementById('layoutOptions'),moreLayoutsButton:document.getElementById('moreLayoutsButton'),adjustPanel:document.getElementById('adjustPanel'),selectedPhotoName:document.getElementById('selectedPhotoName'),fillButton:document.getElementById('fillButton'),fitButton:document.getElementById('fitButton'),zoomRange:document.getElementById('zoomRange'),zoomValue:document.getElementById('zoomValue'),heroButton:document.getElementById('heroButton'),previewStage:document.getElementById('previewStage'),finishPanel:document.getElementById('finishPanel'),ratioGrid:document.getElementById('ratioGrid'),customRatioRow:document.getElementById('customRatioRow'),customRatioWidth:document.getElementById('customRatioWidth'),customRatioHeight:document.getElementById('customRatioHeight'),gapRange:document.getElementById('gapRange'),gapValue:document.getElementById('gapValue'),marginRange:document.getElementById('marginRange'),marginValue:document.getElementById('marginValue'),radiusRange:document.getElementById('radiusRange'),radiusValue:document.getElementById('radiusValue'),backgroundColor:document.getElementById('backgroundColor'),backgroundHex:document.getElementById('backgroundHex'),transparentBackground:document.getElementById('transparentBackground'),appToast:document.getElementById('appToast'),appToastMessage:document.getElementById('appToastMessage'),appToastAction:document.getElementById('appToastAction'),outputFilename:document.getElementById('outputFilename')};
+    const state={lang:(navigator.language||'ja').toLowerCase().startsWith('ja')?'ja':'en',photos:[],phase:'empty',generation:0,outputFilename:'photo-collage',layoutCandidates:[],selectedLayoutId:'',layoutPage:0,previewGeneration:0,selectedPhotoId:'',dragPhotoId:'',previewCells:[],cropDrag:null,canvasRatioKey:'1:1',canvasAspect:1,customRatioWidth:1,customRatioHeight:1,gap:8,outerMargin:8,cornerRadius:0,background:'#ffffff',transparentBackground:false};
     const previewImageCache=new Map();
     let toastTimer=0;
     window.AppToast=Object.freeze({show({message,tone='default',actionLabel='',onAction=null,duration=3600}={}){clearTimeout(toastTimer);els.appToastMessage.textContent=message||'';els.appToast.dataset.tone=tone;if(actionLabel&&typeof onAction==='function'){els.appToastAction.hidden=false;els.appToastAction.textContent=actionLabel;els.appToastAction.onclick=()=>{onAction();hideToast()}}else{els.appToastAction.hidden=true;els.appToastAction.onclick=null}els.appToast.classList.add('show');toastTimer=setTimeout(hideToast,duration)}});
     function hideToast(){els.appToast.classList.remove('show');clearTimeout(toastTimer)}
     function tr(key,vars={}){let text=T[state.lang][key]??key;for(const[k,v]of Object.entries(vars))text=text.replace(`{${k}}`,String(v));return text}
-    function applyLanguage(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[state.lang][k]!=null)el.textContent=T[state.lang][k]});document.querySelectorAll('[data-i18n-title]').forEach(el=>el.title=tr(el.dataset.i18nTitle));document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAriaLabel)));els.languageButton.textContent=state.lang==='ja'?'EN':'JA';renderPhotos();renderLayoutChoices();renderAdjustPanel()}
+    function applyLanguage(){document.documentElement.lang=state.lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(T[state.lang][k]!=null)el.textContent=T[state.lang][k]});document.querySelectorAll('[data-i18n-title]').forEach(el=>el.title=tr(el.dataset.i18nTitle));document.querySelectorAll('[data-i18n-aria-label]').forEach(el=>el.setAttribute('aria-label',tr(el.dataset.i18nAriaLabel)));els.languageButton.textContent=state.lang==='ja'?'EN':'JA';renderPhotos();renderLayoutChoices();renderAdjustPanel();renderFinishPanel()}
     function setPhase(phase){state.phase=phase;els.loadingState.classList.toggle('show',phase==='loading');els.emptyState.hidden=phase!=='empty';els.readyArea.classList.toggle('show',phase!=='empty'&&phase!=='loading')}
     function setStatus(message,tone='warning'){if(!message){els.statusStrip.className='status-strip';els.statusText.textContent='';return}els.statusText.textContent=message;els.statusStrip.className=`status-strip show ${tone}`}
     function validType(file){return ['image/jpeg','image/png','image/webp'].includes(file.type)}
@@ -249,12 +280,38 @@
       els.selectedPhotoName.textContent=photo.name;els.fillButton.setAttribute('aria-pressed',photo.fit==='fill'?'true':'false');els.fitButton.setAttribute('aria-pressed',photo.fit==='fit'?'true':'false');
       els.zoomRange.value=String(photo.zoom);els.zoomRange.disabled=photo.fit==='fit';els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';els.heroButton.setAttribute('aria-pressed',photo.hero?'true':'false');els.heroButton.textContent=tr(photo.hero?'normalSize':'makeHero');els.previewCanvas.classList.toggle('can-adjust',photo.fit==='fill');
     }
+    const ratioPresets=Object.freeze({'1:1':1,'4:5':4/5,'9:16':9/16,'16:9':16/9,'3:2':3/2,'4:3':4/3});
+    function renderFinishPanel(){
+      els.ratioGrid.querySelectorAll('[data-ratio-key]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.ratioKey===state.canvasRatioKey?'true':'false'));
+      els.customRatioRow.classList.toggle('show',state.canvasRatioKey==='custom');
+      els.customRatioWidth.value=String(state.customRatioWidth);els.customRatioHeight.value=String(state.customRatioHeight);
+      els.gapRange.value=String(state.gap);els.gapValue.textContent=String(state.gap);
+      els.marginRange.value=String(state.outerMargin);els.marginValue.textContent=String(state.outerMargin);
+      els.radiusRange.value=String(state.cornerRadius);els.radiusValue.textContent=String(state.cornerRadius);
+      els.backgroundColor.value=state.background;els.backgroundHex.value=state.background;els.backgroundColor.disabled=state.transparentBackground;els.backgroundHex.disabled=state.transparentBackground;els.transparentBackground.checked=state.transparentBackground;
+    }
+    function setCanvasRatio(key){
+      if(key==='custom')state.canvasAspect=state.customRatioWidth/state.customRatioHeight;
+      else if(ratioPresets[key])state.canvasAspect=ratioPresets[key];
+      else return;
+      state.canvasRatioKey=key;state.selectedLayoutId='';renderFinishPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'));
+    }
+    function applyCustomRatio(){
+      const width=Math.max(1,Math.min(10,Math.round(Number(els.customRatioWidth.value)||1))),height=Math.max(1,Math.min(10,Math.round(Number(els.customRatioHeight.value)||1)));
+      state.customRatioWidth=width;state.customRatioHeight=height;els.customRatioWidth.value=String(width);els.customRatioHeight.value=String(height);if(state.canvasRatioKey==='custom')setCanvasRatio('custom');
+    }
+    function normalizeHex(value){
+      const text=String(value||'').trim();if(/^#[0-9a-f]{6}$/i.test(text))return text.toLowerCase();return null;
+    }
     function loadPreviewImage(photo){
       if(previewImageCache.has(photo.id))return previewImageCache.get(photo.id);
       const promise=new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=photo.thumbUrl});previewImageCache.set(photo.id,promise);return promise;
     }
-    function drawPhoto(ctx,img,photo,x,y,w,h){
-      ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+    function roundedPath(ctx,x,y,w,h,r){
+      const radius=Math.max(0,Math.min(r,w/2,h/2));ctx.beginPath();ctx.moveTo(x+radius,y);ctx.lineTo(x+w-radius,y);ctx.quadraticCurveTo(x+w,y,x+w,y+radius);ctx.lineTo(x+w,y+h-radius);ctx.quadraticCurveTo(x+w,y+h,x+w-radius,y+h);ctx.lineTo(x+radius,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-radius);ctx.lineTo(x,y+radius);ctx.quadraticCurveTo(x,y,x+radius,y);ctx.closePath();
+    }
+    function drawPhoto(ctx,img,photo,x,y,w,h,radius){
+      ctx.save();roundedPath(ctx,x,y,w,h,radius);ctx.clip();
       if(photo.fit==='fit'){
         const scale=Math.min(w/img.naturalWidth,h/img.naturalHeight),dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
       }else{
@@ -307,12 +364,12 @@
       });
       return{id:`${mode[0]}:${groups.join('-')}`,mode,groups:groups.slice(),cells,score:0};
     }
-    function scoreLayout(layout,photos){
+    function scoreLayout(layout,photos,canvasAspect=1){
       const areas=[];
       let crop=0,extreme=0;
       for(let i=0;i<layout.cells.length;i+=1){
         const cell=layout.cells[i],photo=photos[i];
-        const cellAspect=Math.max(.03,cell.w/cell.h),photoAspect=Math.max(.03,photo.aspect);
+        const cellAspect=Math.max(.03,canvasAspect*cell.w/cell.h),photoAspect=Math.max(.03,photo.aspect);
         const visible=Math.min(1,photoAspect/cellAspect,cellAspect/photoAspect);
         crop+=1-visible;
         if(cellAspect>3.2)extreme+=(cellAspect-3.2)*.06;
@@ -326,13 +383,13 @@
       if(heroIndex>=0){const heroArea=areas[heroIndex]||0;heroPenalty=Math.max(0,1.45-heroArea/mean)*1.1}
       return crop/Math.max(1,photos.length)+extreme+balance*.055+singletons*.008+heroPenalty;
     }
-    function generateLayouts(photos){
+    function generateLayouts(photos,canvasAspect=1){
       if(photos.length<2)return[];
       const candidates=[];
       for(const groups of generatePartitions(photos.length)){
         for(const mode of ['rows','columns']){
           const layout=makeLayout(groups,mode,photos);
-          layout.score=scoreLayout(layout,photos);
+          layout.score=scoreLayout(layout,photos,canvasAspect);
           candidates.push(layout);
         }
       }
@@ -363,7 +420,7 @@
         const button=document.createElement('button');
         button.type='button';button.className='layout-option';button.setAttribute('aria-pressed',layout.id===state.selectedLayoutId?'true':'false');
         button.setAttribute('aria-label',tr('layoutOption',{index:start+pageIndex+1}));
-        const thumb=document.createElement('span');thumb.className='layout-thumb';thumb.setAttribute('aria-hidden','true');
+        const thumb=document.createElement('span');thumb.className='layout-thumb';thumb.setAttribute('aria-hidden','true');thumb.style.aspectRatio=String(state.canvasAspect);thumb.style.backgroundColor=state.transparentBackground?'transparent':state.background;
         layout.cells.forEach((cell,index)=>{
           const part=document.createElement('span');part.className='layout-thumb-cell';
           part.style.left=`${cell.x*100}%`;part.style.top=`${cell.y*100}%`;part.style.width=`${cell.w*100}%`;part.style.height=`${cell.h*100}%`;
@@ -377,29 +434,42 @@
       });
       els.moreLayoutsButton.hidden=state.layoutCandidates.length<=pageSize;
     }
+    function previewDimensions(aspect){
+      const max=900,safe=Math.max(.1,Math.min(10,aspect||1));return safe>=1?{width:max,height:Math.max(90,Math.round(max/safe))}:{width:Math.max(90,Math.round(max*safe)),height:max};
+    }
     async function renderPreview(){
       const canvas=els.previewCanvas,message=els.previewMessage,renderToken=++state.previewGeneration;
       if(state.photos.length<2){canvas.hidden=true;message.hidden=false;state.previewCells=[];return}
       const layout=getSelectedLayout();if(!layout){canvas.hidden=true;message.hidden=false;state.previewCells=[];return}
-      message.hidden=true;canvas.hidden=false;const generation=state.generation,size=900,gap=8,inner=size-gap*2;canvas.width=size;canvas.height=size;
-      const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);state.previewCells=[];
+      message.hidden=true;canvas.hidden=false;const generation=state.generation,dimensions=previewDimensions(state.canvasAspect),width=dimensions.width,height=dimensions.height,scale=Math.min(width,height)/900;
+      const gap=Math.max(0,state.gap*scale),margin=Math.max(0,state.outerMargin*scale),radius=Math.max(0,state.cornerRadius*scale),contentW=Math.max(1,width-margin*2),contentH=Math.max(1,height-margin*2);
+      canvas.width=width;canvas.height=height;canvas.style.aspectRatio=width+' / '+height;
+      const ctx=canvas.getContext('2d',{alpha:true});ctx.clearRect(0,0,width,height);if(!state.transparentBackground){ctx.fillStyle=state.background;ctx.fillRect(0,0,width,height)}state.previewCells=[];
       for(let i=0;i<state.photos.length;i+=1){
         const photo=state.photos[i],cell=layout.cells[i];if(!cell)continue;
-        const x=gap+cell.x*inner+gap/2,y=gap+cell.y*inner+gap/2,w=Math.max(1,cell.w*inner-gap),h=Math.max(1,cell.h*inner-gap);state.previewCells.push({id:photo.id,x,y,w,h});
-        const img=await loadPreviewImage(photo);if(generation!==state.generation||renderToken!==state.previewGeneration)return;drawPhoto(ctx,img,photo,x,y,w,h);
-        if(photo.id===state.selectedPhotoId){ctx.save();ctx.strokeStyle='#16624F';ctx.lineWidth=6;ctx.strokeRect(x+3,y+3,Math.max(0,w-6),Math.max(0,h-6));ctx.restore()}
+        const x=margin+cell.x*contentW+gap/2,y=margin+cell.y*contentH+gap/2,w=Math.max(1,cell.w*contentW-gap),h=Math.max(1,cell.h*contentH-gap);state.previewCells.push({id:photo.id,x,y,w,h});
+        const img=await loadPreviewImage(photo);if(generation!==state.generation||renderToken!==state.previewGeneration)return;drawPhoto(ctx,img,photo,x,y,w,h,radius);
+        if(photo.id===state.selectedPhotoId){ctx.save();ctx.strokeStyle='#16624F';ctx.lineWidth=Math.max(2,6*scale);roundedPath(ctx,x+3*scale,y+3*scale,Math.max(0,w-6*scale),Math.max(0,h-6*scale),Math.max(0,radius-3*scale));ctx.stroke();ctx.restore()}
       }
     }
     async function rebuildLayouts(){
       if(state.photos.length<2){state.layoutCandidates=[];state.selectedLayoutId='';state.layoutPage=0;renderLayoutChoices();await renderPreview();return}
       if(!state.photos.some(photo=>photo.id===state.selectedPhotoId))state.selectedPhotoId=(state.photos[0]||{}).id||'';
       const previous=state.selectedLayoutId;
-      state.layoutCandidates=generateLayouts(state.photos);
+      state.layoutCandidates=generateLayouts(state.photos,state.canvasAspect);
       state.selectedLayoutId=state.layoutCandidates.some(layout=>layout.id===previous)?previous:(state.layoutCandidates[0]?.id||'');
       state.layoutPage=0;renderLayoutChoices();renderAdjustPanel();await renderPreview();
     }
     function updateView(){if(state.photos.length&&!state.photos.some(photo=>photo.id===state.selectedPhotoId))state.selectedPhotoId=state.photos[0].id;renderPhotos();renderAdjustPanel();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))}
     function openPicker(){if(state.photos.length>=20){window.AppToast.show({message:tr('limit',{count:1}),tone:'warning'});return}els.fileInput.click()}
+    els.ratioGrid.addEventListener('click',event=>{const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
+    els.customRatioWidth.addEventListener('change',applyCustomRatio);els.customRatioHeight.addEventListener('change',applyCustomRatio);
+    els.gapRange.addEventListener('input',()=>{state.gap=Number(els.gapRange.value)||0;els.gapValue.textContent=String(state.gap);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.marginRange.addEventListener('input',()=>{state.outerMargin=Number(els.marginRange.value)||0;els.marginValue.textContent=String(state.outerMargin);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.radiusRange.addEventListener('input',()=>{state.cornerRadius=Number(els.radiusRange.value)||0;els.radiusValue.textContent=String(state.cornerRadius);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.backgroundColor.addEventListener('input',()=>{state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.transparentBackground.addEventListener('change',()=>{state.transparentBackground=els.transparentBackground.checked;renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fill';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fit';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.zoomRange.addEventListener('input',()=>{const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;photo.zoom=Math.max(1,Math.min(3,Number(els.zoomRange.value)||1));els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
@@ -423,7 +493,7 @@
     ['dragenter','dragover'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.add('dragover')}));['dragleave','drop'].forEach(type=>els.dropZone.addEventListener(type,e=>{e.preventDefault();e.stopPropagation();els.dropZone.classList.remove('dragover')}));els.dropZone.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
     els.languageButton.addEventListener('click',()=>{state.lang=state.lang==='ja'?'en':'ja';applyLanguage()});els.helpButton.addEventListener('click',()=>els.helpDialog.showModal());els.closeHelpButton.addEventListener('click',()=>els.helpDialog.close());els.helpDialog.addEventListener('click',e=>{if(e.target===els.helpDialog)els.helpDialog.close()});
     els.outputFilename.value=state.outputFilename;
-    applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();renderAdjustPanel();
+    applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();renderAdjustPanel();renderFinishPanel();
   })();
   </script>
 </body>
