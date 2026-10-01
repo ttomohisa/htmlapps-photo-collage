@@ -2,7 +2,6 @@
 
 2〜20枚の写真をブラウザー内で読み込み、写真に合った配置候補から選んで1枚のコラージュ画像として保存するBrowser Kitty向けツールです。
 
-![Photo Collage / 写真コラージュ](assets/screenshot.png)
 
 ## Features
 
