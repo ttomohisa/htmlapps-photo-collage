@@ -540,7 +540,7 @@ v1.0.0へ進む前に少なくとも以下を実ブラウザーで確認する�
 - `scripts/check-photo-collage-rc.cjs` がrepositoryに存在する。
 - Standalone CIがRC regressionを実行する。
 - READMEがfinished-app shapeになっている。
-- READMEにactual screenshotを掲載する。
+- v1.0.0最終パスでactual screenshot（JA / EN / desktop / smartphone）を正式アセットへ更新する。
 - READMEにPrivacy / Limitations / Single HTML / Offlineを記載する。
 - SECURITY.mdがPhoto Collageのtrust boundaryを説明する。
 - THIRD_PARTY_NOTICES.mdが現状third-party libraryなしを説明する。
