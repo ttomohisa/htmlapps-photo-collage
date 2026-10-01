@@ -2,7 +2,7 @@
 
 A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
 
-The current development release is **v0.3.0**. In addition to photo-aware layout suggestions, each photo can now be reordered and adjusted without uploading it anywhere.
+The current development release is **v0.4.0**. You can now adjust the canvas ratio, spacing, background, transparency, and rounded corners in addition to the photo-aware layout and per-photo editing controls.
 
 ## Features
 
@@ -10,14 +10,16 @@ The current development release is **v0.3.0**. In addition to photo-aware layout
 - 2–20 photo workflow
 - Multi-select and Drag & Drop input
 - Photo-aware automatic layout suggestions
-- Crop-loss, extreme-cell, area-balance, and featured-photo scoring
-- Select photos from the list or directly on the Canvas preview
 - Reorder photos by Drag & Drop or move buttons
-- Drag a photo in the preview to adjust its crop position
+- Crop-position adjustment directly on the Canvas
 - 1×–3× zoom
 - Fill frame / Show all
 - One featured photo with larger-layout preference
 - Undo after removing a photo
+- Canvas ratios: 1:1, 4:5, 9:16, 16:9, 3:2, 4:3, and custom
+- Photo spacing and outer margin
+- Background color and transparent background preview
+- Per-photo rounded corners
 - Japanese / English UI
 - Desktop and smartphone layouts
 - No runtime network access
@@ -26,12 +28,12 @@ The current development release is **v0.3.0**. In addition to photo-aware layout
 
 1. Add two or more photos.
 2. Choose a suggested layout.
-3. Select a photo in the list or preview.
-4. Drag it in the preview, change zoom, or switch between Fill frame and Show all.
-5. Use **Make this photo larger** when one photo should be featured.
-6. Reorder photos with Drag & Drop or the move buttons.
+3. Select and adjust individual photos as needed.
+4. Choose the canvas ratio.
+5. Adjust photo spacing, outer margin, background, transparency, and rounded corners.
+6. Reorder or feature a photo when needed.
 
-Final image export is not available in v0.3.0 yet.
+Final image export is not available in v0.4.0 yet. Transparent background is prepared for PNG export in v0.5.0.
 
 ## Privacy
 
@@ -45,13 +47,12 @@ Current stable Chrome, Edge, Firefox, and Safari, including major mobile browser
 
 ## Limitations
 
-v0.3.0 does not yet include:
+v0.4.0 does not yet include:
 
-- Canvas ratio presets
-- Gap / outer margin
-- Background color
-- Rounded corners
 - JPEG / PNG / WebP export
+- Export quality controls
+- Export resolution presets
+- Editable output filename UI
 
 See `APP_SPEC.md` for the roadmap.
 
