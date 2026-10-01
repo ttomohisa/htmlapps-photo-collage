@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0 - 2026-10-02
+
+### Added
+
+- Release-candidate regression script covering layout generation, extreme aspect ratios, MIME fallback, export pixel limits, reorder logic, 50-step history, translation parity, CSP, and template contracts.
+- CI execution of the app-specific release-candidate regression.
+- Filename-level separation for photos that fail to decode while successful photos remain available.
+
+### Changed
+
+- Feature set frozen for the v1.0.0 release-candidate phase.
+- README / README.ja reorganized into the finished-app documentation shape.
+- SECURITY.md and THIRD_PARTY_NOTICES.md rewritten for Photo Collage instead of the starter template.
+
 ## 0.8.1 - 2026-10-02
 
 ### Changed
