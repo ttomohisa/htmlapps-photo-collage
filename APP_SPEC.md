@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.3.0`
+- **Current development version:** `0.4.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,66 +297,87 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.3.0 implementation contract
+## 15. v0.4.0 implementation contract
 
-v0.3.0では、自動レイアウトを「選ぶ」だけでなく、写真単位で見せ方を調整できる編集フローへ進める。
+v0.4.0では、写真ごとの編集に加えて、完成画像全体の比率と仕上げを調整できるようにする。
 
-### Reorder
+### Canvas ratio
 
-- 写真カードはPCでDrag & Dropにより並べ替えできる。
-- タッチ環境やキーボード利用者のため、各写真に前 / 後へ移動する操作も用意する。
-- 並べ替え後は写真順を保持したままレイアウト候補を再生成する。
+正式プリセット:
 
-### Photo selection
+- 1:1
+- 4:5
+- 9:16
+- 16:9
+- 3:2
+- 4:3
+- custom
 
-- 写真カードまたはCanvas内のセルを選択できる。
-- 選択写真は写真一覧とCanvasの両方で視覚的に識別できる。
-- 選択状態は色だけに依存せず、枠でも示す。
+customは幅 / 高さを1〜10の整数で指定する。内部では `canvasAspect = width / height` として保持する。
 
-### Crop / Zoom
+比率変更時は単純にCanvasを伸縮するだけではなく、レイアウト候補のcrop loss評価にも実際のcanvas aspect ratioを反映し、候補を再生成する。
 
-- Fill時はCanvas上で写真をドラッグし、正規化された `cropX / cropY` を更新する。
-- crop位置はレイアウト変更後も維持する。
-- Zoomは1.0〜3.0倍。
-- Fitでは写真全体をセル内へ表示し、Zoom操作は無効化する。
-- Preview操作には縮小サムネイルを使い、元画像を操作のたびに再decodeしない。
+### Finish parameters
 
-### Hero photo
+仕上げ値は将来の高解像度書き出しでも再利用できるよう、プレビュー解像度へ直接固定した値ではなく、短辺900を基準としたdesign unitとして保持する。
 
-- 主役写真は最大1枚。
-- 「この写真を大きく」で指定し、「通常サイズに戻す」で解除する。
-- 主役写真を含む単独セルはレイアウト生成時に面積を広げる方向へ重み付けする。
-- 候補scoreでも主役写真の面積が小さい配置を減点する。
+- gap: 0〜40
+- outer margin: 0〜60
+- corner radius: 0〜60
+- background: 6桁hex color
+- transparent background: boolean
 
-### Delete Undo
+プレビュー時はcanvas短辺に応じてdesign unitをscaleする。
 
-- 写真削除は確認ダイアログを出さず即時実行する。
-- テンプレート標準 `AppToast` のUndoで復元できる。
-- 復元時は元の位置へ戻し、その写真を選択する。
+### Background / transparency
 
-v0.3.0では余白・背景・角丸・キャンバス比率はまだ変更しない。これらはv0.4.0で追加する。最終画像exportはv0.5.0まで提供しない。
+通常は背景色でCanvas全体を塗る。
 
-## 16. v0.3.0 acceptance criteria
+transparent background有効時はCanvasをclearしたまま写真のみ描画する。プレビューの透明部分はcheckerboardで識別できる。
 
-- 写真カードを選択できる。
-- Canvas内の写真をタップ / クリックして選択できる。
-- PCでは写真カードのDrag & Dropで並べ替えできる。
-- 前 / 後へ移動ボタンによりタッチ環境でも並べ替えできる。
-- 並べ替え後に自動レイアウト候補を再生成する。
-- Fill / Fitを写真ごとに切り替えられる。
-- Fill時はCanvas上のPointer dragでcrop位置を変更できる。
-- crop位置は0〜1の正規化座標として保持する。
-- Zoomを1〜3倍で変更できる。
-- Fit時はZoom操作を無効化する。
-- 主役写真は最大1枚。
-- 主役指定時に主役写真を大きくする候補を優先する。
-- 主役指定の解除ができる。
-- 写真削除直後にUndoできる。
-- Undoすると元の並び位置へ戻る。
-- Previewはサムネイルを利用して編集操作中の元画像再decodeを避ける。
-- stale preview renderをgeneration tokenで破棄する。
-- JA / EN双方で編集UIが成立する。
-- 360px幅で調整UIが横にはみ出さない。
+透明背景はv0.5.0のPNG書き出しで利用する。JPEGではv0.5.0実装時に無効化する。
+
+### Rounded corners
+
+角丸は各写真セルのclipへ適用する。
+
+ブラウザ固有の `CanvasRenderingContext2D.roundRect()` へ依存せず、pathを自前構築して対象ブラウザで一貫して動作させる。
+
+### Fit behavior
+
+Fit時に画像外側へ余白ができる場合、通常背景では現在のCanvas背景色が見える。transparent backgroundでは透明になる。
+
+### Layout candidate scoring
+
+実際のセルaspect ratioは、
+
+`canvasAspect * normalizedCellWidth / normalizedCellHeight`
+
+として計算し、crop loss / extreme cell penaltyへ利用する。
+
+v0.4.0では最終画像exportはまだ提供しない。v0.5.0でこの同じ描画パラメータを高解像度Canvasへ適用する。
+
+## 16. v0.4.0 acceptance criteria
+
+- 1:1 / 4:5 / 9:16 / 16:9 / 3:2 / 4:3へ切り替えられる。
+- custom比率を1〜10 : 1〜10で指定できる。
+- 比率変更時にCanvas dimensionsが実際の比率へ変わる。
+- 比率変更時にlayout scoreがcanvas aspect ratioを利用する。
+- 比率変更時に候補を再生成する。
+- 写真間隔を0〜40で変更できる。
+- 外側余白を0〜60で変更できる。
+- 写真角丸を0〜60で変更できる。
+- 背景色をcolor pickerまたは6桁hexで変更できる。
+- 不正なhex入力は現在値へ戻す。
+- transparent backgroundを切り替えられる。
+- transparent background時はCanvas alphaを保持する。
+- 透明部分はcheckerboard previewで視認できる。
+- Fit時の余白は現在のbackground / transparencyを反映する。
+- 角丸は写真ごとのCanvas clipへ反映する。
+- 選択写真のoutlineは角丸形状に沿う。
+- 1:10 / 10:1相当のcustom極端比率でも描画ロジックが破綻しない。
+- JA / EN双方でfinish UIが成立する。
+- 360px幅ではratio / finish controlsが1列または3列へ縮退し、横スクロールしない。
 - Runtime CSPの `connect-src 'none'` を維持する。
 - `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
