@@ -2,7 +2,7 @@
 
 複数の写真をブラウザー内で読み込み、1枚のコラージュにまとめるBrowser Kitty向けツールです。
 
-現在の開発版は **v0.7.0** です。既存のPC / スマートフォン編集フローに、50段階のUndo / Redo、キーボード操作、Reset確認、Accessibility改善を追加しました。
+現在の開発版は **v0.8.0** です。高解像度写真を扱うときの安定性を中心に、orientation対応decode、Bitmap / Object URLの明示解放、逐次処理、端末の画像処理メモリが不足した場合の回復案内を追加しました。
 
 ## Features
 
@@ -14,35 +14,36 @@
 - 元写真からの高解像度書き出し
 - スマホ4画面: 写真 / 配置 / 仕上げ / 保存
 - 最大50操作のUndo / Redo
-- Ctrl / Cmd + Z、Ctrl / Cmd + Shift + Z、Ctrl / Cmd + Y
-- cropやslider dragを1操作として履歴化
-- Undo可能な確認付きReset
-- Preview Canvasからのキーボード位置調整
-- accessible name / disabled state / visible focus / dialog label
+- 利用可能な場合のorientation-aware `createImageBitmap`
+- `ImageBitmap.close()` / Object URLの明示解放
+- thumbnail作成と元写真exportの逐次処理
+- 現在のコラージュから外れたpreview decoded imageのcache解放
+- 最大辺8192px / 最大32MP
+- 画像処理メモリ不足時のrecovery案内
+- MIMEが空のJPEG / PNG / WebPを拡張子で補完
 - 日本語 / English
 - Runtime network accessなし
 
-## Undo / Redo
+## Performance / Memory
 
-履歴は最大50操作です。履歴ごとに写真バイナリをコピーせず、既存のFile referenceと編集値を保持します。
+元写真を20枚まとめてdecodeした状態で保持しません。
 
-写真追加・削除・並べ替え、レイアウト選択、写真調整、キャンバス仕上げ、保存設定をUndo / Redoできます。写真選択、言語切替、スマートフォンのページ切替は履歴を消費しません。
+入力時は1枚ずつ元画像をdecodeし、preview用thumbnailへ描画したら元decodeを解放して次の写真へ進みます。高解像度書き出しも元写真を1枚ずつ読み込み、出力Canvasへ描いた直後に解放します。
 
-cropやsliderを連続してドラッグした場合は、ドラッグ全体を1操作として記録します。
+対応ブラウザーでは `createImageBitmap(..., { imageOrientation: "from-image" })` を使い、利用後にBitmapをcloseします。互換性のためHTML image fallbackも残しています。
 
-## Keyboard
+thumbnailのObject URLは現在の編集状態またはUndo / Redo履歴から参照されている間だけ保持します。現在のコラージュにないdecoded preview imageはcacheから外します。
 
-- **Ctrl / Cmd + Z** — 元に戻す
-- **Ctrl / Cmd + Shift + Z** — やり直す
-- **Ctrl / Cmd + Y** — やり直す
-- **Previewにfocusして矢印キー** — 選択中のFill写真を位置調整
-- **Shift + 矢印キー** — 大きく位置調整
+## Robustness
 
-text input等を編集中は、アプリ側のUndo / Redo shortcutでブラウザー標準の文字編集Undoを奪いません。
+- custom canvas ratio: 1:10〜10:1
+- export最大辺: 8192px
+- export最大総画素数: 32MP
+- MIME typeが空でもJPEG / PNG / WebP拡張子なら入力可能
+- 明確な非画像MIMEはfilename extensionだけでは受け入れない
+- 端末resource不足時は無反応にせずrecovery案内を表示
 
-## Reset
-
-「最初から」は確認dialogを表示します。写真と現在の編集設定を初期化しますが、Reset自体も履歴に入るため、直後に「元に戻す」で復元できます。
+20 × 12MP desktop / 10 × 12MP smartphoneの最終実機stress確認はv0.9.0 Release Candidateで実施します。
 
 ## Privacy
 
