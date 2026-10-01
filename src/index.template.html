@@ -488,7 +488,7 @@
       els.resolutionGrid.querySelectorAll('[data-long-side]').forEach(button=>button.setAttribute('aria-pressed',button.dataset.longSide===state.exportLongSideKey?'true':'false'));
       els.customResolutionRow.classList.toggle('show',state.exportLongSideKey==='custom');els.customLongSide.value=String(state.customLongSide);
       els.exportDimensions.textContent=dimensions.width+' × '+dimensions.height+' px';els.qualityField.dataset.disabled=state.exportFormat==='png'?'true':'false';els.qualityRange.disabled=state.exportFormat==='png';els.qualityRange.value=String(state.exportQuality);els.qualityValue.textContent=String(state.exportQuality);
-      els.filenameExtension.textContent=format.ext;els.outputFilename.value=state.outputFilename;els.exportButton.disabled=state.photos.length<2||state.exporting;
+      els.filenameExtension.textContent=format.ext;els.outputFilename.value=state.outputFilename;els.exportButton.disabled=state.photos.length<2||state.exporting;updateHistoryControls();
     }
     function setExportFormat(format){
       if(!exportFormats[format]||(format==='webp'&&!webpExportSupported)||format===state.exportFormat)return;const historyBefore=captureHistoryState();state.exportFormat=format;if(format!=='png')state.transparentBackground=false;commitHistory(historyBefore);renderFinishPanel();renderExportPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));
@@ -699,27 +699,36 @@
     els.formatGrid.addEventListener('click',event=>{const button=event.target.closest('[data-format]');if(button)setExportFormat(button.dataset.format)});
     els.resolutionGrid.addEventListener('click',event=>{const button=event.target.closest('[data-long-side]');if(button)setResolutionKey(button.dataset.longSide)});
     els.customLongSide.addEventListener('change',applyCustomLongSide);
+    for(const [control,key] of [[els.qualityRange,'quality'],[els.gapRange,'gap'],[els.marginRange,'margin'],[els.radiusRange,'radius'],[els.zoomRange,'zoom'],[els.backgroundColor,'backgroundColor'],[els.backgroundHex,'backgroundHex'],[els.outputFilename,'filename']]){
+      control.addEventListener('focus',()=>beginHistoryGesture(key));control.addEventListener('pointerdown',()=>beginHistoryGesture(key));control.addEventListener('blur',()=>endHistoryGesture(key));
+    }
     els.qualityRange.addEventListener('input',()=>{state.exportQuality=Math.max(10,Math.min(100,Number(els.qualityRange.value)||90));els.qualityValue.textContent=String(state.exportQuality)});
+    els.qualityRange.addEventListener('change',()=>endHistoryGesture('quality'));
     els.outputFilename.addEventListener('input',()=>{state.outputFilename=els.outputFilename.value});
-    els.outputFilename.addEventListener('blur',()=>{state.outputFilename=sanitizeFilename(els.outputFilename.value);els.outputFilename.value=state.outputFilename});
+    els.outputFilename.addEventListener('blur',()=>{state.outputFilename=sanitizeFilename(els.outputFilename.value);els.outputFilename.value=state.outputFilename;endHistoryGesture('filename')});
     els.exportButton.addEventListener('click',exportImage);
     els.ratioGrid.addEventListener('click',event=>{const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
     els.customRatioWidth.addEventListener('change',applyCustomRatio);els.customRatioHeight.addEventListener('change',applyCustomRatio);
     els.gapRange.addEventListener('input',()=>{state.gap=Number(els.gapRange.value)||0;els.gapValue.textContent=String(state.gap);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.gapRange.addEventListener('change',()=>endHistoryGesture('gap'));
     els.marginRange.addEventListener('input',()=>{state.outerMargin=Number(els.marginRange.value)||0;els.marginValue.textContent=String(state.outerMargin);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.marginRange.addEventListener('change',()=>endHistoryGesture('margin'));
     els.radiusRange.addEventListener('input',()=>{state.cornerRadius=Number(els.radiusRange.value)||0;els.radiusValue.textContent=String(state.cornerRadius);renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.radiusRange.addEventListener('change',()=>endHistoryGesture('radius'));
     els.backgroundColor.addEventListener('input',()=>{state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
-    els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
-    els.transparentBackground.addEventListener('change',()=>{state.transparentBackground=els.transparentBackground.checked;renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
-    els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fill';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
-    els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fit';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.backgroundColor.addEventListener('change',()=>endHistoryGesture('backgroundColor'));
+    els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;endHistoryGesture('backgroundHex');return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'));endHistoryGesture('backgroundHex')});
+    els.transparentBackground.addEventListener('change',()=>{const historyBefore=captureHistoryState();state.transparentBackground=els.transparentBackground.checked;commitHistory(historyBefore);renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fill')return;const historyBefore=captureHistoryState();photo.fit='fill';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
+    els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fit')return;const historyBefore=captureHistoryState();photo.fit='fit';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.zoomRange.addEventListener('input',()=>{const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;photo.zoom=Math.max(1,Math.min(3,Number(els.zoomRange.value)||1));els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
-    els.heroButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;const next=!photo.hero;state.photos.forEach(item=>item.hero=false);photo.hero=next;state.selectedLayoutId='';renderPhotos();renderAdjustPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))});
+    els.zoomRange.addEventListener('change',()=>endHistoryGesture('zoom'));
+    els.heroButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;const historyBefore=captureHistoryState(),next=!photo.hero;state.photos.forEach(item=>item.hero=false);photo.hero=next;state.selectedLayoutId='';commitHistory(historyBefore);renderPhotos();renderAdjustPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))});
     function canvasPoint(event){const rect=els.previewCanvas.getBoundingClientRect();if(!rect.width||!rect.height)return null;return{x:(event.clientX-rect.left)*els.previewCanvas.width/rect.width,y:(event.clientY-rect.top)*els.previewCanvas.height/rect.height}}
     els.previewCanvas.addEventListener('pointerdown',event=>{
       const point=canvasPoint(event);if(!point)return;const cell=state.previewCells.find(item=>point.x>=item.x&&point.x<=item.x+item.w&&point.y>=item.y&&point.y<=item.y+item.h);if(!cell)return;
       selectPhoto(cell.id);const photo=state.photos.find(item=>item.id===cell.id);if(!photo||photo.fit!=='fill')return;
-      state.cropDrag={id:photo.id,startX:event.clientX,startY:event.clientY,cropX:photo.cropX,cropY:photo.cropY,cell};if(els.previewCanvas.setPointerCapture)els.previewCanvas.setPointerCapture(event.pointerId);els.previewCanvas.classList.add('is-dragging');event.preventDefault();
+      state.cropDrag={id:photo.id,startX:event.clientX,startY:event.clientY,cropX:photo.cropX,cropY:photo.cropY,cell,historyBefore:captureHistoryState()};if(els.previewCanvas.setPointerCapture)els.previewCanvas.setPointerCapture(event.pointerId);els.previewCanvas.classList.add('is-dragging');event.preventDefault();
     });
     els.previewCanvas.addEventListener('pointermove',event=>{
       const drag=state.cropDrag;if(!drag)return;const photo=state.photos.find(item=>item.id===drag.id);if(!photo)return;
@@ -727,7 +736,7 @@
       const base=Math.max(drag.cell.w/photo.width,drag.cell.h/photo.height)*Math.max(1,photo.zoom||1),dw=photo.width*base,dh=photo.height*base,ox=Math.max(0,dw-drag.cell.w),oy=Math.max(0,dh-drag.cell.h);
       if(ox>0)photo.cropX=Math.max(0,Math.min(1,drag.cropX-dx/ox));if(oy>0)photo.cropY=Math.max(0,Math.min(1,drag.cropY-dy/oy));renderPreview().catch(()=>setStatus(tr('failed'),'error'));event.preventDefault();
     });
-    function endCrop(event){if(!state.cropDrag)return;state.cropDrag=null;els.previewCanvas.classList.remove('is-dragging');try{if(els.previewCanvas.releasePointerCapture)els.previewCanvas.releasePointerCapture(event.pointerId)}catch(error){}}
+    function endCrop(event){if(!state.cropDrag)return;const historyBefore=state.cropDrag.historyBefore;state.cropDrag=null;commitHistory(historyBefore);els.previewCanvas.classList.remove('is-dragging');try{if(els.previewCanvas.releasePointerCapture)els.previewCanvas.releasePointerCapture(event.pointerId)}catch(error){}}
     els.previewCanvas.addEventListener('pointerup',endCrop);els.previewCanvas.addEventListener('pointercancel',endCrop);
     els.chooseButton.addEventListener('click',openPicker);els.addMoreButton.addEventListener('click',openPicker);els.fileInput.addEventListener('change',()=>addFiles(els.fileInput.files));
     els.moreLayoutsButton.addEventListener('click',()=>{const pages=Math.max(1,Math.ceil(state.layoutCandidates.length/6));state.layoutPage=(state.layoutPage+1)%pages;renderLayoutChoices()});
