@@ -13,6 +13,7 @@
 - Feature set frozen for the v1.0.0 release-candidate phase.
 - README / README.ja reorganized into the finished-app documentation shape.
 - SECURITY.md and THIRD_PARTY_NOTICES.md rewritten for Photo Collage instead of the starter template.
+- Removed the stale starter-template screenshot from README while the final JA / EN desktop / smartphone screenshots are staged for the v1.0.0 pass.
 
 ## 0.8.1 - 2026-10-02
 
