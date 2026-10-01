@@ -3,7 +3,7 @@
   "name": "Photo Collage",
   "nameJa": "写真コラージュ",
   "slug": "photo-collage",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Combine multiple photos into one collage directly in your browser.",
   "descriptionJa": "複数の写真をブラウザー内で1枚のコラージュにまとめます。",
   "defaultLanguage": "auto",

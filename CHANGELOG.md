@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 - 2026-10-01
+
+### Added
+
+- Photo selection from both the thumbnail list and Canvas preview.
+- Desktop Drag & Drop reordering plus move-earlier / move-later controls for touch and keyboard use.
+- Per-photo crop position adjustment by dragging directly on the Canvas preview.
+- Per-photo 1×–3× zoom.
+- Fill frame / Show all display modes.
+- Single featured-photo mode with layout generation and scoring that prefer a larger cell.
+- Undo after photo removal using the template AppToast pattern.
+- Thumbnail-backed preview rendering to avoid decoding original files during every edit.
+
 ## 0.2.0 - 2026-10-01
 
 ### Added
