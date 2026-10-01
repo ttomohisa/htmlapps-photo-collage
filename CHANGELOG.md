@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.7.0 - 2026-10-01
+
+### Added
+
+- Bounded 50-step Undo / Redo history.
+- Undo / Redo toolbar controls with keyboard shortcut metadata.
+- Ctrl / Cmd + Z, Ctrl / Cmd + Shift + Z, and Ctrl / Cmd + Y shortcuts.
+- History grouping so continuous crop and range drags consume one history step.
+- Undoable photo add, remove, reorder, layout selection, photo adjustment, canvas finish, and export setting changes.
+- Confirmation dialog for Start over / Reset.
+- Reset itself as an undoable history step.
+- Keyboard photo positioning from the focused preview Canvas, with Shift for a larger step.
+- Accessible preview Canvas label and Reset dialog labeling.
+- Focus recovery after photo deletion and Reset dialog close.
+- Session thumbnail URL tracking with pagehide cleanup.
+
+### Changed
+
+- Delete Toast Undo now uses the shared history engine and guards against stale Undo actions.
+- Global history shortcuts no longer override browser text-input Undo behavior.
+- Undo / Redo / Reset controls reflect current history and export state.
+
 ## 0.6.0 - 2026-10-01
 
 ### Added

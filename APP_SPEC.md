@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.6.0`
+- **Current development version:** `0.7.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,137 +297,161 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.6.0 implementation contract
+## 15. v0.7.0 implementation contract
 
-v0.6.0ではスマートフォンをPC版の単純縦積みとして扱わず、テンプレート現行 `components/mobile-bottom-bar.html` のpage-tab patternを採用する。
+v0.7.0では、編集操作を安全に試せるようUndo / Redoを正式実装し、キーボード操作とReset確認を整える。
 
-### Smartphone pages
+### History model
 
-スマートフォンでは以下の4ページへ分ける。
+最大50操作を保持する。
 
-- 写真
-- 配置
-- 仕上げ
-- 保存
+履歴snapshotは写真バイナリを複製しない。各写真について既存の `File` referenceとthumbnail URLを保持し、以下の編集値を複製する。
 
-Desktopでは4ページを通常のdocument flowとしてすべて表示し、既存の編集フローを維持する。
-
-### Mobile bottom bar
-
-テンプレートの `AppMobileBottomBar.mount()` patternをcopy / adaptして利用する。
-
-- 4項目固定
-- safe-area bottomを考慮
-- 54px以上のtap target
-- active pageを `aria-current="page"` で示す
-- page切替時はworkspace上端へscrollする
-- `prefers-reduced-motion` 時はsmooth scrollを使わない
-
-通常portrait smartphoneは `max-width: 600px` を対象とする。
-
-横向きスマートフォンも対象にするため、`max-height: 520px and pointer: coarse` もmobile workflowへ含める。
-
-### Availability
-
-写真ページは常に利用可能。
-
-配置 / 仕上げ / 保存は写真が2枚以上のときだけ有効にする。
-
-写真削除等により2枚未満へ戻った場合、他ページを表示したまま操作不能にせず自動的に写真ページへ戻す。
-
-### Page contents
-
-写真:
-
-- 写真追加
-- 写真一覧
-- 並べ替え
-- 削除
-- Undo導線
-
-配置:
-
-- main preview
-- 写真選択
-- crop / zoom
+- photo order
+- crop x / y
+- zoom
 - Fill / Fit
-- 主役写真
-- 自動レイアウト候補
-
-仕上げ:
-
-- compact preview
-- ratio
+- hero
+- selected layout
+- canvas ratio / custom ratio
 - gap
 - outer margin
 - background / transparency
-- rounded corners
+- corner radius
+- export format / resolution / quality
+- output filename
 
-保存:
+写真選択そのもの、言語切替、mobile page切替はUndo対象にしない。
 
-- compact preview
-- JPEG / PNG / WebP
-- resolution
-- quality
-- filename
-- export progress / result
+### History behavior
 
-### Compact preview
+操作前snapshotをUndo stackへ保存し、Undo実行時は現在snapshotをRedo stackへ移して直前状態を復元する。
 
-仕上げ / 保存ページには確認用preview Canvasを表示する。
+新しい編集を行った場合はRedo stackを破棄する。
 
-main previewの編集用選択outlineはcompact previewへ含めない。
+履歴復元時はderived stateであるlayout candidatesを再生成し、previewも再描画する。
 
-そのためmain previewを各写真まで描画した時点でcompact previewへcopyし、その後main previewだけへ選択outlineを描く。
+### Continuous controls
 
-compact previewは別途写真をdecodeしない。
+pointer dragやrange inputを1px / 1tickごとに履歴化しない。
 
-### Empty / loading
+以下は操作開始前から操作終了までを1履歴とする。
 
-写真0枚のmobile写真ページでは、写真追加panelだけを主表示とし、同内容の空状態panelを重複表示しない。
+- crop pointer drag
+- zoom
+- gap
+- outer margin
+- corner radius
+- JPEG / WebP quality
+- color picker
+- filename edit
 
-Loading / partial failure / errorは既存statusを保持する。
+keyboardでrangeを1step変更した場合は1stepを1履歴としてよい。
 
-### Fixed UI
+### Photo operations
 
-bottom barの高さとsafe-area分をbody paddingへ確保する。
+以下をUndo / Redo可能にする。
 
-Toastはbottom barより上へ表示し、重ならない。
+- photo add
+- photo remove
+- reorder buttons
+- Drag & Drop reorder
 
-dialogは従来どおりviewport / safe-area内へ収める。
+削除直後のToast Undoはhistory engineと同じUndo処理を利用する。
 
-### Mobile preview size
+Toast表示後に別の編集が行われた場合、古い削除Toastが後の別操作をUndoしないようhistory revisionを確認する。
 
-main previewはmobile viewportで最大約40vhを目安とし、編集controlが画面下へ追い出されすぎないようにする。
+### Reset
 
-仕上げ / 保存のcompact previewは最大約33vhとする。
+「最初から」は即実行しない。
 
-## 16. v0.6.0 acceptance criteria
+確認dialogを表示し、以下を初期値へ戻す。
 
-- 現行templateのmobile-bottom-bar patternを使用する。
-- smartphoneで写真 / 配置 / 仕上げ / 保存の4ページへ切り替えられる。
-- Desktopでは4ページがすべて通常flowで表示される。
-- 写真2枚未満では配置 / 仕上げ / 保存がdisabled。
-- 2枚以上になると3ページがenabled。
-- 2枚未満へ戻った場合は写真ページへ戻る。
-- portrait 600px以下でbottom barを表示する。
-- coarse pointerの低height landscape smartphoneでもbottom barを表示する。
-- safe-area inset bottomをbottom bar paddingへ反映する。
-- body bottom paddingにbottom bar + safe-areaを確保する。
-- Toastがbottom barと重ならない。
-- active tabは色だけでなく `aria-current="page"` を持つ。
-- tab tap targetは54px以上。
-- page切替時にworkspace付近へscrollする。
-- reduced motion時はsmooth scrollを無効化する。
-- 写真0枚時にmobileで不要なempty cardを重複表示しない。
-- 仕上げ / 保存にcompact previewを表示する。
-- compact previewへ選択中outlineを含めない。
-- compact previewのために写真を再decodeしない。
-- main previewはmobileで最大40vh程度に収める。
-- compact previewは最大33vh程度に収める。
-- 360px幅でhorizontal scrollを発生させない。
-- 長いfilenameがphoto cardからはみ出さない。
+- photos
+- photo edits
+- selected layout
+- canvas ratio / finish
+- export settings
+- output filename
+
+Reset自体も1履歴として記録し、Reset後にUndoすれば直前の作業状態へ戻せる。
+
+Reset dialogはEscapeで閉じられ、Cancel / close buttonを持つ。
+
+### Keyboard shortcuts
+
+document-level:
+
+- Ctrl / Cmd + Z: Undo
+- Ctrl / Cmd + Shift + Z: Redo
+- Ctrl / Cmd + Y: Redo
+
+input / textarea / select / contenteditableにfocusがある場合、アプリ側shortcutでブラウザー標準のtext editing Undoを奪わない。
+
+### Canvas keyboard adjustment
+
+main preview Canvasをkeyboard focus可能にする。
+
+Fillの選択写真について:
+
+- Arrow Left / Right / Up / Down: position adjustment
+- Shift + Arrow: larger step
+
+各keyboard adjustmentはUndo可能。
+
+Canvasにはaccessible nameを与え、focus-visibleを維持する。
+
+### Focus / accessibility
+
+- Undo / Redo / Resetはbutton disabled stateを正しく反映する。
+- Undo / Redo buttonに `aria-keyshortcuts` を付与する。
+- Reset dialogは `aria-labelledby` / `aria-describedby` を持つ。
+- Reset dialog終了後はhistory toolbarへfocusを戻す。
+- 写真削除後は可能なら次の写真cardへfocusを移す。
+- 既存 `aria-live` / visible focus / reduced motionを維持する。
+- 色だけでactive / selectedを表現しない。
+
+### Thumbnail lifetime
+
+Undo / Redoで削除写真を復元できるよう、thumbnail Object URLを写真削除時に即revokeしない。
+
+session内で生成したthumbnail URLをSetで追跡し、pagehide時にまとめてrevokeする。
+
+## 16. v0.7.0 acceptance criteria
+
+- Undo historyは最大50件。
+- 51件目以降は最古履歴を破棄する。
+- Redo historyも最大50件。
+- 新規編集後にRedo historyを破棄する。
+- 写真追加をUndo / Redoできる。
+- 写真削除をUndo / Redoできる。
+- 写真並べ替えをUndo / Redoできる。
+- layout選択をUndo / Redoできる。
+- crop dragを1drag = 1履歴でUndo / Redoできる。
+- zoom sliderを1drag = 1履歴で扱う。
+- gap / outer margin / corner radiusを各1drag = 1履歴で扱う。
+- Fill / FitをUndo / Redoできる。
+- hero指定をUndo / Redoできる。
+- canvas ratio / custom ratioをUndo / Redoできる。
+- background / transparencyをUndo / Redoできる。
+- export format / resolution / qualityをUndo / Redoできる。
+- filename editをUndo / Redoできる。
+- Ctrl / Cmd + ZがUndoとして動作する。
+- Ctrl / Cmd + Shift + ZがRedoとして動作する。
+- Ctrl / Cmd + YがRedoとして動作する。
+- text input focus中はglobal Undo shortcutを奪わない。
+- Resetは確認dialogを表示する。
+- Reset後にUndoすると直前状態へ戻る。
+- main Canvasをkeyboard focusできる。
+- Fill写真を矢印キーでposition調整できる。
+- Shift + Arrowで大きくposition調整できる。
+- keyboard position調整をUndoできる。
+- Undo / Redo / Resetのdisabled stateが現在履歴と一致する。
+- 写真削除後に可能なら残存photo cardへfocusを移す。
+- Reset dialogにlabel / descriptionがある。
+- thumbnail URLを削除時に即revokeしない。
+- thumbnail URLをpagehideでrevokeする。
 - Runtime CSPの `connect-src 'none'` を維持する。
 - `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
-- `StandaloneAssets`, `window.AppToast`, `outputFilename` 契約を維持する。
+- `StandaloneAssets`, `window.AppToast`, `AppMobileBottomBar`, `outputFilename` 契約を維持する。
