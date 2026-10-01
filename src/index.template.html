@@ -399,7 +399,7 @@
           if(resizeWidth>0||resizeHeight>0)options.resizeQuality=resizeQuality;
           const bitmap=await createImageBitmap(file,options),dimensions=sourceDimensions(bitmap);
           return{image:bitmap,width:dimensions.width,height:dimensions.height,dispose(){bitmap.close?.()}};
-        }catch(error){}
+        }catch(error){if(isResourcePressureError(error))throw error}
       }
       const url=URL.createObjectURL(file),image=new Image();image.decoding='async';
       try{
