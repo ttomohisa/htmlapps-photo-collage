@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0 - 2026-10-01
+
+### Added
+
+- Dedicated smartphone page workflow: Photos / Layout / Finish / Save.
+- Fixed bottom navigation based on the current template mobile-bottom-bar component pattern.
+- Safe-area-aware bottom bar and body spacing.
+- Disabled Layout / Finish / Save tabs until two photos are available.
+- Automatic fallback to Photos when the collage drops below two photos.
+- Compact output preview on Finish and Save pages without re-decoding photos.
+- Coarse-pointer landscape smartphone detection in addition to <=600px portrait widths.
+- Mobile help copy describing the four-page workflow.
+
+### Changed
+
+- Mobile Toast positioning now clears the fixed bottom navigation.
+- Empty mobile state avoids showing a redundant empty card under the photo input.
+- Mobile preview heights are constrained so controls remain reachable.
+
 ## 0.5.0 - 2026-10-01
 
 ### Added
