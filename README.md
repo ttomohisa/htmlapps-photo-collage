@@ -2,7 +2,7 @@
 
 A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
 
-The current development release is **v0.6.0**. It adds a dedicated smartphone workflow with four bottom-bar pages instead of stacking the complete desktop editor into one long mobile screen.
+The current development release is **v0.7.0**. It adds bounded Undo / Redo history, keyboard editing, reset confirmation, and accessibility polish to the existing desktop and smartphone workflow.
 
 ## Features
 
@@ -12,28 +12,37 @@ The current development release is **v0.6.0**. It adds a dedicated smartphone wo
 - Reorder, crop, zoom, Fill / Fit, and featured photo
 - Canvas ratio, spacing, background, transparency, and rounded corners
 - High-resolution export from original source photos
-- 1080 / 2160 / 4096px and custom output resolution
-- Editable sanitized filename
 - Smartphone pages: Photos / Layout / Finish / Save
-- Template-based fixed mobile bottom navigation
-- Safe-area-aware mobile layout and Toast positioning
-- Compact preview on Finish and Save pages
-- Portrait and coarse-pointer landscape smartphone workflow
+- Up to 50 Undo / Redo steps
+- Ctrl / Cmd + Z, Ctrl / Cmd + Shift + Z, and Ctrl / Cmd + Y
+- One history step per pointer drag for crop and range controls
+- Undoable reset with confirmation dialog
+- Keyboard photo positioning from the focused preview Canvas
+- Accessible names, disabled states, visible focus, and dialog labeling
 - Japanese / English UI
 - No runtime network access
 
-## Smartphone workflow
+## Undo / Redo
 
-On supported smartphone layouts, use the bottom bar:
+The editor keeps up to 50 edit steps without duplicating the photo binary for every history entry.
 
-1. **Photos** — add, review, reorder, or remove photos.
-2. **Layout** — choose a layout and adjust individual photos.
-3. **Finish** — adjust ratio, spacing, background, transparency, and corners.
-4. **Save** — choose export settings and save the image.
+Undo covers photo add/remove/reorder, layout selection, photo adjustments, canvas finish settings, and export settings. Selecting a photo, switching language, or moving between smartphone pages does not consume history.
 
-Layout, Finish, and Save stay disabled until at least two photos are loaded.
+When a slider or crop gesture is dragged continuously, the complete gesture is stored as one history step.
 
-Desktop keeps the full editor visible in normal document flow.
+## Keyboard
+
+- **Ctrl / Cmd + Z** — Undo
+- **Ctrl / Cmd + Shift + Z** — Redo
+- **Ctrl / Cmd + Y** — Redo
+- **Arrow keys on the focused preview** — reposition the selected Fill photo
+- **Shift + Arrow** — larger position step
+
+Global Undo / Redo shortcuts are ignored while a text or form input is being edited.
+
+## Reset
+
+**Start over** opens a confirmation dialog. Reset clears the photos and current edit settings, but the reset itself is stored in history, so it can be undone immediately afterward.
 
 ## Privacy
 
@@ -45,7 +54,7 @@ Current stable Chrome, Edge, Firefox, and Safari, including major mobile browser
 
 ## Development
 
-This app follows `ttomohisa/htmlapps-template`. The smartphone navigation copies/adapts the current template `components/mobile-bottom-bar.html` pattern.
+This app follows `ttomohisa/htmlapps-template`.
 
 ```powershell
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-powershell-syntax.ps1
