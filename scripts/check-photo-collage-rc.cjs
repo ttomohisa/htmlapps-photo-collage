@@ -43,7 +43,7 @@ assert(!source.includes('\\n    .photo-actions'), 'Malformed literal \\n remains
 assert(!/\b(?:src|href)\s*=\s*["']https?:\/\//i.test(source), 'External runtime src/href detected.');
 
 const translationStart = source.indexOf('    const T=');
-const translationEnd = source.indexOf('\n    function tr', translationStart);
+const translationEnd = source.indexOf('\n    const els=', translationStart);
 assert(translationStart >= 0 && translationEnd > translationStart, 'Translation object markers are missing.');
 const translationExpression = source.slice(translationStart + '    const T='.length, translationEnd).trim().replace(/;$/, '');
 const translations = new Function('return (' + translationExpression + ');')();
