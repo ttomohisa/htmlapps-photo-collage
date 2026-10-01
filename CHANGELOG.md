@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 - 2026-10-01
+
+### Added
+
+- Canvas ratio presets for 1:1, 4:5, 9:16, 16:9, 3:2, and 4:3.
+- Custom canvas ratio input from 1:10 through 10:1.
+- Ratio-aware automatic layout scoring based on actual canvas cell aspect ratios.
+- Adjustable photo spacing and outer margin.
+- Background color picker and validated hex color input.
+- Transparent Canvas background preview for future PNG export.
+- Per-photo rounded corners using a browser-independent Canvas path.
+- Checkerboard preview behind transparent Canvas regions.
+- Finish controls that scale consistently with the Canvas short side.
+
 ## 0.3.0 - 2026-10-01
 
 ### Added
