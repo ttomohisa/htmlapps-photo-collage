@@ -221,7 +221,6 @@
         if(state.photos.some(item=>item.id===photo.id)||state.photos.length>=20)return;
         state.photos.splice(Math.min(index,state.photos.length),0,photo);state.selectedPhotoId=photo.id;state.generation+=1;updateView();window.AppToast.show({message:tr('restored'),tone:'success'});
       }});
-      setTimeout(()=>{if(!state.photos.some(item=>item.id===photo.id)){URL.revokeObjectURL(photo.thumbUrl);previewImageCache.delete(photo.id)}},5400);
     }
     function renderPhotos(){
       els.photoCountPill.textContent=state.photos.length+' / 20';els.photoGrid.replaceChildren();
@@ -283,13 +282,14 @@
     function makeLayout(groups,mode,photos){
       let photoIndex=0;
       const ideals=groups.map(group=>{
-        let total=0;
+        const startIndex=photoIndex;let total=0;
         for(let i=0;i<group;i+=1){
           const aspect=Math.max(.05,photos[photoIndex+i]?.aspect||1);
           total+=mode==='rows'?1/aspect:aspect;
         }
         photoIndex+=group;
-        return Math.max(.03,total/(group*group));
+        const heroBoost=group===1&&photos[startIndex]?.hero?1.45:1;
+        return Math.max(.03,total/(group*group))*heroBoost;
       });
       const idealTotal=ideals.reduce((a,b)=>a+b,0)||1;
       const tracks=ideals.map(v=>v/idealTotal);
@@ -398,7 +398,7 @@
       state.selectedLayoutId=state.layoutCandidates.some(layout=>layout.id===previous)?previous:(state.layoutCandidates[0]?.id||'');
       state.layoutPage=0;renderLayoutChoices();renderAdjustPanel();await renderPreview();
     }
-    function updateView(){renderPhotos();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))}
+    function updateView(){if(state.photos.length&&!state.photos.some(photo=>photo.id===state.selectedPhotoId))state.selectedPhotoId=state.photos[0].id;renderPhotos();renderAdjustPanel();if(!state.photos.length)setPhase('empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error'))}
     function openPicker(){if(state.photos.length>=20){window.AppToast.show({message:tr('limit',{count:1}),tone:'warning'});return}els.fileInput.click()}
     els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fill';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
     els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;photo.fit='fit';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error'))});
