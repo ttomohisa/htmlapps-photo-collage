@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0 - 2026-10-01
+
+### Added
+
+- High-resolution JPEG, PNG, and WebP export rendered from original source photos.
+- JPEG / WebP quality controls from 10–100.
+- Long-side resolution presets for 1080, 2160, and 4096px plus custom output.
+- Exact 8192px maximum-edge and 32MP maximum-pixel safety enforcement after integer rounding.
+- PNG-only transparent background export.
+- Editable output filenames with invalid-character, reserved-name, and duplicate-extension sanitization.
+- Sequential original-photo decoding during export to avoid keeping all source images decoded at once.
+- Export progress, encoding state, output dimensions, format, and file-size result.
+- WebP Canvas encode feature detection.
+- Blob URL and temporary Canvas cleanup after export.
+
 ## 0.4.0 - 2026-10-01
 
 ### Added
