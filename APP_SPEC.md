@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.5.0`
+- **Current development version:** `0.6.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -297,159 +297,137 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - CI green
 - `file://` / offline smoke
 
-## 15. v0.5.0 implementation contract
+## 15. v0.6.0 implementation contract
 
-v0.5.0では、現在のプレビュー・写真編集・仕上げ設定を元画像へ適用し、実用解像度の1枚画像として端末へ保存できるようにする。
+v0.6.0ではスマートフォンをPC版の単純縦積みとして扱わず、テンプレート現行 `components/mobile-bottom-bar.html` のpage-tab patternを採用する。
 
-### Export formats
+### Smartphone pages
 
-正式対応:
+スマートフォンでは以下の4ページへ分ける。
 
-- JPEG
-- PNG
-- WebP
+- 写真
+- 配置
+- 仕上げ
+- 保存
 
-JPEGを初期値とする。
+Desktopでは4ページを通常のdocument flowとしてすべて表示し、既存の編集フローを維持する。
 
-WebPはブラウザーのCanvas encode対応をfeature detectionし、未対応ブラウザーでは選択不可とする。
+### Mobile bottom bar
 
-透明背景はPNGのみ正式対応する。JPEG / WebP選択時はtransparent backgroundを無効化し、現在の背景色でflattenする。
+テンプレートの `AppMobileBottomBar.mount()` patternをcopy / adaptして利用する。
 
-### Resolution
+- 4項目固定
+- safe-area bottomを考慮
+- 54px以上のtap target
+- active pageを `aria-current="page"` で示す
+- page切替時はworkspace上端へscrollする
+- `prefers-reduced-motion` 時はsmooth scrollを使わない
 
-長辺プリセット:
+通常portrait smartphoneは `max-width: 600px` を対象とする。
 
-- 1080px
-- 2160px
-- 4096px
-- custom
+横向きスマートフォンも対象にするため、`max-height: 520px and pointer: coarse` もmobile workflowへ含める。
 
-初期値は2160px。
+### Availability
 
-customは256〜8192pxの範囲で指定する。
+写真ページは常に利用可能。
 
-安全上限:
+配置 / 仕上げ / 保存は写真が2枚以上のときだけ有効にする。
 
-- 最大辺 8192px
-- 最大総画素数 32,000,000px
+写真削除等により2枚未満へ戻った場合、他ページを表示したまま操作不能にせず自動的に写真ページへ戻す。
 
-aspect ratioと整数丸めを反映した最終width × heightでも32MPを超えないこと。境界では計算上の理論値だけでなく、丸め後の実画素数を再検証して長辺を縮小する。
+### Page contents
 
-### High-resolution rendering
+写真:
 
-プレビューの縮小サムネイルを高解像度保存へ流用しない。
+- 写真追加
+- 写真一覧
+- 並べ替え
+- 削除
+- Undo導線
 
-保存開始時に以下をsnapshotする。
+配置:
 
-- photo order
-- File references
-- crop x / y
-- zoom
+- main preview
+- 写真選択
+- crop / zoom
 - Fill / Fit
-- hero-derived selected layout cells
-- canvas aspect ratio
+- 主役写真
+- 自動レイアウト候補
+
+仕上げ:
+
+- compact preview
+- ratio
 - gap
 - outer margin
-- corner radius
 - background / transparency
-- format / quality
-- output dimensions
+- rounded corners
+
+保存:
+
+- compact preview
+- JPEG / PNG / WebP
+- resolution
+- quality
 - filename
+- export progress / result
 
-保存処理中にUI設定が変更されても、実行中の1回のexport内容は変化しない。
+### Compact preview
 
-元画像は1枚ずつObject URLからdecodeし、Canvasへ描画後にURLをrevokeする。20枚の元画像を同時decodeしたまま保持しない。
+仕上げ / 保存ページには確認用preview Canvasを表示する。
 
-### Preview / export consistency
+main previewの編集用選択outlineはcompact previewへ含めない。
 
-gap / outer margin / corner radiusはv0.4.0と同じshort-side 900基準のdesign unitを使用し、高解像度Canvasの短辺へscaleする。
+そのためmain previewを各写真まで描画した時点でcompact previewへcopyし、その後main previewだけへ選択outlineを描く。
 
-crop x / yは0〜1正規化値を利用するため、previewとexportの解像度差に依存しない。
+compact previewは別途写真をdecodeしない。
 
-Fill / Fit / zoom / background / transparency / rounded cornersはpreviewと同じ描画関数を使用する。
+### Empty / loading
 
-選択写真を示す編集用outlineはexport画像へ描画しない。
+写真0枚のmobile写真ページでは、写真追加panelだけを主表示とし、同内容の空状態panelを重複表示しない。
 
-### Quality
+Loading / partial failure / errorは既存statusを保持する。
 
-JPEG / WebP:
+### Fixed UI
 
-- 10〜100
-- 初期値90
-- Canvas encode時は0.10〜1.00へ変換
+bottom barの高さとsafe-area分をbody paddingへ確保する。
 
-PNGではquality UIを無効化し、可逆PNG encodeとする。
+Toastはbottom barより上へ表示し、重ならない。
 
-### Filename
+dialogは従来どおりviewport / safe-area内へ収める。
 
-保存前にbase filenameを編集できる。
+### Mobile preview size
 
-- 初期値: `photo-collage`
-- Windows等で無効な文字を `-` へ置換
-- control characters除去
-- 末尾のdot / space除去
-- JPEG / PNG / WebP拡張子が入力されていた場合はbase nameから除去
-- Windows reserved nameは安全な名前へ変換
-- 空文字等は `photo-collage` へfallback
-- 選択形式に応じて `.jpg` / `.png` / `.webp` を自動付与
+main previewはmobile viewportで最大約40vhを目安とし、編集controlが画面下へ追い出されすぎないようにする。
 
-### Metadata
+仕上げ / 保存のcompact previewは最大約33vhとする。
 
-出力画像はCanvasから新規encodeする。
+## 16. v0.6.0 acceptance criteria
 
-元画像のEXIF / GPS / camera metadataをコピーする処理は行わない。
-
-### Export state
-
-保存中は少なくとも以下を表示する。
-
-- 現在処理中の写真番号 / 総枚数
-- encode中状態
-
-多重exportを防止する。
-
-成功時はwidth × height / format / file sizeを表示する。
-
-失敗時は無反応にせず、解像度を下げて再試行できる文言を表示する。
-
-### Memory release
-
-encode完了後は一時export Canvasを1×1へ縮小して描画bufferを解放可能な状態にする。
-
-download用Blob URLは利用後にrevokeする。
-
-## 16. v0.5.0 acceptance criteria
-
-- JPEG / PNG / WebPを選択できる。
-- WebP未対応ブラウザーではWebPを無効化する。
-- JPEGを初期形式とする。
-- PNGのみtransparent backgroundを利用できる。
-- JPEG / WebPへ切り替えるとtransparent backgroundを無効化する。
-- 長辺1080 / 2160 / 4096pxを選択できる。
-- custom長辺を256〜8192pxで指定できる。
-- 最終width / heightのどちらも8192pxを超えない。
-- 最終総画素数が32,000,000pxを超えない。
-- 1:1 / 4:5 / 9:16 / 16:9 / 3:2 / 4:3 / 1:10 / 10:1で安全上限計算が成立する。
-- プレビュー用thumbnailではなく元Fileからexportする。
-- 元画像を1枚ずつ逐次decodeする。
-- 保存開始時の設定snapshotを利用する。
-- crop / zoom / Fill / Fitを高解像度出力へ反映する。
-- gap / outer margin / background / transparency / corner radiusを出力へ反映する。
-- 編集中の選択outlineを出力へ含めない。
-- JPEG / WebPのqualityを10〜100で指定できる。
-- PNGではquality controlを無効化する。
-- output filenameを保存前に編集できる。
-- 無効ファイル名文字をsanitizeする。
-- 入力された既知画像拡張子をbase filenameから除去する。
-- 拡張子をformatから自動付与する。
-- Canvas re-encodeにより元写真metadataをコピーしない。
-- export中の多重実行を防止する。
-- export progressを表示する。
-- 成功時にdimensions / format / file sizeを表示する。
-- failure時に解像度を下げる案内を表示する。
-- download Blob URLをrevokeする。
-- export Canvasを完了後に縮小してmemory release可能な状態にする。
+- 現行templateのmobile-bottom-bar patternを使用する。
+- smartphoneで写真 / 配置 / 仕上げ / 保存の4ページへ切り替えられる。
+- Desktopでは4ページがすべて通常flowで表示される。
+- 写真2枚未満では配置 / 仕上げ / 保存がdisabled。
+- 2枚以上になると3ページがenabled。
+- 2枚未満へ戻った場合は写真ページへ戻る。
+- portrait 600px以下でbottom barを表示する。
+- coarse pointerの低height landscape smartphoneでもbottom barを表示する。
+- safe-area inset bottomをbottom bar paddingへ反映する。
+- body bottom paddingにbottom bar + safe-areaを確保する。
+- Toastがbottom barと重ならない。
+- active tabは色だけでなく `aria-current="page"` を持つ。
+- tab tap targetは54px以上。
+- page切替時にworkspace付近へscrollする。
+- reduced motion時はsmooth scrollを無効化する。
+- 写真0枚時にmobileで不要なempty cardを重複表示しない。
+- 仕上げ / 保存にcompact previewを表示する。
+- compact previewへ選択中outlineを含めない。
+- compact previewのために写真を再decodeしない。
+- main previewはmobileで最大40vh程度に収める。
+- compact previewは最大33vh程度に収める。
+- 360px幅でhorizontal scrollを発生させない。
+- 長いfilenameがphoto cardからはみ出さない。
 - Runtime CSPの `connect-src 'none'` を維持する。
 - `__APP_ICON_DATA_URI__` はfaviconとheader iconの2箇所のみ。
 - `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
-- テンプレートの `StandaloneAssets` API、`window.AppToast`、`outputFilename` 契約を維持する。
+- `StandaloneAssets`, `window.AppToast`, `outputFilename` 契約を維持する。
