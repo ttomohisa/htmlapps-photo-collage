@@ -1,128 +1,324 @@
-# APP_SPEC.md
-
-This file is the product contract for the application created from this template. Replace the starter specification below before asking an LLM to build a new product.
+# Photo Collage / 写真コラージュ — APP_SPEC
 
 ## 1. Product identity
 
-- **Working name:** Single HTML App Starter
-- **One-sentence purpose:** Demonstrate the template's local-first, responsive, bilingual, single-file application foundation.
-- **Primary users:** Developers and LLM coding agents starting a new browser utility.
-- **Release artifacts:** `dist/index.html`, `dist/index.self-extract.html`, and a repository-root copy of the readable build named from `repository.name` with a leading `htmlapps-` removed
+- **Name:** Photo Collage / 写真コラージュ
+- **Slug:** `photo-collage`
+- **Repository:** `ttomohisa/htmlapps-photo-collage`
+- **Current development version:** `0.1.0`
+- **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
+- **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
-## 2. Problem and outcome
+## 2. Product boundary
 
-The starter must make the repository's constraints visible and testable without pretending to be a finished end-user product. A user can enter text, see basic counts, copy it, save it, and persist it locally.
+このアプリはデザインソフトではない。中心価値は次の短いフローである。
 
-A successful replacement app should state here:
+```text
+写真を追加
+↓
+写真に合ったレイアウト候補を選ぶ
+↓
+必要なら少し調整
+↓
+1枚の画像として保存
+```
 
-- What concrete problem it solves.
-- Who experiences the problem.
-- What result the user gets in one session.
-- Why a local single-HTML implementation is useful.
+v1系では、自由配置・ステッカー・フィルター・AI生成・クラウド保存などへ無制限に拡張しない。
 
-## 3. Core user flow
+## 3. Differentiator
 
-1. Open the page locally or through GitHub Pages.
-2. Enter or paste text.
-3. See character, word, and line counts update immediately.
-4. Edit the suggested output filename, then copy or download the text.
-5. Use Clear or Restore sample and undo the reversible change from the toast when needed.
-6. Reload and recover the locally saved text.
+固定テンプレートを大量に探させるのではなく、読み込んだ写真の枚数・縦横比・主役写真・出力比率から、トリミング量の少ないレイアウト候補を生成する。
 
-## 4. Functional requirements
+AIモデルや外部APIは使用しない。
 
-- Provide a responsive text area.
-- Calculate Unicode-aware character count.
-- Calculate approximate word and line counts.
-- Copy text with a compatibility fallback.
-- Download UTF-8 plain text with a user-editable output filename and a predictable `.txt` extension.
-- Save the current text in local storage when available.
-- Use the reusable `AppToast.show()` Undo pattern for reversible Clear / Restore sample operations. Reserve `AppConfirm.ask()` for irreversible or high-risk actions.
-- Switch Japanese and English without reloading.
-- Use a light-only interface; do not add a dark-mode or theme switcher.
-- Expose build version, generation timestamp, and embedded dependency count.
+## 4. Supported input
+
+- JPEG / JPG
+- PNG
+- WebP
+- 2〜20枚を正式対応
+- 1枚のみの場合は追加を案内し、最終書き出しは無効
+- 20枚を超えた分は黙って無視せず件数を案内
+- ファイル選択、複数選択、Drag & Drop
+- スマートフォンのOS標準画像選択
+
+HEIC / HEIFはv1.0.0では正式対応しない。
 
 ## 5. Data and privacy
 
-- Input text remains in browser memory and local storage.
-- The app performs no runtime network request.
-- There is no server-side storage, login, analytics, telemetry, or tracking.
-- Download occurs only after a user action.
+- ユーザー写真はブラウザ内のみで処理する。
+- ランタイム外部通信を行わない。
+- CSPは `connect-src 'none'` を基本とする。
+- CDN、外部フォント、Analytics、Telemetry、AI APIを使用しない。
+- ユーザー写真をlocalStorage / IndexedDB / Cache Storageへ自動保存しない。
+- 写真はページ再読み込みで失われる。
+- 書き出し画像はCanvasから新規エンコードし、元画像のEXIF / GPS等を意図的に引き継がない。
 
-## 6. Non-goals
+## 6. State model
 
-- Collaborative editing.
-- Cloud synchronization.
-- Rich text formatting.
-- Server-side conversion.
-- Account management.
+最低限以下を明確に分ける。
 
-## 7. UX and accessibility
+- `empty`
+- `loading`
+- `ready-one-photo`
+- `ready`
+- `partial-error`
+- `exporting`
+- `complete`
+- `error`
 
-- Mobile-first responsive layout from 320px upward.
-- All controls have visible labels or accessible names.
-- Keyboard focus is visible.
-- Motion respects `prefers-reduced-motion`.
-- Reversible changes provide a visible Undo action in the reusable toast.
-- Irreversible or high-risk destructive actions use the reusable confirmation component, centered on desktop and presented as a safe-area-aware bottom sheet on smartphones.
-- Status messages use an `aria-live` region.
-- If the finished app needs persistent smartphone access to 3-5 sections or workflow actions, reuse `components/mobile-bottom-bar.html` rather than inventing another fixed bottom bar. For long multi-section tools, prefer its mobile page-tab mode (`data-mobile-page-target`) so tapping a bottom tab shows only that group on smartphones while desktop still shows all sections. Keep unavailable actions disabled until their prerequisites exist.
+入力変更中の非同期処理はgeneration tokenで古い結果を破棄する。
 
-## 8. Performance expectations
+## 7. Photo model
 
-- Initial UI should become interactive without network access.
-- Input updates should remain smooth for at least 100,000 characters on a typical desktop browser.
-- Avoid rebuilding large DOM sections on every keystroke.
+各写真について最低限以下を保持する。
 
-## 9. Browser target
+- id
+- File reference
+- original filename
+- width / height
+- aspect ratio
+- order
+- thumbnail Blob URL
+- crop x / y
+- zoom
+- fit mode
+- hero state
+- load / error state
 
-Current stable desktop and mobile versions of Chromium, Firefox, and Safari. Direct `file://` opening is required.
+写真の元ファイルはメモリ上で参照し、プレビュー用には縮小画像を利用する。
 
-## 10. Acceptance criteria
+## 8. v1.0.0 functional target
 
-- `build-standalone.ps1` produces the readable HTML, a gzip self-extracting variant, and an exact repository-root copy named from `repository.name` with a leading `htmlapps-` removed (for example `htmlapps-tap-counter` → `tap-counter.html`).
-- Embedded asset bytes are Base64-encoded exactly once; the complete asset-bundle JSON is not wrapped in a second Base64 layer.
-- Assets configured with `gzip` / `auto` can be read through the async embedded-asset API, and the build writes `build-size-report.json`.
-- `scripts/verify-standalone.ps1` passes.
-- The self-extract loader is ASCII-only, inherits the embedded favicon from the readable HTML, and restores the source HTML byte-for-byte.
-- The generated HTML contains no unresolved build placeholder.
-- The generated HTML contains no external script, stylesheet, frame, module import, or CSS asset URL.
-- Runtime CSP includes `connect-src 'none'`.
-- The full core user flow works after opening either generated HTML directly.
-- No data leaves the page.
-- Japanese and English copy both fit at 360px width.
-- Clear happens immediately but offers Undo for long enough to recover the previous text.
-- The output filename can be edited before download; invalid filename characters are sanitized and an empty name falls back to the app slug.
+### Photo management
 
-## 11. Open decisions for a new app
+- 追加 / 削除
+- 並べ替え
+- サムネイル
+- 写真サイズ表示
+- 削除Undo
 
-Replace these with explicit decisions before implementation:
+### Automatic layout
 
-- Maximum accepted input size.
-- Supported input file types.
-- Export file formats, default filename, editable filename behavior, sanitization, and extension rules.
-- Persistence strategy and reset behavior.
-- Undo/redo scope.
-- Error and recovery behavior, including stale async-result invalidation when inputs can change during processing.
-- Explicit async phases (`empty`, `ready`, `loading-runtime` if needed, `processing`, `result`, `error`) for heavy processing apps.
-- Mobile relationship between previews and their directly related controls.
-- Smartphone navigation model: bottom-tab page switching, section-scrolling bottom bar, workflow-action bar, or no fixed bottom bar.
-- Media coordinate/orientation strategy when drawing overlays.
-- Required third-party libraries.
-- Whether the app intentionally needs peer-to-peer WebRTC. If so, decide whether the fully serverless same-LAN QR pairing component is appropriate, what DataChannels are required, and how paired-device data is described to users.
-- Whether bilingual UI is required.
+- 2〜20枚
+- キャンバス比率と各写真aspect ratioを利用
+- Crop loss
+- Extreme cell penalty
+- Balance penalty
+- Hero compatibility
+- Similar layout deduplication
+- 最大6候補
+- 「別の配置を見る」
+- 同条件で基本的に同じ結果となる決定的処理
 
-## In-app help
+### Photo adjustment
 
-The upper-right header includes a compact help button. It opens a bilingual “使い方と注意事項” dialog containing:
+- crop位置
+- zoom
+- Fill / Fit
+- 「この写真を大きく」
+- 「通常サイズに戻す」
 
-- the real user workflow,
-- privacy and local-processing behavior,
-- limitations and data-loss risks,
-- any browser or device constraints relevant to the app.
+### Canvas
 
-Acceptance criteria: help content is updated together with each user-facing behavior change, contains no leftover starter instructions, and remains fully scrollable at narrow smartphone widths / short viewport heights so the final item and close control are always reachable.
+- 1:1
+- 4:5
+- 9:16
+- 16:9
+- 3:2
+- 4:3
+- カスタム比率
+- 写真間隔
+- 外周余白
+- 単色背景
+- 角丸
+- PNG透明背景
 
-## WebRTC readiness requirement
+### Export
 
-When an app uses peer-to-peer WebRTC DataChannels, define which reliable channel represents application readiness. Custom channel layouts must set `readyChannelLabel`; do not define application-ready from ICE/PeerConnection `connected` alone.
+- JPEG
+- PNG
+- WebP
+- JPEG / WebP quality
+- 長辺1080 / 2160 / 4096px
+- カスタム解像度
+- 最大辺8192px / 最大32MPを基本安全上限
+- 保存前の出力ファイル名編集
+- 無効文字sanitize
+- 拡張子自動付与
+
+### Undo / Redo
+
+- 最大50操作を目安
+- Ctrl/Cmd + Z
+- Ctrl/Cmd + Shift + Z
+
+## 9. Desktop UX target
+
+基本は写真一覧 / プレビュー / 設定の3領域。狭い幅では2カラム以下へ縮退し、3カラムを無理に維持しない。
+
+## 10. Smartphone UX target
+
+v0.6.0でテンプレート標準 `mobile-bottom-bar` を利用し、以下の4ページに分ける。
+
+- 写真
+- レイアウト
+- 仕上げ
+- 保存
+
+PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、360px幅、長いファイル名を確認する。
+
+## 11. Accessibility
+
+- Visible focus
+- Accessible names
+- `aria-live`
+- Enter / Space
+- Escapeでモーダル終了
+- キーボード操作
+- 色だけで状態を区別しない
+- `prefers-reduced-motion`
+
+## 12. Browser targets
+
+- Chrome stable
+- Edge stable
+- Firefox stable
+- Safari stable
+- iOS Safari stable
+- Android Chrome stable
+- `file://` 直開き必須
+
+## 13. Non-goals for v1.0.0
+
+- 完全自由配置
+- 自由角度回転
+- スクラップブック型重なり編集
+- テキスト
+- ステッカー
+- フィルター / 写真補正
+- 背景除去
+- AI画像生成 / AIデザインAPI
+- クラウド保存
+- ログイン
+- SNS直接投稿
+- 共同編集
+- 100枚以上のContact Sheet用途
+
+## 14. Development roadmap
+
+### v0.1.0 — Foundation / Photo Input
+
+- 最新 `htmlapps-template` 準拠
+- JA / EN
+- JPEG / PNG / WebP
+- 複数選択
+- Drag & Drop
+- 2〜20枚制限
+- サムネイル
+- サイズ表示
+- 写真追加 / 削除
+- Empty / Loading / Ready / Partial failure
+- Canvasプレビュー基盤
+- no runtime network
+- `file://`
+
+**Exit:** 20枚まで読み込め、破損画像を分離し、360pxで追加・削除できる。
+
+### v0.2.0 — Automatic Layout Engine
+
+- aspect ratio解析
+- candidate generation
+- crop loss / balance scoring
+- diversity filtering
+- 最大6候補
+- 「別の配置を見る」
+
+### v0.3.0 — Photo Editing / Hero / Reorder
+
+- 並べ替え
+- crop
+- zoom
+- Fill / Fit
+- 主役写真
+- 削除Undo
+
+### v0.4.0 — Canvas & Finish
+
+- 比率プリセット / custom
+- gap
+- outer margin
+- background
+- rounded corners
+- PNG transparency
+
+### v0.5.0 — High-resolution Export
+
+- JPEG / PNG / WebP
+- quality
+- resolution presets
+- editable filename
+- export progress / failure recovery
+
+### v0.6.0 — Smartphone UX
+
+- `components/mobile-bottom-bar.html`利用
+- 4ページ切替
+- safe area
+- narrow viewport / landscape
+
+### v0.7.0 — Undo / Accessibility / Interaction Polish
+
+- 50-step undo / redo
+- keyboard shortcuts
+- accessible controls
+- reset confirmation
+
+### v0.8.0 — Performance / Memory / Robustness
+
+- preview decode最適化
+- object URL / bitmap解放
+- 20×12MP desktop
+- 10×12MP mobile
+- orientation / extreme aspect regression
+
+### v0.9.0 — Release Candidate
+
+- 機能凍結
+- PC / smartphone / JA / EN回帰
+- README / screenshots / favicon
+- standalone / self-extract / CSP / network確認
+
+### v1.0.0 — Final Release
+
+- 2 / 3 / 4 / 5 / 8 / 12 / 20枚回帰
+- 横のみ / 縦のみ / 混在 / square / panorama / extreme portrait
+- JPEG / PNG / transparent PNG / WebP / custom resolution
+- CI green
+- `file://` / offline smoke
+
+## 15. v0.1.0 implementation contract
+
+今回の実装範囲ではレイアウトエンジンを先取りしない。ただしCanvas描画基盤確認のため、2枚以上では均等グリッドの暫定プレビューを描画する。この暫定グリッドはv0.2.0で自動レイアウト候補へ置き換える。
+
+v0.1.0で出力ファイル生成は提供しない。テンプレート契約上の出力ファイル名識別子は将来のexport状態としてコード内に保持するが、UI上の保存機能はv0.5.0まで公開しない。
+
+## 16. v0.1.0 acceptance criteria
+
+- JPEG / PNG / WebPを複数追加できる。
+- Drag & Dropが動く。
+- 最大20枚。
+- 超過件数を通知する。
+- 破損・非対応画像が混在しても正常画像は残る。
+- 写真サムネイル、ファイル名、pixel dimensionsを表示する。
+- 個別削除できる。
+- 2枚以上でCanvas基盤の暫定グリッドプレビューを描画する。
+- 1枚の場合はもう1枚追加する案内を表示する。
+- 写真は永続化しない。
+- JA / ENをページ再読み込みなしで切替できる。
+- ヘルプに実際のv0.1.0操作・privacy・制約を記載する。
+- 360px幅で横スクロールしない。
+- Runtime CSPに `connect-src 'none'` がある。
+- `__APP_ICON_DATA_URI__` はfaviconとheader iconにのみ利用する。
+- `APP:BEGIN` / `APP:END`, `APP:HELP:BEGIN` / `APP:HELP:END` を維持する。
+- テンプレートの `StandaloneAssets` APIと `window.AppToast` 契約を維持する。
