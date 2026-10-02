@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.9.0 - 2026-10-02
+
+### Added
+
+- Release-candidate regression script covering layout generation, extreme aspect ratios, MIME fallback, export pixel limits, reorder logic, 50-step history, translation parity, CSP, and template contracts.
+- CI execution of the app-specific release-candidate regression.
+- Filename-level separation for photos that fail to decode while successful photos remain available.
+
+### Changed
+
+- Feature set frozen for the v1.0.0 release-candidate phase.
+- README / README.ja reorganized into the finished-app documentation shape.
+- SECURITY.md and THIRD_PARTY_NOTICES.md rewritten for Photo Collage instead of the starter template.
+- Removed the stale starter-template screenshot from README while the final JA / EN desktop / smartphone screenshots are staged for the v1.0.0 pass.
+
+## 0.8.1 - 2026-10-02
+
+### Changed
+
+- Changed the privacy badge to `完全ローカル処理 / Fully local processing`.
+- Changed the default canvas ratio from 1:1 to 4:3.
+- Made More layouts immediately apply the first layout from the next candidate page.
+- Added a page indicator to the More layouts button.
+- Added a touch / pen drag handle for photo reordering while keeping desktop Drag & Drop and arrow controls.
+- Aligned the app header with the current htmlapps-template header UI.
+- Fixed the broken photo action-row CSS that caused controls to stack vertically and cards to grow with large blank areas.
+- Kept photo cards content-height sized instead of stretching to the tallest card in the grid row.
+- Simplified desktop dragging to use the photo thumbnail as the drag ghost and show the grip only on coarse-pointer devices.
+
 ## 0.8.0 - 2026-10-01
 
 ### Added

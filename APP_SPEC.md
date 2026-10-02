@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.8.0`
+- **Current development version:** `0.9.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -126,7 +126,7 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 - 9:16
 - 16:9
 - 3:2
-- 4:3
+- 4:3（初期値）
 - カスタム比率
 - 写真間隔
 - 外周余白
@@ -282,12 +282,29 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 - 10×12MP mobile
 - orientation / extreme aspect regression
 
+### v0.8.1 — UX polish
+
+- privacy badgeを「完全ローカル処理」へ変更
+- default canvas ratioを4:3へ変更
+- 「別の配置を見る」で次候補を自動選択しpreviewも更新
+- alternate layout page数をボタンへ表示
+- desktop Drag & Dropを維持
+- touch / pen向けdrag handleを追加
+- drag reorderもUndo / Redo対象として維持
+- current htmlapps-template header UIへ同期
+- photo cardはgrid rowへstretchせずcontent heightで表示
+- photo action rowは横並びを維持し、不要な縦余白を作らない
+- desktopでは専用drag gripを表示せずcard Drag & Dropを利用
+- coarse pointerではthumbnail上のcompact gripを表示
+
 ### v0.9.0 — Release Candidate
 
 - 機能凍結
 - PC / smartphone / JA / EN回帰
 - README / screenshots / favicon
 - standalone / self-extract / CSP / network確認
+- 失敗画像のfilename分離表示
+- app-specific RC regressionをCIへ固定
 
 ### v1.0.0 — Final Release
 
@@ -412,3 +429,121 @@ v0.8.0の構造上の目標は以下とするが、実機browserでの最終stre
 - smartphone: 10 × 12MP JPEG
 
 failureした端末では無反応・page破損にせず、部分失敗または解像度低下のrecoveryを提示する。
+
+## 17. v0.9.0 release candidate contract
+
+v0.9.0では新しい編集機能を増やさず、v1.0.0へ向けた機能凍結・エラー状態・文書・CI回帰を仕上げる。
+
+### Feature freeze
+
+v0.9.0以降、v1.0.0まで以下を原則固定する。
+
+- 2〜20枚
+- JPEG / PNG / WebP input
+- automatic layout + More layouts
+- reorder / crop / zoom / Fill / Fit / hero
+- 4:3 default canvas
+- finish controls
+- JPEG / PNG / WebP export
+- 50-step Undo / Redo
+- smartphone 4-page workflow
+
+新しいデザイン機能やinput formatはv1.0.0前には追加しない。
+
+### Partial failure
+
+一部の画像だけdecodeできなかった場合、正常画像を破棄しない。
+
+失敗画像は「読み込めなかった写真」としてfilename付きで写真一覧の下へ分離表示する。
+
+次の追加操作では最新batchの失敗一覧へ置き換え、Resetでは失敗一覧もclearする。
+
+### RC regression script
+
+`scripts/check-photo-collage-rc.cjs` をStandalone CIで実行する。
+
+最低限以下を自動検証する。
+
+- JavaScript syntax
+- duplicate element ID
+- JA / EN translation key parity
+- canonical icon placeholder count
+- CSP `connect-src 'none'`
+- external runtime src / hrefなし
+- default / reset canvas 4:3
+- failed-file UI存在
+- 2〜20枚 standard layout
+- extreme portrait / panorama layout
+- More layouts candidate pages
+- input MIME fallback
+- 8192px / 32MP output limit
+- forward / backward reorder
+- 50-step history / Undo / Redo / Reset→Undo
+- mobile 4 pages / 4 bottom items
+- stale pre-RC UI versionなし
+
+### Finished-app documentation
+
+READMEは完成アプリ向けの以下の順序へ整理する。
+
+1. purpose
+2. representative screenshot
+3. features
+4. how to use
+5. privacy
+6. supported browsers / devices
+7. limitations
+8. single-HTML / offline
+9. development / verification
+10. license / notices
+
+`SECURITY.md` と `THIRD_PARTY_NOTICES.md` からstarter固有表現を除く。
+
+### RC manual verification targets
+
+自動CIだけではbrowser / device実動作を代替しない。
+
+v1.0.0へ進む前に少なくとも以下を実ブラウザーで確認する。
+
+- fresh load
+- 2 / 3 / 4 / 5 / 8 / 12 / 20 photos
+- all landscape / all portrait / mixed / square / panorama / extreme portrait
+- invalid / corrupt mixed batch
+- Undo / Redo / Reset
+- desktop Drag & Drop
+- touch reorder
+- crop / zoom / Fill / Fit / hero
+- JA / EN
+- 360px smartphone
+- desktop
+- help dialog last item
+- JPEG / PNG / transparent PNG / WebP / custom output
+- output filename
+- readable standalone via `file://`
+- self-extract via `file://`
+- offline reload
+- no runtime network after initial HTML load
+- no console error
+- desktop target 20 × 12MP JPEG
+- smartphone target 10 × 12MP JPEG
+
+実機・実ブラウザーで未確認の項目をCI成功だけで「確認済み」と扱わない。
+
+## 18. v0.9.0 acceptance criteria
+
+- UI / app.config / APP_SPEC / READMEのversionが0.9.0で一致する。
+- 機能凍結状態である。
+- 部分失敗時に正常画像を保持する。
+- 失敗画像filenameを分離表示する。
+- Resetで失敗一覧をclearする。
+- JA / ENで失敗一覧title / reasonを表示する。
+- `scripts/check-photo-collage-rc.cjs` がrepositoryに存在する。
+- Standalone CIがRC regressionを実行する。
+- READMEがfinished-app shapeになっている。
+- v1.0.0最終パスでactual screenshot（JA / EN / desktop / smartphone）を正式アセットへ更新する。
+- READMEにPrivacy / Limitations / Single HTML / Offlineを記載する。
+- SECURITY.mdがPhoto Collageのtrust boundaryを説明する。
+- THIRD_PARTY_NOTICES.mdが現状third-party libraryなしを説明する。
+- faviconとheader app iconは同一canonical SVG。
+- readable / self-extract build contractを維持する。
+- Runtime CSP `connect-src 'none'` を維持する。

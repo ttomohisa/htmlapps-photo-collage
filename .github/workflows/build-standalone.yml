@@ -34,6 +34,10 @@ jobs:
         shell: powershell
         run: .\scripts\check-powershell-syntax.ps1
 
+      - name: Run Photo Collage RC regression
+        shell: pwsh
+        run: node ./scripts/check-photo-collage-rc.cjs
+
       - name: Build and verify standalone HTML
         shell: pwsh
         run: ./scripts/check-repository.ps1

@@ -1,66 +1,82 @@
 # Photo Collage
 
-A Browser Kitty tool for combining multiple photos into one collage directly in the browser.
+Combine 2–20 photos into one collage directly in the browser, with photo-aware layout suggestions and local image export.
 
-The current development release is **v0.8.0**. This milestone focuses on high-resolution photo robustness: orientation-aware decoding, explicit bitmap and Object URL cleanup, sequential processing, and recovery when a device cannot allocate enough image-processing resources.
 
 ## Features
 
-- JPEG / PNG / WebP input and export
-- 2–20 photo workflow
-- Photo-aware automatic layout suggestions
-- Reorder, crop, zoom, Fill / Fit, and featured photo
-- Canvas ratio, spacing, background, transparency, and rounded corners
-- High-resolution export from original source photos
-- Smartphone pages: Photos / Layout / Finish / Save
+- JPEG / PNG / WebP input
+- Photo-aware automatic layout suggestions with additional candidate pages
+- Desktop Drag & Drop and touch-friendly photo reordering
+- Crop position, 1×–3× zoom, Fill / Fit, and featured photo
+- 4:3 default canvas plus 1:1, 4:5, 9:16, 16:9, 3:2, and custom ratio
+- Photo spacing, outer margin, background color, PNG transparency, and rounded corners
+- JPEG / PNG / WebP export from the original source photos
+- 1080 / 2160 / 4096px and custom output resolution
 - Up to 50 Undo / Redo steps
-- Orientation-aware `createImageBitmap` decoding when available
-- Explicit `ImageBitmap.close()` and Object URL cleanup
-- Sequential input thumbnail generation and sequential original-photo export
-- Preview decode cache cleanup when photos leave the current collage
-- 8192px edge and 32MP export safety limits
-- Recovery messages for image-processing memory failures
-- MIME-empty local JPEG / PNG / WebP extension fallback
+- Smartphone workflow with Photos / Layout / Finish / Save pages
 - Japanese / English UI
+- Failed photos are kept separate by filename without discarding successfully loaded photos
 - No runtime network access
 
-## Performance and memory behavior
+## How to use
 
-Photo Collage intentionally avoids keeping all original photos decoded at once.
+1. Add 2–20 JPEG, PNG, or WebP photos.
+2. Choose one of the suggested layouts. Use **More layouts** when additional candidate pages are available.
+3. Reorder photos or select a photo to adjust crop position, zoom, Fill / Fit, or featured-photo status.
+4. Adjust the canvas ratio, spacing, background, transparency, and rounded corners.
+5. Choose JPEG, PNG, or WebP, set the output resolution and quality, edit the filename, and select **Save image**.
 
-For input, each source image is decoded, drawn to a small preview thumbnail, released, and then the app proceeds to the next photo. High-resolution export similarly decodes one original photo at a time and releases it immediately after drawing it into the output Canvas.
+The default canvas ratio is **4:3**.
 
-When supported, decoding uses `createImageBitmap(..., { imageOrientation: "from-image" })` and closes the bitmap after use. The HTML image path remains as a compatibility fallback.
+## Privacy / local processing
 
-Thumbnail Object URLs remain alive only while the current editor or Undo / Redo history can still reference them. Decoded preview images that are no longer current are dropped from the cache.
+Photo Collage processes selected photos in the browser. The app does not upload photos, use analytics or telemetry, call an external API, load a runtime CDN, or use remote fonts.
 
-## Robustness
+The runtime Content Security Policy keeps `connect-src 'none'`.
 
-- Custom canvas ratios remain limited to 1:10 through 10:1.
-- Export remains limited to 8192px on either edge and 32MP total.
-- Files with no MIME type can still be accepted by a recognized JPEG / PNG / WebP extension.
-- Explicit non-image MIME types are not accepted only because of the filename extension.
-- Resource-pressure failures show a recovery suggestion instead of silently failing.
+Exported images are newly encoded from Canvas. The app does not intentionally copy source EXIF, GPS, camera metadata, or original filenames into the exported image. This should not be treated as a general-purpose metadata sanitization guarantee.
 
-The release-candidate stage will still perform final real-device stress checks for the 20 × 12MP desktop and 10 × 12MP smartphone targets.
+Photos and edit state are kept in the current page session only. Reloading or closing the page clears the current work.
 
-## Privacy
+## Supported browsers / devices
 
-Photos are processed in the browser and are not sent to an external server by this app. Export is rendered from Canvas and source EXIF / GPS metadata is not copied into the output image.
+Target browsers are current stable Chrome, Edge, Firefox, Safari, iOS Safari, and Android Chrome.
 
-## Supported browsers
+Desktop and smartphone layouts are both supported. Smartphone editing uses the fixed Photos / Layout / Finish / Save workflow.
 
-Current stable Chrome, Edge, Firefox, and Safari, including major mobile browsers. Direct `file://` opening remains a release requirement.
+## Limitations
 
-## Development
+- 2–20 photos per collage.
+- HEIC / HEIF is not officially supported in v1.0.0.
+- No text, stickers, filters, background removal, free placement, arbitrary rotation, or cloud project storage.
+- Custom canvas ratio is limited to 1:10 through 10:1.
+- Export is limited to 8192px on either edge and 32MP total.
+- Very large source photos may exceed the browser or device image-processing memory. The app processes photos sequentially and shows a recovery suggestion when resource pressure is detected.
+- WebP export is available only when the browser can encode WebP from Canvas.
+
+## Single HTML / offline behavior
+
+The build produces:
+
+- `dist/index.html` — readable self-contained HTML
+- `dist/index.self-extract.html` — gzip self-extracting single HTML
+- `photo-collage.html` — readable root copy
+
+The release target includes direct `file://` opening. Runtime application behavior does not require network access.
+
+## Development / verification
 
 This app follows `ttomohisa/htmlapps-template`.
 
 ```powershell
+node .\scripts\check-photo-collage-rc.cjs
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-powershell-syntax.ps1
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-repository.ps1
 ```
 
-## License
+The RC regression covers layout generation, extreme aspect ratios, file-type fallback, export pixel limits, reorder logic, Undo / Redo, translation-key parity, CSP, and template contracts. Real-browser and real-device smoke testing is still required before v1.0.0.
 
-MIT License
+## License and third-party notices
+
+MIT License. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

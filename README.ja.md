@@ -1,67 +1,82 @@
 # Photo Collage / 写真コラージュ
 
-複数の写真をブラウザー内で読み込み、1枚のコラージュにまとめるBrowser Kitty向けツールです。
+2〜20枚の写真をブラウザー内で読み込み、写真に合った配置候補から選んで1枚のコラージュ画像として保存するBrowser Kitty向けツールです。
 
-現在の開発版は **v0.8.0** です。高解像度写真を扱うときの安定性を中心に、orientation対応decode、Bitmap / Object URLの明示解放、逐次処理、端末の画像処理メモリが不足した場合の回復案内を追加しました。
 
 ## Features
 
-- JPEG / PNG / WebP入力・書き出し
-- 2〜20枚の写真
-- 写真に合わせた自動レイアウト候補
-- 並べ替え / crop / zoom / Fill / Fit / 主役写真
-- 比率 / 写真間隔 / 外周余白 / 背景 / 透明背景 / 角丸
-- 元写真からの高解像度書き出し
-- スマホ4画面: 写真 / 配置 / 仕上げ / 保存
+- JPEG / PNG / WebP入力
+- 写真に合わせた自動レイアウト候補と追加候補ページ
+- PCのDrag & Drop / タッチ向け写真並べ替え
+- crop位置 / 1〜3倍zoom / Fill / Fit / 主役写真
+- 初期値4:3、1:1 / 4:5 / 9:16 / 16:9 / 3:2 / custom比率
+- 写真間隔 / 外周余白 / 背景色 / PNG透明背景 / 角丸
+- 元写真からJPEG / PNG / WebPへ高解像度書き出し
+- 長辺1080 / 2160 / 4096px / custom解像度
 - 最大50操作のUndo / Redo
-- 利用可能な場合のorientation-aware `createImageBitmap`
-- `ImageBitmap.close()` / Object URLの明示解放
-- thumbnail作成と元写真exportの逐次処理
-- 現在のコラージュから外れたpreview decoded imageのcache解放
-- 最大辺8192px / 最大32MP
-- 画像処理メモリ不足時のrecovery案内
-- MIMEが空のJPEG / PNG / WebPを拡張子で補完
+- スマホ4画面: 写真 / 配置 / 仕上げ / 保存
 - 日本語 / English
-- Runtime network accessなし
+- 読み込めなかった写真をfilename付きで分離し、正常画像は保持
+- 実行時外部通信なし
 
-## Performance / Memory
+## 使い方
 
-元写真を20枚まとめてdecodeした状態で保持しません。
+1. JPEG / PNG / WebP写真を2〜20枚追加します。
+2. 「おすすめの配置」から選びます。追加候補がある場合は「別の配置を見る」で切り替えます。
+3. 必要なら写真を並べ替え、crop位置・zoom・Fill / Fit・主役写真を調整します。
+4. キャンバス比率、写真間隔、外周余白、背景、透明背景、角丸を調整します。
+5. JPEG / PNG / WebP、解像度、画質、ファイル名を選び、「画像を保存」を押します。
 
-入力時は1枚ずつ元画像をdecodeし、preview用thumbnailへ描画したら元decodeを解放して次の写真へ進みます。高解像度書き出しも元写真を1枚ずつ読み込み、出力Canvasへ描いた直後に解放します。
+キャンバス比率の初期値は **4:3** です。
 
-対応ブラウザーでは `createImageBitmap(..., { imageOrientation: "from-image" })` を使い、利用後にBitmapをcloseします。互換性のためHTML image fallbackも残しています。
+## Privacy / ローカル処理
 
-thumbnailのObject URLは現在の編集状態またはUndo / Redo履歴から参照されている間だけ保持します。現在のコラージュにないdecoded preview imageはcacheから外します。
+選択した写真はブラウザー内で処理します。このアプリから写真を外部サーバーへアップロードしません。Analytics / Telemetry / 外部API / runtime CDN / remote fontも使用しません。
 
-## Robustness
+Runtime CSPは `connect-src 'none'` を維持します。
 
-- custom canvas ratio: 1:10〜10:1
-- export最大辺: 8192px
-- export最大総画素数: 32MP
-- MIME typeが空でもJPEG / PNG / WebP拡張子なら入力可能
-- 明確な非画像MIMEはfilename extensionだけでは受け入れない
-- 端末resource不足時は無反応にせずrecovery案内を表示
+出力画像はCanvasから新しくエンコードします。元写真のEXIF、GPS、カメラ情報、元ファイル名を意図的に出力へコピーする処理はありません。ただし、一般的な「メタデータ完全除去ツール」として保証するものではありません。
 
-20 × 12MP desktop / 10 × 12MP smartphoneの最終実機stress確認はv0.9.0 Release Candidateで実施します。
+写真と編集状態は現在のページセッション内だけで保持します。再読み込みやタブを閉じると現在の作業内容は失われます。
 
-## Privacy
+## 対応ブラウザー / 端末
 
-写真はブラウザー内で処理し、このアプリから外部サーバーへ送信しません。出力画像はCanvasから新しくエンコードし、元写真のEXIF / GPSをコピーしません。
+Current stable Chrome / Edge / Firefox / Safari / iOS Safari / Android Chromeを対象とします。
 
-## Browser support
+PCとスマートフォンの両方を対象にし、スマホでは「写真 / 配置 / 仕上げ / 保存」の下部固定4画面で操作します。
 
-Current stable Chrome / Edge / Firefox / Safari、および主要なモバイルブラウザーを対象とします。配布用HTMLの `file://` 直開きも対象です。
+## 制限
 
-## Development
+- 1コラージュ2〜20枚。
+- HEIC / HEIFはv1.0.0正式対応外。
+- テキスト、ステッカー、フィルター、背景除去、完全自由配置、自由角度回転、クラウド保存は対象外。
+- custom比率は1:10〜10:1。
+- 書き出しは最大辺8192px / 最大32MP。
+- 非常に大きい元写真はブラウザーや端末の画像処理メモリ上限へ達する場合があります。写真は逐次処理し、resource不足を検出した場合は回復案内を表示します。
+- WebP書き出しはブラウザーのCanvas WebP encode対応時のみ利用できます。
 
-このリポジトリは `ttomohisa/htmlapps-template` を基盤とします。
+## Single HTML / Offline
+
+buildでは以下を生成します。
+
+- `dist/index.html` — 読みやすい自己完結HTML
+- `dist/index.self-extract.html` — gzip自己展開型単一HTML
+- `photo-collage.html` — repository rootの読みやすいcopy
+
+配布版は `file://` 直開きを対象とします。アプリ実行時にネットワーク接続を必要としません。
+
+## Development / Verification
+
+`ttomohisa/htmlapps-template` に準拠します。
 
 ```powershell
+node .\scripts\check-photo-collage-rc.cjs
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-powershell-syntax.ps1
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-repository.ps1
 ```
 
-## License
+RC regressionでは、layout生成、extreme aspect、file type fallback、export画素上限、並べ替え、Undo / Redo、日英translation key一致、CSP、template契約を確認します。v1.0.0前には実ブラウザー / 実端末のsmoke testも別途必要です。
 
-MIT License
+## License / Third-party notices
+
+MIT License。詳細は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
