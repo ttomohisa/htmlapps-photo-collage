@@ -77,6 +77,10 @@ assert(readmeJa.includes('https://ttomohisa.github.io/htmlapps-photo-collage/'),
 assert(readmeEn.includes('check-photo-collage-release.cjs') && readmeJa.includes('check-photo-collage-release.cjs'),
   'Stable release regression command must appear in both READMEs.');
 
+const deployWorkflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
+assert(deployWorkflow.includes('node ./scripts/check-photo-collage-release.cjs'),
+  'GitHub Pages deployment must run the stable release regression before publishing.');
+
 const translationStart = source.indexOf('    const T=');
 const translationEnd = source.indexOf('\n    const els=', translationStart);
 assert(translationStart >= 0 && translationEnd > translationStart, 'Translation object markers are missing.');
