@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 - 2026-10-02
+
+### Released
+
+- Promoted the v0.9.0 release candidate to the first stable Photo Collage release.
+- Finalized the 2–20 photo collage workflow, photo-aware layout suggestions, editing, finish controls, and JPEG / PNG / WebP export.
+- Finalized desktop and smartphone workflows, Undo / Redo, local-only processing, and standalone / self-extract distribution.
+- Reworked README / README.ja to the finished-app structure used by PDF Organizer.
+- Added final release regression coverage and formal v1.0.0 screenshot / release checks.
+
 ## 0.9.0 - 2026-10-02
 
 ### Added
