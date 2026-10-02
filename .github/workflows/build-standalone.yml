@@ -7,8 +7,11 @@ on:
       - main
     paths:
       - "src/**"
+      - "assets/**"
       - "scripts/**"
       - "app.config.json"
+      - "README.md"
+      - "README.ja.md"
       - "dependencies.json"
       - "dependencies.lock.json"
       - "schemas/dependencies*.json"
