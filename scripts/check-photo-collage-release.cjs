@@ -42,6 +42,35 @@ assert(source.includes('id="failedFiles"') && source.includes('id="failedFilesLi
 assert(!source.includes('\\n    .photo-actions'), 'Malformed literal \\n remains in photo action CSS.');
 assert(!/\b(?:src|href)\s*=\s*["']https?:\/\//i.test(source), 'External runtime src/href detected.');
 
+const readmeEn = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+const readmeJa = fs.readFileSync(path.join(root, 'README.ja.md'), 'utf8');
+const screenshotRequirements = [
+  {name: 'screenshot.png', minWidth: 1000, minHeight: 700, readme: readmeJa},
+  {name: 'screenshot-en.png', minWidth: 1000, minHeight: 700, readme: readmeEn},
+  {name: 'screenshot-mobile.png', minWidth: 360, minHeight: 700, readme: readmeJa},
+  {name: 'screenshot-mobile-en.png', minWidth: 360, minHeight: 700, readme: readmeEn}
+];
+function pngDimensions(buffer) {
+  const signature = '89504e470d0a1a0a';
+  assert(buffer.length >= 24 && buffer.subarray(0, 8).toString('hex') === signature, 'Release screenshot must be a PNG.');
+  return {width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20)};
+}
+for (const requirement of screenshotRequirements) {
+  const relative = 'assets/' + requirement.name;
+  const full = path.join(root, relative);
+  assert(fs.existsSync(full), 'Missing release screenshot: ' + relative);
+  const bytes = fs.readFileSync(full);
+  assert(bytes.length > 10000, 'Release screenshot is unexpectedly small: ' + relative);
+  const dimensions = pngDimensions(bytes);
+  assert(dimensions.width >= requirement.minWidth && dimensions.height >= requirement.minHeight,
+    'Release screenshot dimensions are too small: ' + relative + ' (' + dimensions.width + 'x' + dimensions.height + ')');
+  assert(requirement.readme.includes(relative), 'README does not reference release screenshot: ' + relative);
+}
+assert(readmeEn.includes('https://ttomohisa.github.io/htmlapps-photo-collage/'), 'English README live demo URL is missing.');
+assert(readmeJa.includes('https://ttomohisa.github.io/htmlapps-photo-collage/'), 'Japanese README live demo URL is missing.');
+assert(readmeEn.includes('check-photo-collage-release.cjs') && readmeJa.includes('check-photo-collage-release.cjs'),
+  'Stable release regression command must appear in both READMEs.');
+
 const translationStart = source.indexOf('    const T=');
 const translationEnd = source.indexOf('\n    const els=', translationStart);
 assert(translationStart >= 0 && translationEnd > translationStart, 'Translation object markers are missing.');
