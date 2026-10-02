@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `0.9.0`
+- **Current development version:** `1.0.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -547,3 +547,102 @@ v1.0.0へ進む前に少なくとも以下を実ブラウザーで確認する�
 - faviconとheader app iconは同一canonical SVG。
 - readable / self-extract build contractを維持する。
 - Runtime CSP `connect-src 'none'` を維持する。
+
+
+## 19. v1.0.0 final release contract
+
+v1.0.0では機能追加を行わず、v0.9.0 Release Candidateを正式版として固定する。
+
+### Final release scope
+
+正式版に含める機能:
+
+- JPEG / PNG / WebP入力
+- 2〜20枚
+- 写真の縦横比を使った自動レイアウト候補
+- 「別の配置を見る」による追加候補
+- PC Drag & Drop / touch drag handle / arrow button並べ替え
+- crop / zoom / Fill / Fit / 主役写真
+- 4:3 default canvas
+- 1:1 / 4:5 / 9:16 / 16:9 / 3:2 / 4:3 / custom ratio
+- gap / outer margin / background / PNG transparency / rounded corners
+- JPEG / PNG / WebP export
+- 1080 / 2160 / 4096 / custom resolution
+- 50-step Undo / Redo
+- smartphone 4-page workflow
+- JA / EN
+- fully local processing
+- readable single HTML / self-extract single HTML
+
+### Final documentation
+
+README / README.jaは `html-pdf-organizer` の完成アプリREADME構成を参考にし、少なくとも以下を含める。
+
+1. badges
+2. language switch
+3. purpose
+4. live demo
+5. representative screenshot
+6. features
+7. quick start
+8. usage
+9. keyboard shortcuts
+10. GitHub Pages publication
+11. development / build layout
+12. privacy / runtime network protection
+13. limitations
+14. dependencies
+15. contributing
+16. license
+
+説明はPhoto Collageの実装事実に限定する。
+
+### Final screenshots
+
+正式アセット:
+
+- `assets/screenshot.png` — 日本語 desktop
+- `assets/screenshot-en.png` — English desktop
+- `assets/screenshot-mobile.png` — 日本語 smartphone
+- `assets/screenshot-mobile-en.png` — English smartphone
+
+スクリーンショットはv1.0.0生成物または同一コードstateのPreviewから取得する。
+
+### Final verification
+
+自動release regressionに加え、生成済みstandalone HTMLで少なくとも以下を確認する。
+
+- 2 / 3 / 4 / 5 / 8 / 12 / 20 photo layout generation
+- landscape / portrait / mixed / square / panorama / extreme portrait
+- corrupt mixed batch
+- More layouts
+- reorder / Undo / Redo / Reset
+- crop / zoom / Fill / Fit / hero
+- JA / EN
+- desktop / smartphone
+- JPEG / PNG / transparent PNG / WebP / custom resolution
+- output filename
+- readable standalone
+- self-extract expansion
+- no external runtime src / href
+- CSP `connect-src 'none'`
+- favicon / header icon canonical SVG
+
+CI成功だけで実機stressや制限付き環境の `file://` browser smokeを確認済みとは扱わない。
+
+## 20. v1.0.0 acceptance criteria
+
+- app.config / UI / APP_SPEC / README / README.ja / CHANGELOGの正式版記述が1.0.0で整合する。
+- release regressionがCIで実行される。
+- deploy workflowでもrelease regressionを実行する。
+- README / README.jaがfinished-app READMEとして完成する。
+- READMEにlive demo / screenshot / quick start / usage / keyboard / privacy / limitations / build / licenseを含む。
+- JA / EN desktop / smartphone screenshotの4アセットが揃う。
+- canonical faviconとheader iconが同一SVG。
+- readable `dist/index.html` を生成できる。
+- self-extract `dist/index.self-extract.html` を生成できる。
+- repository root `photo-collage.html` を生成できる。
+- Runtime CSP `connect-src 'none'`。
+- runtime external CDN / font / analytics / telemetry / API requestなし。
+- no unresolved build placeholder。
+- CI green。
