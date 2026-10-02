@@ -22,6 +22,12 @@ function block(startMarker, endMarker) {
 assert(config.version === '1.0.0', 'app.config.json version must be 1.0.0.');
 assert(source.includes('v1.0.0'), 'UI version must be v1.0.0.');
 
+const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
+assert(committedRootHtml.includes('v1.0.0'), 'Committed photo-collage.html must be the v1.0.0 readable build.');
+assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collage.html must keep connect-src 'none'.");
+assert(!committedRootHtml.includes('__APP_ICON_DATA_URI__'), 'Committed photo-collage.html must not contain unresolved icon placeholders.');
+assert(!committedRootHtml.includes('__EMBEDDED_ASSET_BUNDLE_JSON__'), 'Committed photo-collage.html must not contain unresolved asset placeholders.');
+
 const scriptMatch = source.match(/<script>\s*([\s\S]*?)\s*<\/script>/);
 assert(scriptMatch, 'Application script block is missing.');
 new Function(scriptMatch[1]);
