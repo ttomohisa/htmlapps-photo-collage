@@ -19,8 +19,14 @@ function block(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-assert(config.version === '0.9.0', 'app.config.json version must be 0.9.0.');
-assert(source.includes('v0.9.0'), 'UI version must be v0.9.0.');
+assert(config.version === '1.0.0', 'app.config.json version must be 1.0.0.');
+assert(source.includes('v1.0.0'), 'UI version must be v1.0.0.');
+
+const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
+assert(committedRootHtml.includes('v1.0.0'), 'Committed photo-collage.html must be the v1.0.0 readable build.');
+assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collage.html must keep connect-src 'none'.");
+assert(!committedRootHtml.includes('__APP_ICON_DATA_URI__'), 'Committed photo-collage.html must not contain unresolved icon placeholders.');
+assert(!committedRootHtml.includes('__EMBEDDED_ASSET_BUNDLE_JSON__'), 'Committed photo-collage.html must not contain unresolved asset placeholders.');
 
 const scriptMatch = source.match(/<script>\s*([\s\S]*?)\s*<\/script>/);
 assert(scriptMatch, 'Application script block is missing.');
@@ -41,6 +47,39 @@ assert(source.includes("state.canvasRatioKey='4:3';state.canvasAspect=4/3"), 'Re
 assert(source.includes('id="failedFiles"') && source.includes('id="failedFilesList"'), 'Failed-file UI is missing.');
 assert(!source.includes('\\n    .photo-actions'), 'Malformed literal \\n remains in photo action CSS.');
 assert(!/\b(?:src|href)\s*=\s*["']https?:\/\//i.test(source), 'External runtime src/href detected.');
+
+const readmeEn = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+const readmeJa = fs.readFileSync(path.join(root, 'README.ja.md'), 'utf8');
+const screenshotRequirements = [
+  {name: 'screenshot.png', minWidth: 1000, minHeight: 700, readme: readmeJa},
+  {name: 'screenshot-en.png', minWidth: 1000, minHeight: 700, readme: readmeEn},
+  {name: 'screenshot-mobile.png', minWidth: 360, minHeight: 700, readme: readmeJa},
+  {name: 'screenshot-mobile-en.png', minWidth: 360, minHeight: 700, readme: readmeEn}
+];
+function pngDimensions(buffer) {
+  const signature = '89504e470d0a1a0a';
+  assert(buffer.length >= 24 && buffer.subarray(0, 8).toString('hex') === signature, 'Release screenshot must be a PNG.');
+  return {width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20)};
+}
+for (const requirement of screenshotRequirements) {
+  const relative = 'assets/' + requirement.name;
+  const full = path.join(root, relative);
+  assert(fs.existsSync(full), 'Missing release screenshot: ' + relative);
+  const bytes = fs.readFileSync(full);
+  assert(bytes.length > 10000, 'Release screenshot is unexpectedly small: ' + relative);
+  const dimensions = pngDimensions(bytes);
+  assert(dimensions.width >= requirement.minWidth && dimensions.height >= requirement.minHeight,
+    'Release screenshot dimensions are too small: ' + relative + ' (' + dimensions.width + 'x' + dimensions.height + ')');
+  assert(requirement.readme.includes(relative), 'README does not reference release screenshot: ' + relative);
+}
+assert(readmeEn.includes('https://ttomohisa.github.io/htmlapps-photo-collage/'), 'English README live demo URL is missing.');
+assert(readmeJa.includes('https://ttomohisa.github.io/htmlapps-photo-collage/'), 'Japanese README live demo URL is missing.');
+assert(readmeEn.includes('check-photo-collage-release.cjs') && readmeJa.includes('check-photo-collage-release.cjs'),
+  'Stable release regression command must appear in both READMEs.');
+
+const deployWorkflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
+assert(deployWorkflow.includes('node ./scripts/check-photo-collage-release.cjs'),
+  'GitHub Pages deployment must run the stable release regression before publishing.');
 
 const translationStart = source.indexOf('    const T=');
 const translationEnd = source.indexOf('\n    const els=', translationStart);
@@ -165,12 +204,12 @@ const historyResult = new Function(
 )();
 
 const staleVersions = source.match(/v0\.(?:[1-8])(?:\.\d+)?/g) || [];
-assert(staleVersions.length === 0, 'Stale pre-v0.9 UI version text remains: ' + [...new Set(staleVersions)].join(', '));
+assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + [...new Set(staleVersions)].join(', '));
 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
 assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
 
-console.log('[OK] Photo Collage RC regression passed.');
+console.log('[OK] Photo Collage release regression passed.');
 console.log('[OK] Standard layout cases:', standardLayoutCases);
 console.log('[OK] Extreme layout cases:', extremeLayoutCases);
 console.log('[OK] Candidate counts 2..20:', candidateCounts.join(','));
