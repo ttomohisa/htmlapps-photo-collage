@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Cancel photo imports without losing the existing collage or its Undo/Redo history.
+- Prevent superseded decode failures from replacing current progress or continuing stale work.
+- Release staged thumbnail URLs on cancellation and replacement; retain history-owned resources.
+- Show failed filenames even when every selected photo fails, including on the mobile Photos page.
+- Keep previous export details on failed/cancelled attempts and clear them only after a successful photo addition.
+- Add deterministic import lifecycle regressions to the stable release check.
+
 ## 1.0.0 - 2026-10-02
 
 ### Released

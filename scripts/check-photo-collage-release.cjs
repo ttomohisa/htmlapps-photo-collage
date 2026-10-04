@@ -192,7 +192,7 @@ const historyResult = new Function(
   "const state={photos:[],selectedPhotoId:'',selectedLayoutId:'',generation:0,layoutCandidates:[],layoutPage:0,cropDrag:null,dragPhotoId:'',pointerReorder:null,failedFiles:[],canvasRatioKey:'4:3',canvasAspect:4/3,customRatioWidth:4,customRatioHeight:3,gap:8,outerMargin:8,cornerRadius:0,background:'#ffffff',transparentBackground:false,exportFormat:'jpeg',exportLongSideKey:'2160',customLongSide:2160,exportQuality:90,outputFilename:'photo-collage',exporting:false};" +
   "const HISTORY_LIMIT=50,undoStack=[],redoStack=[],historyGestures=new Map();let historyApplying=false,historyRevision=0,initialHistorySignature='';" +
   "const els={undoButton:{disabled:true},redoButton:{disabled:true},resetButton:{disabled:true},exportResult:{classList:{remove(){}},textContent:''},exportProgress:{classList:{remove(){}},textContent:''}};" +
-  "const window={AppToast:{show(){}}};function tr(k){return k}function setStatus(){}function hideToast(){}function updateView(){}function renderFinishPanel(){}function cleanupUnusedPhotoResources(){}" +
+  "const window={AppToast:{show(){}}};function tr(k){return k}function setStatus(){}function hideToast(){}function cancelImport(){}function updateView(){}function renderFinishPanel(){}function cleanupUnusedPhotoResources(){}" +
   historyCode +
   "initialHistorySignature=historySignature(captureHistoryState());" +
   "for(let i=0;i<60;i++){const before=captureHistoryState();state.gap=i;commitHistory(before)}" +
@@ -208,6 +208,8 @@ assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + 
 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
 assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
+
+require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs')], {stdio: 'inherit'});
 
 console.log('[OK] Photo Collage release regression passed.');
 console.log('[OK] Standard layout cases:', standardLayoutCases);
