@@ -646,3 +646,13 @@ CI成功だけで実機stressや制限付き環境の `file://` browser smokeを
 - runtime external CDN / font / analytics / telemetry / API requestなし。
 - no unresolved build placeholder。
 - CI green。
+
+## 21. Safe photo import lifecycle
+
+- Each import owns its staged photos, decode generation, failures, and progress. A newer nonempty selection supersedes only the pending batch, not the committed collage.
+- A native localized Cancel import button is available during loading. Cancellation immediately returns to the existing collage (or empty/error state), leaves edits and Undo/Redo unchanged, and restores focus from Cancel to the visible photo picker. Browser decoders already running may finish later, but cannot publish results or start the next file.
+- Completed staged thumbnail URLs are released immediately on cancellation/supersession and on every stale exit. Current photos and Undo/Redo-owned thumbnail URLs are never released by a cancelled batch.
+- Commit successful photos together after the active batch settles; clear previous export details only if photos actually change. Partial failures retain valid photos. All-failed imports retain the previous collage, history, and export details.
+- Display failed filenames as text outside the hidden ready area. With no valid photos, use the error phase so mobile users can see both the failure list and retry instructions. Export stays disabled until at least two photos are ready and while an import runs.
+- Clear the picker value when a selection is captured so the same file can be retried. Reset, Undo/Redo, and pagehide invalidate pending imports. A persisted pagehide restores the cancelled UI and retains committed resources for back-forward cache restoration; a final pagehide releases all session resources. Do not accept imports during export.
+- Run `scripts/check-photo-collage-import.cjs` through the stable release regression: deferred decode/error/encode races, cancellation/restart, atomic history, URL cleanup, all-failed and partial batches, hostile filenames, capacity, JA/EN and keyboard focus contracts.
