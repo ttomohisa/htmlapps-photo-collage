@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `1.0.0`
+- **Current development version:** `1.0.1`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -656,3 +656,13 @@ CI成功だけで実機stressや制限付き環境の `file://` browser smokeを
 - Display failed filenames as text outside the hidden ready area. With no valid photos, use the error phase so mobile users can see both the failure list and retry instructions. Export stays disabled until at least two photos are ready and while an import runs.
 - Clear the picker value when a selection is captured so the same file can be retried. Reset, Undo/Redo, and pagehide invalidate pending imports. A persisted pagehide restores the cancelled UI and retains committed resources for back-forward cache restoration; a final pagehide releases all session resources. Do not accept imports during export.
 - Run `scripts/check-photo-collage-import.cjs` through the stable release regression: deferred decode/error/encode races, cancellation/restart, atomic history, URL cleanup, all-failed and partial batches, hostile filenames, capacity, JA/EN and keyboard focus contracts.
+
+
+## 22. v1.0.1 adjustment reset and export naming
+
+- Reset photo adjustment returns only the selected photo to centered crop, 100% zoom, and Fill mode. It preserves the File reference, photo ID, order, selected layout, and featured status.
+- Reset is a single Undo / Redo step. Already-default, missing, single-photo, and exporting states disable it; no-op calls do not change history. Crop, zoom, mode, selection, and export transitions update its availability.
+- Output naming is stable across blur and save: strip stacked image suffixes and exposed trailing dots/spaces, sanitize invalid characters, and prefix Windows-reserved stems even when followed by another extension.
+- The header shows v1.0.1. EN / JA keeps the destination language visible and names that destination in a localized aria-label and title. Help and the truthful Fully local processing / 完全ローカル処理 badges remain localized.
+- Keep the dependency-free, single-HTML, CSP, original-source export, orientation-aware decode, and existing Cloudflare preview/cleanup contracts.
+- The release regression includes adjustment reset/history, control availability, localized header names, and filename regression tests. Real-browser QA verifies native file selection, EXIF orientation, Fill/Fit geometry, and saved output pixels/dimensions separately.
