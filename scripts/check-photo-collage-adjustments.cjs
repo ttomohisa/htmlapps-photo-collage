@@ -118,3 +118,11 @@ test('language button names the destination in the current language and Help sta
   assert.match(source, /id="resetPhotoButton"[^>]*type="button"[^>]*data-i18n="resetPhoto"/);
   assert(source.includes("els.resetPhotoButton.addEventListener('click',resetPhotoAdjustment)"));
 });
+
+test('header keeps 44-pixel language and Help targets without hiding the version', () => {
+  assert.match(source, /\.language-button\{[^}]*min-width:44px[^}]*min-height:44px/);
+  assert.match(source, /\.header-icon-button\{[^}]*width:44px[^}]*height:44px/);
+  assert.match(source, /\.header-actions\{[^}]*flex-shrink:0/);
+  assert.match(source, /\.brand-name\{[^}]*display:flex/);
+  assert.match(source, /\.version-badge\{[^}]*flex-shrink:0/);
+});
