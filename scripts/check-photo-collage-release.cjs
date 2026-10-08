@@ -19,11 +19,11 @@ function block(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-assert(config.version === '1.0.0', 'app.config.json version must be 1.0.0.');
-assert(source.includes('v1.0.0'), 'UI version must be v1.0.0.');
+assert(config.version === '1.0.1', 'app.config.json version must be 1.0.1.');
+assert(source.includes('v' + config.version), 'UI version must match app.config.json.');
 
 const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
-assert(committedRootHtml.includes('v1.0.0'), 'Committed photo-collage.html must be the v1.0.0 readable build.');
+assert(committedRootHtml.includes('v' + config.version), 'Committed photo-collage.html must match app.config.json.');
 assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collage.html must keep connect-src 'none'.");
 assert(!committedRootHtml.includes('__APP_ICON_DATA_URI__'), 'Committed photo-collage.html must not contain unresolved icon placeholders.');
 assert(!committedRootHtml.includes('__EMBEDDED_ASSET_BUNDLE_JSON__'), 'Committed photo-collage.html must not contain unresolved asset placeholders.');
@@ -209,7 +209,7 @@ assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
 assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
 
-require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs')], {stdio: 'inherit'});
+require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs'), path.join(__dirname, 'check-photo-collage-adjustments.cjs')], {stdio: 'inherit'});
 
 console.log('[OK] Photo Collage release regression passed.');
 console.log('[OK] Standard layout cases:', standardLayoutCases);

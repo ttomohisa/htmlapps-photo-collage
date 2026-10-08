@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 - 2026-10-08
+
+### Added
+- Reset only the selected photo’s crop, zoom, and Fill / Fit mode, with one-step Undo / Redo. Photo identity, order, and featured status are preserved.
+
+### Changed
+- Give the EN / JA button localized destination labels and tooltips; keep the header version aligned with app configuration.
+
+### Fixed
+- Normalize stacked image extensions consistently before saving, and protect reserved filename stems followed by extra extensions.
+- Keep reset availability synchronized with crop, zoom, selection, and export.
+
+### Previously unreleased import fixes
 
 ### Fixed
 - Cancel photo imports without losing the existing collage or its Undo/Redo history.

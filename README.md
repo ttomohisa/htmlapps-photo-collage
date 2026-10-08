@@ -22,6 +22,7 @@ GitHub Pages delivers the initial HTML. After it loads, photo decoding, thumbnai
 - **More layouts when you want another arrangement** — Additional candidate pages are available for larger photo sets, and switching pages immediately updates the preview.
 - **Reorder photos naturally** — Use desktop Drag & Drop, a touch-friendly drag handle, or the move buttons.
 - **Adjust each photo without a free-form editor** — Change crop position, 1×–3× zoom, Fill / Fit, or mark one photo as the featured image.
+- **Reset one photo’s adjustment** — Return the selected photo to centered Fill at 100% zoom without changing its featured status or order. Undo restores its previous crop, zoom, and mode.
 - **Finish the canvas quickly** — Start at 4:3 or choose 1:1, 4:5, 9:16, 16:9, 3:2, 4:3, or a custom ratio, then adjust spacing, outer margin, background, transparency, and rounded corners.
 - **Export from the original photos** — Save as JPEG, PNG, or WebP at 1080, 2160, 4096px, or a custom long-side size.
 - **Cancel photo imports safely** — Stop a pending batch without changing existing photos, edits, or Undo / Redo. Failed filenames stay visible even if none load, and selecting again replaces only the pending batch.
@@ -64,6 +65,8 @@ The app itself does not require Python, Node.js, a local web server, or an insta
 7. Edit the output filename if needed and select **Save image**.
 
 While photos load, select **Cancel import** to keep your current collage. A new selection stops the pending batch. Unsupported or damaged files are listed by name; valid photos from the same completed batch are still added. A cancelled or wholly failed batch does not clear the last export details.
+
+Use **Reset photo adjustment** to reset only the selected photo, or **Undo** to restore its previous adjustment. It is unavailable when the photo is already at its defaults or while exporting.
 
 The default canvas ratio is **4:3**. Transparent background is available for PNG export.
 
