@@ -666,3 +666,7 @@ CI成功だけで実機stressや制限付き環境の `file://` browser smokeを
 - The header shows v1.0.1. EN / JA keeps the destination language visible and names that destination in a localized aria-label and title. Help and the truthful Fully local processing / 完全ローカル処理 badges remain localized.
 - Keep the dependency-free, single-HTML, CSP, original-source export, orientation-aware decode, and existing Cloudflare preview/cleanup contracts.
 - The release regression includes adjustment reset/history, control availability, localized header names, and filename regression tests. Real-browser QA verifies native file selection, EXIF orientation, Fill/Fit geometry, and saved output pixels/dimensions separately.
+
+## Informational footer on smartphones
+
+Hide only the main informational footer using the existing smartphone layout query `(max-width:600px), (max-height:520px) and (pointer:coarse)`. Preserve functional navigation, desktop footer, existing local-processing wording and Help content. No build information is added.
