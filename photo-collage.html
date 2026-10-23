@@ -112,6 +112,7 @@
     @media (max-width:600px), (max-height:520px) and (pointer:coarse){.app-toast{bottom:calc(var(--app-mobile-bottom-bar-height) + env(safe-area-inset-bottom) + 12px)}}
     @media(max-width:520px){:root{--header-height:58px}.header-inner{padding-block:8px}.brand-mark{width:34px;height:34px;border-radius:10px}.brand-name{font-size:15px}.brand-meta{display:none}.header-actions{gap:11px}.language-button{padding-block:6px}.header-icon-button{padding-block:6px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+      @media (max-width:600px), (max-height:520px) and (pointer:coarse) { body > footer { display: none; } }
   </style>
 </head>
 <body class="has-mobile-bottom-bar has-mobile-page-tabs" data-mobile-page="photos">
@@ -308,7 +309,7 @@
   (()=>{
     'use strict';
     const APP_CONFIG={"$schema":"./schemas/app-config.schema.json","name":"Photo Collage","nameJa":"写真コラージュ","slug":"photo-collage","version":"1.0.1","description":"Combine multiple photos into one collage directly in your browser.","descriptionJa":"複数の写真をブラウザー内で1枚のコラージュにまとめます。","defaultLanguage":"auto","repository":{"owner":"ttomohisa","name":"htmlapps-photo-collage"},"build":{"output":"dist/index.html","blockRuntimeNetwork":true,"selfExtract":{"enabled":true,"output":"dist/index.self-extract.html"},"sizeBudget":{"readableWarningMb":25,"selfExtractWarningMb":12}}};
-    const BUILD_MANIFEST={"schemaVersion":2,"builder":"single-html-app-template/1.3","generatedAtUtc":"2026-10-08T11:31:22.3642873Z","app":{"name":"Photo Collage","slug":"photo-collage","version":"1.0.1"},"dependencies":[]};
+    const BUILD_MANIFEST={"schemaVersion":2,"builder":"single-html-app-template/1.3","generatedAtUtc":"2026-10-23T10:22:27.8717007Z","app":{"name":"Photo Collage","slug":"photo-collage","version":"1.0.1"},"dependencies":[]};
     const assetBundle={"schemaVersion":2,"dependencies":{}};
     const blobUrls=new Set();
     const assetByteCache=new Map();

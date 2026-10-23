@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
+
+
 ## 1.0.1 - 2026-10-08
 
 ### Added
