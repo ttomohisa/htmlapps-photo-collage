@@ -4,3 +4,6 @@
 *.png binary
 *.jpg binary
 *.zip binary
+
+# Keep the fixed shared UI lock byte-identical to its canonical template source.
+components/ui-conventions.lock.json -text whitespace=cr-at-eol

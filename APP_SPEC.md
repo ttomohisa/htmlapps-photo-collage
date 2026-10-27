@@ -164,7 +164,7 @@ v0.6.0でテンプレート標準 `mobile-bottom-bar` を利用し、以下の4�
 - 写真
 - レイアウト
 - 仕上げ
-- 保存
+- 出力設定（画面の切替。画像の保存は画面内のボタンから実行）
 
 PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、360px幅、長いファイル名を確認する。
 
@@ -670,3 +670,15 @@ CI成功だけで実機stressや制限付き環境の `file://` browser smokeを
 ## Informational footer on smartphones
 
 Hide only the main informational footer using the existing smartphone layout query `(max-width:600px), (max-height:520px) and (pointer:coarse)`. Preserve functional navigation, desktop footer, existing local-processing wording and Help content. No build information is added.
+
+## Shared UI conventions v1
+
+- Embed the exact version 1.0.0 JS/CSS and lock in `components/ui-conventions.*` using `scripts/embed-ui-conventions.ps1`. Hash/marker mismatch fails the build. No runtime fetch or dependency change.
+- Photos and editor state remain tab-session-only. Display retention at the work title on every mobile page; no photo/project persistence is added. Only explicit language choice writes `browser-kitty:ui-language:v1`.
+- Resolve language from valid URL, common preference, first supported browser language, then English; this app has no legacy language key. Startup does not write preferences. Failed preference writes apply to this screen and show a persistent notice.
+- Language changes translate document title/description, open dialogs, statuses, export progress/results, accessibility labels and help. Preserve live input drafts, filenames, photos, selection, pointer capture, history, import ownership, export snapshot and mobile page.
+- Bottom **Output settings / 出力設定** is navigation only. It never exports or downloads. The real **Save image / 画像を保存** button shows native unavailable/busy states and a visible two-photo/import/export prerequisite.
+- Before export show photo count → one collage, selected format, dimensions and editable filename. Retain the original-source decode/draw/encode path and 8192px / 32MP limits. Download feedback uses the actual snapshot filename and details; edits mark retained feedback as a previous result, while selection/language alone do not. A failed retry retains that result and the current work, and shows persistent recovery.
+- Reset dialog states the photo count and all editor settings reset; original disk files remain. Cancel receives initial focus; native Escape, backdrop cancellation and return focus remain. Reset and removal provide real revision-bound Undo. Later edits remove stale Undo actions; focused Undo never expires.
+- Executable controls opt into the shared colors and native disabled behavior; page and pressed choices retain selection styles. Header/dialog/history/main actions target 44px. Dense reorder/remove buttons retain 34–36px targets, the drag grip is 34px, and preset/Fill-Fit choices retain 36–38px: these allow preview/settings density and require human touch acceptance; keyboard alternatives remain.
+- Run `node scripts/check-photo-collage-ui.cjs` via release and repository checks. These production-function harnesses do not establish browser/device acceptance. Real downloads/pixels/transparency/orientation, touch/reorder, keyboard focus, 360/390/768/1280px JA/EN, both single-file variants/offline and desktop 20×12MP/mobile 10×12MP remain manual gates.

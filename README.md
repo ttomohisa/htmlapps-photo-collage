@@ -27,7 +27,7 @@ GitHub Pages delivers the initial HTML. After it loads, photo decoding, thumbnai
 - **Export from the original photos** — Save as JPEG, PNG, or WebP at 1080, 2160, 4096px, or a custom long-side size.
 - **Cancel photo imports safely** — Stop a pending batch without changing existing photos, edits, or Undo / Redo. Failed filenames stay visible even if none load, and selecting again replaces only the pending batch.
 - **Undo and redo safely** — Keep up to 50 edit steps, including reorder, layout, crop, finish settings, and export settings.
-- **Desktop and smartphone workflows** — Smartphones use dedicated Photos / Layout / Finish / Save pages instead of a long stacked desktop UI.
+- **Desktop and smartphone workflows** — Smartphones use dedicated Photos / Layout / Finish / Output settings pages instead of a long stacked desktop UI.
 - **Fully local processing** — No account, runtime CDN, remote font, analytics, telemetry, or external API is required by the app.
 
 ## Quick start
@@ -68,6 +68,10 @@ While photos load, select **Cancel import** to keep your current collage. A new 
 
 Use **Reset photo adjustment** to reset only the selected photo, or **Undo** to restore its previous adjustment. It is unavailable when the photo is already at its defaults or while exporting.
 
+The notice above the workspace identifies this tab-only session on every page. Photos and edits disappear on reload; the app does not save a project. The language switch remembers only an explicit JA/EN choice when storage permits, and shows a notice if it cannot.
+
+Before **Save image**, review the photo count, format, dimensions and edited filename. **Download started** means the file was handed to the browser. Retained export details are marked **Previous result** after edits; a failed retry preserves work and provides recovery. Full editor reset lists its scope, leaves disk originals alone, and offers Undo. Reset photo adjustment affects only the selected photo.
+
 The default canvas ratio is **4:3**. Transparent background is available for PNG export.
 
 ### Keyboard shortcuts
@@ -88,9 +92,9 @@ On narrow smartphone layouts, the fixed bottom bar separates the workflow into f
 - **Photos** — add, review, reorder, and remove photos.
 - **Layout** — choose a layout and adjust individual photos.
 - **Finish** — adjust ratio, spacing, background, transparency, and corners.
-- **Save** — choose export settings and save the result.
+- **Output settings** — choose export settings; **Save image** starts one collage download.
 
-Layout, Finish, and Save stay disabled until at least two photos are ready.
+Layout, Finish, and Output settings stay disabled until at least two photos are ready.
 
 [![Photo Collage mobile screenshot](assets/screenshot-mobile-en.png)](https://ttomohisa.github.io/htmlapps-photo-collage/)
 

@@ -236,3 +236,7 @@ Useful mount options include `initialPage`, `pageTopTarget`, `pageTopOffset`, `o
 ## WebRTC application-ready rule
 
 For `webrtc-qr-pairing.html`, PeerConnection `connected` alone is not application-ready. The designated readiness DataChannel must also be `open`. Custom channel layouts set `readyChannelLabel` to a reliable control channel.
+
+## Browser Kitty UI conventions 1.0.0
+
+`ui-conventions.js`, `.css` and `.lock.json` are copied byte-for-byte from the canonical template. The builder invokes `scripts/embed-ui-conventions.ps1`, verifies SHA-256 and replaces exactly one JS/CSS marker. Do not edit the vendored bytes independently. The app uses `BrowserKittyUI.resolveLanguage`, `chooseLanguage`, `text`, `setButtonState` and `setSaveStatus`; application adapters own photos/history/import/export. Executable controls opt in individually; page/pressed choices retain their selection styling. The app-local toast pauses expiry while Undo has focus and removes stale revision actions. See APP_SPEC shared UI section for dense-target exceptions and manual acceptance.

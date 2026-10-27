@@ -105,12 +105,12 @@ test('reserved-name prefix truncation remains stable and never splits a Unicode 
 
 test('language button names the destination in the current language and Help stays localized', () => {
   const T = new Function('return (' + block('    const T=', '\n    const els=').replace('    const T=', '').trim().replace(/;$/, '') + ')')();
-  const help = element(), els = {languageButton: element()};
+  const help = element(), els = {languageButton: element(),retentionStatus:element(),languageNotice:element()};
   help.dataset = {i18nTitle: 'helpTitle', i18nAriaLabel: 'helpTitle'};
   const lang = els.languageButton; lang.dataset = {i18nTitle: 'switchLanguage', i18nAriaLabel: 'switchLanguage'};
-  const document = {documentElement: {}, querySelectorAll(selector) { return selector === '[data-i18n]' ? [] : [lang, help]; }};
+  const document = {documentElement: {},querySelector(){return element()}, querySelectorAll(selector) { return selector === '[data-i18n]'||selector === 'input,textarea,select' ? [] : [lang, help]; }};
   const state = {lang: 'ja'};
-  const apply = new Function('state','T','els','document', `function tr(k){return T[state.lang][k]}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
+  const apply = new Function('state','T','els','document', `const UI={setSaveStatus(){},text(){return ''}};let languageSessionOnly=false;function captureLanguageInputs(){return []}function refreshPhotoLanguage(){}function renderLocalizedMessages(){}function renderResetDescription(){}function tr(k){return T[state.lang][k]}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
   for (const [language, visible, label, helpLabel] of [['ja','EN','英語に切り替え','使い方と注意事項'],['en','JA','Switch to Japanese','How to use & notes']]) {
     state.lang=language;apply();assert.equal(lang.textContent,visible);assert.equal(lang.attrs['aria-label'],label);assert.equal(lang.title,label);assert.equal(help.attrs['aria-label'],helpLabel);assert.equal(help.title,helpLabel);
   }

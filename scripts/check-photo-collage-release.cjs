@@ -209,7 +209,7 @@ assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
 assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
 
-require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs'), path.join(__dirname, 'check-photo-collage-adjustments.cjs')], {stdio: 'inherit'});
+require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs'), path.join(__dirname, 'check-photo-collage-adjustments.cjs'), path.join(__dirname, 'check-photo-collage-ui.cjs')], {stdio: 'inherit'});
 
 console.log('[OK] Photo Collage release regression passed.');
 console.log('[OK] Standard layout cases:', standardLayoutCases);

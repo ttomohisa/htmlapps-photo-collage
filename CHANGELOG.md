@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Embed pinned Browser Kitty UI v1 with explicit language preferences, per-page session retention, shared executable button states and output scope.
+- Label mobile navigation Output settings; show snapshot-based Download started details, previous-result feedback and persistent export recovery.
+- Preserve numeric/text drafts and in-flight work during translation; add cancel-first scoped reset and revision-bound, focus-preserving Undo.
+- Add production-function shared UI regressions to the release/repository checks. Browser/device acceptance remains separate.
+
 - Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
 
 

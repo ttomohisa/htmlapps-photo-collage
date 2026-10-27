@@ -1,4 +1,4 @@
-param(
+﻿param(
   [switch]$ForceDownload
 )
 
@@ -299,3 +299,7 @@ if (-not $webrtcReadyText.Contains("options.requireReadyChannelOpen!==false&&(!r
   throw "WebRTC application-ready must wait for the designated DataChannel to open."
 }
 
+
+# Production adapter regression, including fixed shared UI hash checks.
+& node (Join-Path $Root "scripts/check-photo-collage-release.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Photo Collage release regression failed." }
