@@ -33,6 +33,8 @@ jobs:
     - name: Build and verify standalone HTML
       shell: pwsh
       run: |
+        $tree = git rev-parse 'HEAD^{tree}'
+        Write-Host "BK_TREE_SHA $tree"
         ./scripts/check-repository.ps1
         node --test tests/mobile-footer.test.cjs
         if ($LASTEXITCODE -ne 0) { throw "Footer source regression failed." }
