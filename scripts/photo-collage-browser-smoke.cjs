@@ -165,8 +165,16 @@ async function runMobileWorkflow(browser){
     assert.match(await page.locator('#removePhotoDescription').textContent(),/Remove/);
     await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
     await page.locator('#undoButton').click();await countPhotos(page,4);
-    // A compact drop zone accepts additional photos via the original file-picker.
-    await page.locator('#fileInput').setInputFiles(images.slice(4));await countPhotos(page,5);
+    // The compact bar still supports the fallback picker and direct file drops.
+    await page.locator('#fileFallbackInput').setInputFiles(images.slice(4));await countPhotos(page,5);
+    await page.evaluate(async()=>{
+      const canvas=document.createElement('canvas');canvas.width=160;canvas.height=100;
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#16624f';ctx.fillRect(0,0,160,100);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+      const transfer=new DataTransfer();transfer.items.add(new File([blob],'dropped-after-import.png',{type:'image/png'}));
+      document.getElementById('dropZone').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
+    });
+    await countPhotos(page,6);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   }finally{await context.close()}
