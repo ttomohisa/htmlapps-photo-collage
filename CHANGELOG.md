@@ -10,6 +10,11 @@
 - Publish an annotated version tag and GitHub Release with standalone assets after a successful main deployment, skipping duplicate releases.
 
 ### Changed
+- Place the live photo list, layout choices, per-photo adjustments, canvas controls, and export settings in one left-hand editor rail on wide screens, with a sticky preview on the right. On mobile, retain the four original workflow pages without losing editing state when the window is resized.
+- Move Undo, Redo, and Reset into the desktop header; use a compact history menu in the mobile header.
+- Simplify layout selection, aspect-ratio choices with shape previews, canvas sliders, and export settings by removing nested panel borders.
+- Replace the mobile dashed drop zone with two adjacent photo/file selection buttons, while keeping drag/drop support.
+- Remove the verbose import cancellation paragraph from Help, retaining the actual cancel operation and other safety notes.
 - Keep the import/drop area compact after photos are added without disabling further imports or drops.
 - Use two photo columns on narrow mobile widths and larger touch controls.
 - Hide the hero heading and local-processing badge in the mobile workflow only, and remove the redundant session note near the importer.
