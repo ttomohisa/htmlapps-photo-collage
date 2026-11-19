@@ -104,6 +104,10 @@ This repository includes a workflow that validates the stable-release regression
 2. Push to `main`, or run **Deploy standalone app to GitHub Pages** from the Actions tab.
 3. After a successful deployment, the app is available at `https://ttomohisa.github.io/htmlapps-photo-collage/`.
 
+## Automatic tag and GitHub Release
+
+After a merged push to `main` passes the GitHub Pages deployment workflow, the app automatically creates an annotated tag and a GitHub Release for the version in `app.config.json`. The validated standalone HTML and self-extracting HTML are attached. Existing version tags are never moved; publishing a different commit under an existing version fails. Merging remains a manual action.
+
 ## Development and build layout
 
 ```text
