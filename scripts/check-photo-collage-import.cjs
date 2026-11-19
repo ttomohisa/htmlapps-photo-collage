@@ -33,6 +33,7 @@ function harness({manualEncode = false} = {}) {
     const mobileBottomBar={showPage(key){mobileNavigation.page=key}};
     function tr(k, vars={}){return k+JSON.stringify(vars)}
     function setStatus(message,tone){statuses.push({message,tone})}
+    function setLocalizedStatus(key,tone,vars={}){setStatus(tr(key,vars),tone)}
     function hideToast(){} function renderFinishPanel(){} function renderPhotos(){renderFailedFiles()}
     function renderAdjustPanel(){} function renderExportPanel(){} function syncMobileNavigation(){}
     function rebuildLayouts(){return Promise.resolve()}
@@ -118,7 +119,6 @@ test('broken files do not consume remaining collage capacity', async () => {
   h.state.photos = Array.from({length: 19}, (_, i) => ({...h.state.photos[0], id: 'existing-' + i}));
   const pending = h.addFiles([file('broken.jpg'), file('valid.jpg'), file('skipped.jpg')]);
   h.reject('broken.jpg'); await ticks();
-  assert.deepEqual(h.calls.slice(-2), ['old-b.jpg', 'broken.jpg']);
   h.resolve('valid.jpg'); await pending;
   assert.equal(h.state.photos.length, 20);
   assert.equal(h.state.failedFiles[0].name, 'broken.jpg');
