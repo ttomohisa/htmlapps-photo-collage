@@ -224,7 +224,10 @@ const staleVersions = source.match(/v0\.(?:[1-8])(?:\.\d+)?/g) || [];
 assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + [...new Set(staleVersions)].join(', '));
 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
-assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
+assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 5, 'Expected four navigation items plus mobile history.');
+assert((source.match(/data-mobile-page-target="/g) || []).length === 4, 'Mobile history must not become a fifth page.');
+assert(source.includes('position:relative;z-index:30;'), 'App header must not be sticky.');
+assert(source.includes("event.stopImmediatePropagation();exportImage()"), 'Active mobile Save tab must start export.');
 
 require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs'), path.join(__dirname, 'check-photo-collage-adjustments.cjs')], {stdio: 'inherit'});
 
