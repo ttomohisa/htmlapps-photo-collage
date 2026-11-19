@@ -111,9 +111,67 @@ async function runCapacity(browser){
     assert.deepEqual(errors,[]);
   }finally{await context.close()}
 }
+async function runMobileWorkflow(browser){
+  const context=await browser.newContext({viewport:{width:320,height:740},locale:'ja',hasTouch:true,acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url())});
+  try{
+    await page.goto(url);
+    assert.equal(await page.locator('#heroTitle').isVisible(),false,'mobile hero title hidden');
+    assert.equal(await page.locator('.privacy-badge').isVisible(),false,'mobile privacy badge hidden');
+    assert.equal(await page.locator('.input-note').count(),0,'unnecessary session notice removed');
+    const emptyHeight=await page.locator('#dropZone').evaluate(el=>el.getBoundingClientRect().height);
+    const images=await fixtures(page,5);
+    await page.locator('#fileInput').setInputFiles(images.slice(0,4));await countPhotos(page,4);
+    const loadedHeight=await page.locator('#dropZone').evaluate(el=>el.getBoundingClientRect().height);
+    assert(loadedHeight<emptyHeight&&loadedHeight<120,`drop target must shrink after import: ${loadedHeight} vs ${emptyHeight}`);
+    const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+    assert.equal(gridColumns,2,'even 320px wide phone must show two photo columns');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await page.locator('#appToast').evaluate(el=>{el.style.display='none'});
+    await page.screenshot({path:path.join(evidence,'mobile-photos-ja.png'),animations:'disabled'});
+    const initial=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
+    const drag=page.locator('#photoGrid .photo-card').first().locator('.drag-handle');
+    const target=page.locator('#photoGrid .photo-card').nth(3);
+    await drag.scrollIntoViewIfNeeded();
+    const from=await drag.boundingBox(),to=await target.boundingBox();
+    assert(from&&to,'drag elements must be visible');
+    await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();
+    await page.mouse.move(to.x+to.width*.8,to.y+to.height*.7,{steps:12});
+    const mid=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
+    assert.notDeepEqual(mid,initial,'cards must move before releasing drag');
+    assert.equal(await page.locator('.photo-reorder-ghost').count(),1);
+    await page.screenshot({path:path.join(evidence,'mobile-photos-drag.png'),animations:'disabled'});
+    await page.mouse.up();
+    const after=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
+    assert.deepEqual(after,mid,'drag release must commit live card order');
+    assert.equal(await page.locator('.photo-reorder-ghost').count(),0,'ghost must be cleaned up');
+    assert.equal(await page.locator('#undoButton').isDisabled(),false);
+    await page.locator('#undoButton').click();
+    const restored=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
+    assert.deepEqual(restored,initial,'reorder must undo in one step');
+    const remove=page.locator('#photoGrid .photo-card').first().locator('.danger-icon-button');
+    await remove.click();assert.equal(await page.locator('#removePhotoDialog').isVisible(),true);
+    assert.equal(await page.locator('#photoGrid .photo-card').count(),4);
+    await page.locator('#cancelRemovePhotoButton').click();
+    assert.equal(await page.locator('#removePhotoDialog').isVisible(),false);
+    assert.equal(await page.locator('#photoGrid .photo-card').count(),4,'cancel must preserve photo');
+    await remove.click();
+    assert.equal(await page.locator('#removePhotoDescription').textContent().then(t=>t.includes('sample-01.png')),true);
+    await page.locator('#languageButton').click();
+    assert.match(await page.locator('#removePhotoDescription').textContent(),/Remove/);
+    await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
+    await page.locator('#undoButton').click();await countPhotos(page,4);
+    // A compact drop zone accepts additional photos via the original file-picker.
+    await page.locator('#fileInput').setInputFiles(images.slice(4));await countPhotos(page,5);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
+  }finally{await context.close()}
+}
 async function main(){
   fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
-  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser)}
+  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser)}
   finally{await browser.close()}
   console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, PNG download, stale result and localized errors');
   console.log('[INFO] Captured four current-UI screenshots in '+evidence);
