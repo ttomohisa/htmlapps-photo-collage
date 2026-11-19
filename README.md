@@ -18,7 +18,7 @@ GitHub Pages delivers the initial HTML. After it loads, photo decoding, thumbnai
 
 ## Features
 
-On desktop, controls appear in a left rail beside a sticky preview; on smartphones, the four workflow pages remain available. Undo, Redo, and Reset are in the header or its mobile history menu.
+On desktop, photo ordering, layout, and canvas adjustments sit in a left rail beside a sticky preview, with export settings directly below that preview. On smartphones, the four workflow pages remain available. Undo, Redo, and Reset are in the header or its mobile history menu.
 
 
 - **Photo-aware layout suggestions** — Add 2–20 photos and choose from layouts scored against the actual photo aspect ratios instead of starting from a blank canvas.
