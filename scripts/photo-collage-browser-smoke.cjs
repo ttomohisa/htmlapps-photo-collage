@@ -159,7 +159,9 @@ async function runMobileWorkflow(browser){
     assert.equal(await page.locator('#photoGrid .photo-card').count(),4,'cancel must preserve photo');
     await remove.click();
     assert.equal(await page.locator('#removePhotoDescription').textContent().then(t=>t.includes('sample-01.png')),true);
+    await page.locator('#cancelRemovePhotoButton').click();
     await page.locator('#languageButton').click();
+    await remove.click();
     assert.match(await page.locator('#removePhotoDescription').textContent(),/Remove/);
     await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
     await page.locator('#undoButton').click();await countPhotos(page,4);
