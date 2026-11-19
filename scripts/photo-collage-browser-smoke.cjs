@@ -179,9 +179,56 @@ async function runMobileWorkflow(browser){
     assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   }finally{await context.close()}
 }
+
+async function runDesktopEditorLayout(browser){
+  const context=await browser.newContext({viewport:{width:1360,height:860},locale:'ja',acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  try{
+    await page.goto(url);
+    const images=await fixtures(page,5);
+    await page.locator('#fileInput').setInputFiles(images);
+    await countPhotos(page,5);
+    await page.waitForFunction(()=>document.querySelector('#layoutPicker:not([hidden])'));
+    const desktop=await page.evaluate(()=>{
+      const rect=id=>document.getElementById(id).getBoundingClientRect(),a=rect('adjustPanel'),b=rect('layoutPicker'),c=rect('finishPanel'),d=rect('exportPanel'),p=rect('previewStage'),h=document.querySelector('.header-inner').getBoundingClientRect(),main=rect('workspace'),head=document.querySelector('.header-inner');
+      const headerContentX=h.left+parseFloat(getComputedStyle(head).paddingLeft);
+      const mainEl=document.querySelector('.main'),mainContentX=mainEl.getBoundingClientRect().left+parseFloat(getComputedStyle(mainEl).paddingLeft);
+      return {editLeft:[a.left,b.left,c.left,d.left],editRight:[a.right,b.right,c.right,d.right],previewLeft:p.left,headerContentX,mainContentX,historyHeader:document.querySelector('.app-header').contains(document.getElementById('historyToolbar')),editorHost:document.querySelector('#desktopEditorControls').contains(document.getElementById('finishPanel')),bodyOverflow:document.documentElement.scrollWidth>innerWidth};
+    });
+    assert.equal(desktop.editorHost,true,'desktop controls use the real moved nodes');
+    assert.equal(desktop.historyHeader,true,'history toolbar belongs in the header');
+    assert(desktop.editRight.every(right=>right<desktop.previewLeft),'all editor sections are left of the preview');
+    assert(Math.abs(desktop.headerContentX-desktop.mainContentX)<2,'header and body edges must align');
+    assert.equal(desktop.bodyOverflow,false,'no desktop horizontal overflow');
+    const before=await page.locator('#canvasRatioKey').count(); // selection remains on the existing ratio controls
+    assert.equal(before,0);
+    await page.locator('[data-ratio-key="9:16"]').click();
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true');
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForFunction(()=>document.querySelector('#layoutPage')?.contains(document.getElementById('adjustPanel')));
+    assert.equal(await page.locator('.privacy-badge').isVisible(),false);
+    assert.equal(await page.locator('#heroTitle').isVisible(),false);
+    await page.locator('#historyMenuButton').click();
+    assert.equal(await page.locator('#historyToolbar').isVisible(),true,'history actions open from the header');
+    assert.equal(await page.locator('#historyMenuButton').getAttribute('aria-expanded'),'true');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),false);
+    await page.locator('[data-mobile-key="finish"]').click();
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','viewport switch keeps settings');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no mobile horizontal overflow');
+    await page.screenshot({path:path.join(evidence,'mobile-finish-refined.png'),animations:'disabled'});
+    await page.locator('[data-mobile-key="save"]').click();
+    await page.screenshot({path:path.join(evidence,'mobile-save-refined.png'),animations:'disabled'});
+    await page.setViewportSize({width:1360,height:860});
+    await page.waitForFunction(()=>document.getElementById('desktopEditorControls').contains(document.getElementById('finishPanel')));
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','settings survive restoration');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close()}
+}
 async function main(){
   fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
-  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser)}
+  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser)}
   finally{await browser.close()}
   console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, PNG download, stale result and localized errors');
   console.log('[INFO] Captured four current-UI screenshots in '+evidence);
