@@ -41,7 +41,7 @@ async function takeScreenshots(browser){
     try{
       await page.goto(url);const images=await fixtures(page,6);
       await page.locator('#fileInput').setInputFiles(images);await countPhotos(page,6);
-      if(kind)await page.locator('[data-mobile-key="layout"]').click();
+      // Show the compact photo list in README phone screenshots; desktop shows the collage editor.
       // Omit transient success toast from the documentation screenshots.
       await page.locator('#appToast').evaluate(el=>{el.style.display='none'});
       for(const language of ['ja','en']){
