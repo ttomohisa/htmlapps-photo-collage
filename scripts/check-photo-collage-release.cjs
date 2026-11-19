@@ -19,7 +19,7 @@ function block(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-assert(config.version === '1.0.1', 'app.config.json version must be 1.0.1.');
+assert(config.version === '1.0.2', 'app.config.json version must be 1.0.2.');
 assert(source.includes('v' + config.version), 'UI version must match app.config.json.');
 
 const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');

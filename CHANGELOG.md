@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.2 - 2026-11-19
+
+### Fixed
+- Pause photo editing during an export while leaving progress and navigation accessible.
+- Hide stale saved-image details after edits or Undo/Redo, and retranslate retained export details and errors on language changes.
+- Let valid photos fill the remaining slots even when earlier selections fail to decode.
+- Refresh the four README screenshots against the current generated application.
 - Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
 
 

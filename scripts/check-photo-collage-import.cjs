@@ -33,6 +33,7 @@ function harness({manualEncode = false} = {}) {
     const mobileBottomBar={showPage(key){mobileNavigation.page=key}};
     function tr(k, vars={}){return k+JSON.stringify(vars)}
     function setStatus(message,tone){statuses.push({message,tone})}
+    function setLocalizedStatus(key,tone,vars={}){setStatus(tr(key,vars),tone)}
     function hideToast(){} function renderFinishPanel(){} function renderPhotos(){renderFailedFiles()}
     function renderAdjustPanel(){} function renderExportPanel(){} function syncMobileNavigation(){}
     function rebuildLayouts(){return Promise.resolve()}
@@ -112,6 +113,21 @@ test('empty picker selection is a no-op, and twenty-photo capacity remains enfor
   const h = harness(), task = h.addFiles([file('pending.jpg')]); const generation = h.state.generation; await h.addFiles([]); assert.equal(h.state.generation, generation); h.resolve('pending.jpg'); await task;
   h.state.photos = Array.from({length: 20}, (_, i) => ({...h.state.photos[0], id: String(i)})); await h.addFiles([file('overflow.jpg')]); assert.equal(h.calls.length, 1); assert.equal(h.state.photos.length, 20); assert.equal(h.toasts.at(-1).message, 'limit{"count":1}');
 });
+test('broken files do not consume remaining collage capacity', async () => {
+  const h = harness();
+  await seed(h);
+  h.state.photos = Array.from({length: 19}, (_, i) => ({...h.state.photos[0], id: 'existing-' + i}));
+  const pending = h.addFiles([file('broken.jpg'), file('valid.jpg'), file('skipped.jpg')]);
+  h.reject('broken.jpg'); await ticks();
+  h.resolve('valid.jpg'); await pending;
+  assert.equal(h.state.photos.length, 20);
+  assert.equal(h.state.failedFiles[0].name, 'broken.jpg');
+  assert.deepEqual(h.calls.slice(-2), ['broken.jpg', 'valid.jpg']);
+  assert(!h.calls.includes('skipped.jpg'));
+  assert.equal(h.statuses.at(-1).message, 'limit{"count":1}');
+  assert.equal(h.undoStack.length, 2);
+});
+
 test('Cancel is a native localized button; progress is announced and mobile all-failed state stays visible', () => {
   assert.match(source, /<button[^>]*id="cancelImportButton"[^>]*type="button"[^>]*data-i18n="cancelImport"/);
   assert.match(source, /id="loadingProgress"[^>]*role="status"[^>]*aria-live="polite"/);

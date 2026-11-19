@@ -48,6 +48,8 @@ jobs:
         New-Item -ItemType Directory -Force -Path test-results/mobile-footer | Out-Null
         node scripts/mobile-footer.browser.cjs 2>&1 | Tee-Object -FilePath test-results/mobile-footer/results.log
         if ($LASTEXITCODE -ne 0) { throw "Footer browser regression failed." }
+        node scripts/capture-photo-collage-screenshots.cjs
+        if ($LASTEXITCODE -ne 0) { throw "Screenshot verification failed." }
     - name: Upload footer browser evidence
       if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
