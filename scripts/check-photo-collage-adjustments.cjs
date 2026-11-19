@@ -126,3 +126,44 @@ test('header keeps 44-pixel language and Help targets without hiding the version
   assert.match(source, /\.brand-name\{[^}]*display:flex/);
   assert.match(source, /\.version-badge\{[^}]*flex-shrink:0/);
 });
+
+test('export lock makes all editor sections inert and restores them', () => {
+  const state={exporting:false},targets=['.input-panel','#layoutPage','#finishPage','#photosPage','.export-grid'];
+  const areas=Object.fromEntries(targets.map(selector=>[selector,{inert:false}]));
+  let navRefresh=0;
+  const doc={body:{dataset:{}},querySelector:selector=>areas[selector]||null};
+  const code=block('    function setExportBusy(', '    async function exportImage(');
+  const setExportBusy=new Function('state','document','syncMobileNavigation',code+'return setExportBusy;')(state,doc,()=>{navRefresh++});
+  setExportBusy(true);
+  assert.equal(state.exporting,true);assert.equal(doc.body.dataset.exporting,'true');
+  assert(targets.every(selector=>areas[selector].inert));
+  setExportBusy(false);
+  assert.equal(state.exporting,false);assert.equal(doc.body.dataset.exporting,'false');
+  assert(targets.every(selector=>!areas[selector].inert));assert.equal(navRefresh,2);
+});
+test('export is immune to destructive edits during image encoding', () => {
+  for(const name of ['removePhoto','movePhoto','movePhotoNear','resetEditor','setCanvasRatio','applyCustomRatio','setExportFormat','setResolutionKey','applyCustomLongSide','resetPhotoAdjustment']){
+    const pattern=new RegExp('function '+name+'\\([^\\n]*\\)\\{if\\(state.exporting\\)return;');
+    assert.match(source,pattern,name+' must refuse edits during export');
+  }
+  assert(source.includes("setExportBusy(true);renderAdjustPanel();renderExportPanel();"));
+  assert(source.includes("setExportBusy(false);renderAdjustPanel();"));
+  assert(source.includes("clearExportResult();undoStack.push(before);"));
+});
+test('status retranslation retains the error and overflow detail after language changes', () => {
+  const start=source.indexOf('    const T='),end=source.indexOf('\\n    const els=',start);
+  const translations=new Function('return ('+source.slice(start+'    const T='.length,end).trim().replace(/;$/,'')+');')();
+  const code=block('    function tr(', '    function validType(');
+  const state={lang:'ja'},els={languageButton:{textContent:''},statusText:{textContent:''},statusStrip:{className:''}};
+  const document={documentElement:{lang:'ja'},querySelectorAll:()=>[]};
+  const noop=()=>{};
+  const api=new Function('env','const {T,state,els,document,noop}=env;let localizedStatus=null;const renderPhotos=noop,renderLayoutChoices=noop,renderAdjustPanel=noop,renderFinishPanel=noop,renderExportPanel=noop;'+code+';return {tr,setStatus,applyLanguage};')({T:translations,state,els,document,noop});
+  const vars={ok:1,bad:1,overflow:2},descriptor={key:'partialWithLimit',vars,tone:'warning'};
+  api.setStatus(api.tr(descriptor.key,vars),'warning',descriptor);
+  assert(els.statusText.textContent.includes('残り2枚'));
+  state.lang='en';api.applyLanguage();
+  assert(els.statusText.textContent.includes('2 files'));
+  assert.equal(els.statusStrip.className,'status-strip show warning');
+  api.setStatus('', 'warning');state.lang='ja';api.applyLanguage();
+  assert.equal(els.statusText.textContent,'');
+});
