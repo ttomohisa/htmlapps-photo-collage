@@ -316,6 +316,10 @@
     @media (max-width:600px), (max-height:520px) and (pointer:coarse){
       .drop-zone strong.mobile-drop-label,body.has-photos .drop-zone strong.mobile-drop-label{display:block}
     }
+
+    .layout-thumb{display:block;min-height:34px}
+    .ratio-button[data-ratio-key="custom"]{grid-column:1/-1;justify-self:end;min-height:35px;width:auto;padding:3px 4px;border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+    .ratio-button[data-ratio-key="custom"]:hover,.ratio-button[data-ratio-key="custom"][aria-pressed="true"]{border:0;background:transparent;color:var(--accent-hover);box-shadow:none}
   </style>
 </head>
 <body class="has-mobile-bottom-bar has-mobile-page-tabs" data-mobile-page="photos">
