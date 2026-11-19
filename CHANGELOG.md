@@ -11,6 +11,8 @@
 
 ### Changed
 - Place the live photo list, layout choices, per-photo adjustments, canvas controls, and export settings in one left-hand editor rail on wide screens, with a sticky preview on the right. On mobile, retain the four original workflow pages without losing editing state when the window is resized.
+- Put the export settings directly below the preview on desktop, keeping the dedicated Save page on smartphones.
+- Remove the duplicate Add Photos button from the photo list. The main picker is labeled “Choose photos” before import and “Add photos” afterward, with equivalent Japanese wording.
 - Move Undo, Redo, and Reset into the desktop header; use a compact history menu in the mobile header.
 - Simplify layout selection, aspect-ratio choices with shape previews, canvas sliders, and export settings by removing nested panel borders.
 - Replace the mobile dashed drop zone with two adjacent photo/file selection buttons, while keeping drag/drop support.
