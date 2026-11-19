@@ -33,8 +33,6 @@ jobs:
     - name: Build and verify standalone HTML
       shell: pwsh
       run: |
-        $tree = git rev-parse 'HEAD^{tree}'
-        Write-Host "BK_TREE_SHA $tree"
         ./scripts/check-repository.ps1
         node --test tests/mobile-footer.test.cjs
         if ($LASTEXITCODE -ne 0) { throw "Footer source regression failed." }
@@ -50,7 +48,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path test-results/mobile-footer | Out-Null
         node scripts/mobile-footer.browser.cjs 2>&1 | Tee-Object -FilePath test-results/mobile-footer/results.log
         if ($LASTEXITCODE -ne 0) { throw "Footer browser regression failed." }
-        $env:BK_EXPORT_LOG_ASSETS = "1"
         node scripts/capture-photo-collage-screenshots.cjs
         if ($LASTEXITCODE -ne 0) { throw "Screenshot verification failed." }
     - name: Upload footer browser evidence
