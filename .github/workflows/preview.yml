@@ -23,7 +23,6 @@ jobs:
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       with:
         persist-credentials: false
-        ref: ${{ github.event.pull_request.head.sha }}
     - name: Setup Node.js
       uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
       with:
@@ -52,19 +51,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path test-results/photo-collage-smoke | Out-Null
         node scripts/photo-collage-browser-smoke.cjs 2>&1 | Tee-Object -FilePath test-results/photo-collage-smoke/results.log
         if ($LASTEXITCODE -ne 0) { throw "Photo Collage browser smoke failed." }
-        # One-time screenshot refresh transfer; remove this diagnostic block after committing assets.
-        $head = (git rev-parse HEAD).Trim()
-        $tree = (git rev-parse 'HEAD^{tree}').Trim()
-        Write-Host "BK_PR_HEAD $head"
-        Write-Host "BK_PR_TREE $tree"
-        foreach ($image in @("screenshot.png", "screenshot-en.png", "screenshot-mobile.png", "screenshot-mobile-en.png")) {
-          $bytes = [System.IO.File]::ReadAllBytes((Join-Path "test-results/photo-collage-smoke" $image))
-          $encoded = [Convert]::ToBase64String($bytes)
-          for ($offset = 0; $offset -lt $encoded.Length; $offset += 3000) {
-            $count = [Math]::Min(3000, $encoded.Length - $offset)
-            Write-Host "BK_IMAGE $image $offset $($encoded.Substring($offset, $count))"
-          }
-        }
     - name: Upload collage browser evidence
       if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
