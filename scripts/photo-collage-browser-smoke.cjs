@@ -148,7 +148,7 @@ async function runMobileWorkflow(browser){
     assert.deepEqual(after,mid,'drag release must commit live card order');
     assert.equal(await page.locator('.photo-reorder-ghost').count(),0,'ghost must be cleaned up');
     assert.equal(await page.locator('#undoButton').isDisabled(),false);
-    await page.locator('#undoButton').click();
+    await page.locator('#historyMenuButton').click();await page.locator('#undoButton').click();
     const restored=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
     assert.deepEqual(restored,initial,'reorder must undo in one step');
     const remove=page.locator('#photoGrid .photo-card').first().locator('.danger-icon-button');
@@ -164,7 +164,7 @@ async function runMobileWorkflow(browser){
     await remove.click();
     assert.match(await page.locator('#removePhotoDescription').textContent(),/Remove/);
     await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
-    await page.locator('#undoButton').click();await countPhotos(page,4);
+    await page.locator('#historyMenuButton').click();await page.locator('#undoButton').click();await countPhotos(page,4);
     // The compact bar still supports the fallback picker and direct file drops.
     await page.locator('#fileFallbackInput').setInputFiles(images.slice(4));await countPhotos(page,5);
     await page.evaluate(async()=>{
