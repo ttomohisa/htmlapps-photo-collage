@@ -132,3 +132,24 @@ test('nonpersisted pagehide releases staged and session thumbnail resources with
   h.eventPagehide({persisted: false}); assert.equal(h.getJob(), null); assert.equal(h.photoObjectUrls.size, 0); assert.equal(h.revoked.length, 3);
   h.resolve('late.jpg'); await task; assert.equal(h.photoObjectUrls.size, 0); assert.equal(h.revoked.length, 3);
 });
+
+test('failed files do not consume the final available photo slot', async () => {
+  const h = harness();
+  h.state.photos = Array.from({length: 19}, (_, i) => ({id:'old-'+i,file:file('old-'+i+'.jpg'),name:'old-'+i+'.jpg',width:100,height:100,aspect:1,thumbUrl:'blob:old-'+i,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false}));
+  const task = h.addFiles([file('broken.jpg'),file('valid.jpg')]);
+  h.reject('broken.jpg'); await ticks(); h.resolve('valid.jpg'); await task;
+  assert.equal(h.state.photos.length, 20);
+  assert.deepEqual(h.calls,['broken.jpg','valid.jpg']);
+  assert.equal(h.state.photos.at(-1).name,'valid.jpg');
+  assert.equal(h.state.failedFiles[0].name,'broken.jpg');
+  assert.equal(h.statuses.at(-1).message,'partial{"ok":1,"bad":1}');
+});
+test('the import reports both a failed image and uninspected overflow', async () => {
+  const h = harness();
+  h.state.photos = Array.from({length: 19}, (_, i) => ({id:'old-'+i,file:file('old-'+i+'.jpg'),name:'old-'+i+'.jpg',width:100,height:100,aspect:1,thumbUrl:'blob:old-'+i,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false}));
+  const task = h.addFiles([file('broken.jpg'),file('valid.jpg'),file('skipped.jpg')]);
+  h.reject('broken.jpg'); await ticks(); h.resolve('valid.jpg'); await task;
+  assert.equal(h.state.photos.length,20);
+  assert.deepEqual(h.calls,['broken.jpg','valid.jpg']);
+  assert.equal(h.statuses.at(-1).message,'partialWithLimit{"ok":1,"bad":1,"overflow":1}');
+});
