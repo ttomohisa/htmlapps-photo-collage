@@ -10,7 +10,7 @@ function element() { return {disabled: false, value: '', textContent: '', attrs:
 const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
 function harness() {
   const state = {photos: [photo('first', {cropX: .2, cropY: .8, zoom: 2, fit: 'fit', hero: true}), photo('second')], selectedPhotoId: 'first', selectedLayoutId: 'layout-1', exporting: false, generation: 0};
-  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton'].map(key => [key, element()]));
+  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton', 'exportResult'].map(key => [key, element()]));
   const api = new Function('state', 'els', `
     const HISTORY_LIMIT=50,undoStack=[],redoStack=[],historyGestures=new Map();
     let historyApplying=false,historyRevision=0,initialHistorySignature='',importJob=null;
@@ -110,7 +110,7 @@ test('language button names the destination in the current language and Help sta
   const lang = els.languageButton; lang.dataset = {i18nTitle: 'switchLanguage', i18nAriaLabel: 'switchLanguage'};
   const document = {documentElement: {}, querySelectorAll(selector) { return selector === '[data-i18n]' ? [] : [lang, help]; }};
   const state = {lang: 'ja'};
-  const apply = new Function('state','T','els','document', `function tr(k){return T[state.lang][k]}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
+  const apply = new Function('state','T','els','document', `let localizedStatus=null;function tr(k){return T[state.lang][k]}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
   for (const [language, visible, label, helpLabel] of [['ja','EN','英語に切り替え','使い方と注意事項'],['en','JA','Switch to Japanese','How to use & notes']]) {
     state.lang=language;apply();assert.equal(lang.textContent,visible);assert.equal(lang.attrs['aria-label'],label);assert.equal(lang.title,label);assert.equal(help.attrs['aria-label'],helpLabel);assert.equal(help.title,helpLabel);
   }
