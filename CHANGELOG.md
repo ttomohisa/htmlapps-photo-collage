@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+- Lock collage edits and export settings while encoding, and restore controls after completion or failure.
+- Clear outdated export details when the collage or output settings change.
+- Use successful photo decodes to fill the remaining slots; report decode failures and skipped overflow together.
+- Retranslate visible import/error status after switching Japanese / English.
+- Add import, export-lock and localization regression coverage.
+
 - Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
 
 
