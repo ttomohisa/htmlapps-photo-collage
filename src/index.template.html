@@ -374,8 +374,8 @@
       if(historyApplying||!before)return false;const after=captureHistoryState();if(historySignature(before)===historySignature(after))return false;
       clearExportResult();undoStack.push(before);if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;historyRevision+=1;cleanupUnusedPhotoResources();updateHistoryControls();return true;
     }
-    function beginHistoryGesture(key){if(historyApplying||historyGestures.has(key))return;historyGestures.set(key,captureHistoryState())}
-    function endHistoryGesture(key){const before=historyGestures.get(key);historyGestures.delete(key);if(before)commitHistory(before)}
+    function beginHistoryGesture(key){if(state.exporting||historyApplying||historyGestures.has(key))return;historyGestures.set(key,captureHistoryState())}
+    function endHistoryGesture(key){const before=historyGestures.get(key);historyGestures.delete(key);if(before&&!state.exporting)commitHistory(before)}
     function restoreHistorySnapshot(snapshot){
       if(!snapshot)return;cancelImport({restore:false,announce:false});historyApplying=true;state.generation+=1;state.photos=snapshot.photos.map(photo=>({...photo}));state.selectedPhotoId=snapshot.selectedPhotoId;state.selectedLayoutId=snapshot.selectedLayoutId;
       state.canvasRatioKey=snapshot.canvasRatioKey;state.canvasAspect=snapshot.canvasAspect;state.customRatioWidth=snapshot.customRatioWidth;state.customRatioHeight=snapshot.customRatioHeight;
@@ -389,7 +389,7 @@
     function redoHistory(){
       if(state.exporting||!redoStack.length)return;const target=redoStack.pop(),current=captureHistoryState();undoStack.push(current);if(undoStack.length>HISTORY_LIMIT)undoStack.shift();historyRevision+=1;restoreHistorySnapshot(target);window.AppToast.show({message:tr('redone'),tone:'success'});
     }
-    function resetEditor(){
+    function resetEditor(){if(state.exporting)return;
       cancelImport({restore:false,announce:false});const before=captureHistoryState();state.generation+=1;state.photos=[];state.selectedPhotoId='';state.selectedLayoutId='';state.layoutCandidates=[];state.layoutPage=0;state.canvasRatioKey='4:3';state.canvasAspect=4/3;state.customRatioWidth=4;state.customRatioHeight=3;state.gap=8;state.outerMargin=8;state.cornerRadius=0;state.background='#ffffff';state.transparentBackground=false;state.exportFormat='jpeg';state.exportLongSideKey='2160';state.customLongSide=2160;state.exportQuality=90;state.outputFilename='photo-collage';state.failedFiles=[];setStatus('');els.exportResult.classList.remove('show');els.exportResult.textContent='';els.exportProgress.classList.remove('show');els.exportProgress.textContent='';commitHistory(before);renderFinishPanel();updateView();window.AppToast.show({message:tr('resetDone'),tone:'success'});
     }
     function currentPhotoIds(){return new Set(state.photos.map(photo=>photo.id))}
@@ -495,16 +495,16 @@
       }
     }
     function selectedPhoto(){return state.photos.find(photo=>photo.id===state.selectedPhotoId)||null}
-    function selectPhoto(id){
+    function selectPhoto(id){if(state.exporting)return;
       if(!state.photos.some(photo=>photo.id===id))return;
       state.selectedPhotoId=id;renderPhotos();renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
     }
-    function movePhoto(id,delta){
+    function movePhoto(id,delta){if(state.exporting)return;
       const from=state.photos.findIndex(photo=>photo.id===id);if(from<0)return;
       const to=Math.max(0,Math.min(state.photos.length-1,from+delta));if(to===from)return;
       const historyBefore=captureHistoryState(),photo=state.photos.splice(from,1)[0];state.photos.splice(to,0,photo);state.generation+=1;commitHistory(historyBefore);updateView();
     }
-    function movePhotoNear(sourceId,targetId){
+    function movePhotoNear(sourceId,targetId){if(state.exporting)return;
       const from=state.photos.findIndex(photo=>photo.id===sourceId),target=state.photos.findIndex(photo=>photo.id===targetId);
       if(from<0||target<0||from===target)return;
       const historyBefore=captureHistoryState(),photo=state.photos.splice(from,1)[0];let insert=state.photos.findIndex(item=>item.id===targetId);
@@ -512,7 +512,7 @@
       state.photos.splice(Math.min(insert,state.photos.length),0,photo);state.generation+=1;commitHistory(historyBefore);updateView();
     }
     function clearPhotoReorderVisuals(){document.querySelectorAll('.photo-card').forEach(card=>card.classList.remove('dragging','drop-target','reorder-active'))}
-    function beginPointerReorder(event,photoId,card,handle){
+    function beginPointerReorder(event,photoId,card,handle){if(state.exporting)return;
       if(event.pointerType==='mouse'&&event.button!==0)return;
       state.pointerReorder={pointerId:event.pointerId,sourceId:photoId,targetId:photoId,startX:event.clientX,startY:event.clientY,active:false,sourceCard:card,targetCard:null};
       try{handle.setPointerCapture?.(event.pointerId)}catch(error){}
@@ -534,7 +534,7 @@
       state.pointerReorder=null;clearPhotoReorderVisuals();
       if(!cancel&&drag.active&&drag.targetId&&drag.targetId!==drag.sourceId)movePhotoNear(drag.sourceId,drag.targetId);
     }
-    function removePhoto(id){
+    function removePhoto(id){if(state.exporting)return;
       const index=state.photos.findIndex(photo=>photo.id===id);if(index<0)return;
       const historyBefore=captureHistoryState(),photo=state.photos.splice(index,1)[0],wasSelected=state.selectedPhotoId===id;state.generation+=1;
       if(wasSelected)state.selectedPhotoId=(state.photos[Math.min(index,state.photos.length-1)]||{}).id||'';
@@ -577,7 +577,7 @@
       els.zoomRange.value=String(photo.zoom);els.zoomRange.disabled=state.exporting||photo.fit==='fit';els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';els.heroButton.setAttribute('aria-pressed',photo.hero?'true':'false');els.heroButton.textContent=tr(photo.hero?'normalSize':'makeHero');els.previewCanvas.classList.toggle('can-adjust',photo.fit==='fill');
     }
     function hasPhotoAdjustment(photo){return Boolean(photo)&&(photo.cropX!==.5||photo.cropY!==.5||photo.zoom!==1||photo.fit!=='fill')}
-    function resetPhotoAdjustment(){
+    function resetPhotoAdjustment(){if(state.exporting)return;
       const photo=selectedPhoto();if(state.exporting||state.photos.length<2||!hasPhotoAdjustment(photo))return;
       const before=captureHistoryState();photo.cropX=.5;photo.cropY=.5;photo.zoom=1;photo.fit='fill';commitHistory(before);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
     }
@@ -591,12 +591,12 @@
       els.radiusRange.value=String(state.cornerRadius);els.radiusValue.textContent=String(state.cornerRadius);
       const transparencyAllowed=state.exportFormat==='png';if(!transparencyAllowed)state.transparentBackground=false;els.backgroundColor.value=state.background;els.backgroundHex.value=state.background;els.backgroundColor.disabled=state.transparentBackground;els.backgroundHex.disabled=state.transparentBackground;els.transparentBackground.disabled=!transparencyAllowed;els.transparentBackground.checked=state.transparentBackground;
     }
-    function setCanvasRatio(key,{record=true}={}){
+    function setCanvasRatio(key,{record=true}={}){if(state.exporting)return;
       if(key!=='custom'&&!ratioPresets[key])return;const historyBefore=record?captureHistoryState():null;
       if(key==='custom')state.canvasAspect=state.customRatioWidth/state.customRatioHeight;else state.canvasAspect=ratioPresets[key];
       state.canvasRatioKey=key;state.selectedLayoutId='';state.customLongSide=Math.min(state.customLongSide,maxLongSideForAspect(state.canvasAspect));if(record)commitHistory(historyBefore);renderFinishPanel();renderExportPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
     }
-    function applyCustomRatio(){
+    function applyCustomRatio(){if(state.exporting)return;
       const historyBefore=captureHistoryState(),width=Math.max(1,Math.min(10,Math.round(Number(els.customRatioWidth.value)||1))),height=Math.max(1,Math.min(10,Math.round(Number(els.customRatioHeight.value)||1)));
       state.customRatioWidth=width;state.customRatioHeight=height;els.customRatioWidth.value=String(width);els.customRatioHeight.value=String(height);if(state.canvasRatioKey==='custom')setCanvasRatio('custom',{record:false});commitHistory(historyBefore);renderFinishPanel();renderExportPanel();
     }
@@ -639,13 +639,13 @@
       els.exportDimensions.textContent=dimensions.width+' × '+dimensions.height+' px';els.qualityField.dataset.disabled=state.exportFormat==='png'?'true':'false';els.qualityRange.disabled=state.exporting||state.exportFormat==='png';els.qualityRange.value=String(state.exportQuality);els.qualityValue.textContent=String(state.exportQuality);
       els.customLongSide.disabled=state.exporting;els.outputFilename.disabled=state.exporting;els.filenameExtension.textContent=format.ext;els.outputFilename.value=state.outputFilename;els.exportButton.disabled=state.photos.length<2||state.exporting||Boolean(importJob);els.chooseButton.disabled=state.exporting;els.addMoreButton.disabled=state.exporting;document.getElementById('fileFallbackButton').disabled=state.exporting;updateHistoryControls();
     }
-    function setExportFormat(format){
+    function setExportFormat(format){if(state.exporting)return;
       if(!exportFormats[format]||(format==='webp'&&!webpExportSupported)||format===state.exportFormat)return;const historyBefore=captureHistoryState();state.exportFormat=format;if(format!=='png')state.transparentBackground=false;commitHistory(historyBefore);renderFinishPanel();renderExportPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
     }
-    function setResolutionKey(key){
+    function setResolutionKey(key){if(state.exporting)return;
       if(!['1080','2160','4096','custom'].includes(key)||key===state.exportLongSideKey)return;const historyBefore=captureHistoryState();state.exportLongSideKey=key;commitHistory(historyBefore);renderExportPanel();
     }
-    function applyCustomLongSide(){
+    function applyCustomLongSide(){if(state.exporting)return;
       const historyBefore=captureHistoryState(),max=maxLongSideForAspect(state.canvasAspect),raw=Math.max(256,Math.min(8192,Math.round(Number(els.customLongSide.value)||2160))),next=Math.min(raw,max);state.customLongSide=next;els.customLongSide.value=String(next);commitHistory(historyBefore);if(raw>max)window.AppToast.show({message:tr('resolutionLimited',{max}),tone:'warning'});renderExportPanel();
     }
     function loadSourceImage(photo){return decodeImageSource(photo.file)}
@@ -806,7 +806,7 @@
         });
         const label=document.createElement('span');label.className='layout-option-label';label.textContent=String(start+pageIndex+1);
         button.append(thumb,label);
-        button.addEventListener('click',()=>{if(state.selectedLayoutId===layout.id)return;const historyBefore=captureHistoryState();state.selectedLayoutId=layout.id;commitHistory(historyBefore);renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+        button.addEventListener('click',()=>{if(state.exporting||state.selectedLayoutId===layout.id)return;const historyBefore=captureHistoryState();state.selectedLayoutId=layout.id;commitHistory(historyBefore);renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
         els.layoutOptions.append(button);
       });
       els.moreLayoutsButton.hidden=pages<=1;if(pages>1){const label=tr('moreLayoutsPage',{current:state.layoutPage+1,total:pages});els.moreLayoutsButton.textContent=label;els.moreLayoutsButton.setAttribute('aria-label',label)}
@@ -850,38 +850,38 @@
     }
     function updateView(){if(importJob&&importJob.generation!==state.generation)cancelImport({restore:false,announce:false});if(state.photos.length&&!state.photos.some(photo=>photo.id===state.selectedPhotoId))state.selectedPhotoId=state.photos[0].id;renderPhotos();renderAdjustPanel();renderExportPanel();syncMobileNavigation();if(importJob)setPhase('loading');else if(!state.photos.length)setPhase(state.failedFiles.length?'error':'empty');else setPhase(state.photos.length===1?'ready-one-photo':'ready');rebuildLayouts().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))}
     function openPicker(){if(state.photos.length>=20){window.AppToast.show({message:tr('limit',{count:1}),tone:'warning'});return}els.fileInput.click()}
-    els.formatGrid.addEventListener('click',event=>{const button=event.target.closest('[data-format]');if(button)setExportFormat(button.dataset.format)});
-    els.resolutionGrid.addEventListener('click',event=>{const button=event.target.closest('[data-long-side]');if(button)setResolutionKey(button.dataset.longSide)});
+    els.formatGrid.addEventListener('click',event=>{if(state.exporting)return;const button=event.target.closest('[data-format]');if(button)setExportFormat(button.dataset.format)});
+    els.resolutionGrid.addEventListener('click',event=>{if(state.exporting)return;const button=event.target.closest('[data-long-side]');if(button)setResolutionKey(button.dataset.longSide)});
     els.customLongSide.addEventListener('change',applyCustomLongSide);
     for(const [control,key] of [[els.qualityRange,'quality'],[els.gapRange,'gap'],[els.marginRange,'margin'],[els.radiusRange,'radius'],[els.zoomRange,'zoom'],[els.backgroundColor,'backgroundColor']]){
       control.addEventListener('focus',()=>beginHistoryGesture(key));control.addEventListener('pointerdown',()=>beginHistoryGesture(key));control.addEventListener('blur',()=>endHistoryGesture(key));
     }
-    els.qualityRange.addEventListener('input',()=>{state.exportQuality=Math.max(10,Math.min(100,Number(els.qualityRange.value)||90));els.qualityValue.textContent=String(state.exportQuality)});
+    els.qualityRange.addEventListener('input',()=>{if(state.exporting)return;state.exportQuality=Math.max(10,Math.min(100,Number(els.qualityRange.value)||90));els.qualityValue.textContent=String(state.exportQuality)});
     els.qualityRange.addEventListener('change',()=>endHistoryGesture('quality'));
     els.outputFilename.addEventListener('focus',()=>beginHistoryGesture('filename'));els.outputFilename.addEventListener('pointerdown',()=>beginHistoryGesture('filename'));els.outputFilename.addEventListener('input',()=>{if(state.exporting)return;state.outputFilename=els.outputFilename.value;clearExportResult()});
     els.outputFilename.addEventListener('blur',()=>{state.outputFilename=sanitizeFilename(els.outputFilename.value);els.outputFilename.value=state.outputFilename;endHistoryGesture('filename')});
     for(const control of [els.qualityRange,els.gapRange,els.marginRange,els.radiusRange,els.zoomRange,els.backgroundColor])control.addEventListener('input',clearExportResult);
     els.exportButton.addEventListener('click',exportImage);
-    els.ratioGrid.addEventListener('click',event=>{const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
+    els.ratioGrid.addEventListener('click',event=>{if(state.exporting)return;const button=event.target.closest('[data-ratio-key]');if(!button)return;setCanvasRatio(button.dataset.ratioKey)});
     els.customRatioWidth.addEventListener('change',applyCustomRatio);els.customRatioHeight.addEventListener('change',applyCustomRatio);
-    els.gapRange.addEventListener('input',()=>{state.gap=Number(els.gapRange.value)||0;els.gapValue.textContent=String(state.gap);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.gapRange.addEventListener('input',()=>{if(state.exporting)return;state.gap=Number(els.gapRange.value)||0;els.gapValue.textContent=String(state.gap);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.gapRange.addEventListener('change',()=>endHistoryGesture('gap'));
-    els.marginRange.addEventListener('input',()=>{state.outerMargin=Number(els.marginRange.value)||0;els.marginValue.textContent=String(state.outerMargin);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.marginRange.addEventListener('input',()=>{if(state.exporting)return;state.outerMargin=Number(els.marginRange.value)||0;els.marginValue.textContent=String(state.outerMargin);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.marginRange.addEventListener('change',()=>endHistoryGesture('margin'));
-    els.radiusRange.addEventListener('input',()=>{state.cornerRadius=Number(els.radiusRange.value)||0;els.radiusValue.textContent=String(state.cornerRadius);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.radiusRange.addEventListener('input',()=>{if(state.exporting)return;state.cornerRadius=Number(els.radiusRange.value)||0;els.radiusValue.textContent=String(state.cornerRadius);renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.radiusRange.addEventListener('change',()=>endHistoryGesture('radius'));
-    els.backgroundColor.addEventListener('input',()=>{state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.backgroundColor.addEventListener('input',()=>{if(state.exporting)return;state.background=els.backgroundColor.value.toLowerCase();els.backgroundHex.value=state.background;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.backgroundColor.addEventListener('change',()=>endHistoryGesture('backgroundColor'));
-    els.backgroundHex.addEventListener('focus',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('pointerdown',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('change',()=>{const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;endHistoryGesture('backgroundHex');return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));endHistoryGesture('backgroundHex')});els.backgroundHex.addEventListener('blur',()=>endHistoryGesture('backgroundHex'));
-    els.transparentBackground.addEventListener('change',()=>{const historyBefore=captureHistoryState();state.transparentBackground=els.transparentBackground.checked;commitHistory(historyBefore);renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.backgroundHex.addEventListener('focus',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('pointerdown',()=>beginHistoryGesture('backgroundHex'));els.backgroundHex.addEventListener('change',()=>{if(state.exporting)return;const value=normalizeHex(els.backgroundHex.value);if(!value){els.backgroundHex.value=state.background;endHistoryGesture('backgroundHex');return}state.background=value;els.backgroundColor.value=value;renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));endHistoryGesture('backgroundHex')});els.backgroundHex.addEventListener('blur',()=>endHistoryGesture('backgroundHex'));
+    els.transparentBackground.addEventListener('change',()=>{if(state.exporting)return;const historyBefore=captureHistoryState();state.transparentBackground=els.transparentBackground.checked;commitHistory(historyBefore);renderFinishPanel();renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.resetPhotoButton.addEventListener('click',resetPhotoAdjustment);
-    els.fillButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fill')return;const historyBefore=captureHistoryState();photo.fit='fill';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
-    els.fitButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo||photo.fit==='fit')return;const historyBefore=captureHistoryState();photo.fit='fit';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
-    els.zoomRange.addEventListener('input',()=>{const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;photo.zoom=Math.max(1,Math.min(3,Number(els.zoomRange.value)||1));els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.fillButton.addEventListener('click',()=>{if(state.exporting)return;const photo=selectedPhoto();if(!photo||photo.fit==='fill')return;const historyBefore=captureHistoryState();photo.fit='fill';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.fitButton.addEventListener('click',()=>{if(state.exporting)return;const photo=selectedPhoto();if(!photo||photo.fit==='fit')return;const historyBefore=captureHistoryState();photo.fit='fit';commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.zoomRange.addEventListener('input',()=>{if(state.exporting)return;const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;photo.zoom=Math.max(1,Math.min(3,Number(els.zoomRange.value)||1));els.zoomValue.textContent=Math.round(photo.zoom*100)+'%';renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     els.zoomRange.addEventListener('change',()=>endHistoryGesture('zoom'));
-    els.heroButton.addEventListener('click',()=>{const photo=selectedPhoto();if(!photo)return;const historyBefore=captureHistoryState(),next=!photo.hero;state.photos.forEach(item=>item.hero=false);photo.hero=next;state.selectedLayoutId='';commitHistory(historyBefore);renderPhotos();renderAdjustPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
+    els.heroButton.addEventListener('click',()=>{if(state.exporting)return;const photo=selectedPhoto();if(!photo)return;const historyBefore=captureHistoryState(),next=!photo.hero;state.photos.forEach(item=>item.hero=false);photo.hero=next;state.selectedLayoutId='';commitHistory(historyBefore);renderPhotos();renderAdjustPanel();rebuildLayouts().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}))});
     function canvasPoint(event){const rect=els.previewCanvas.getBoundingClientRect();if(!rect.width||!rect.height)return null;return{x:(event.clientX-rect.left)*els.previewCanvas.width/rect.width,y:(event.clientY-rect.top)*els.previewCanvas.height/rect.height}}
-    els.previewCanvas.addEventListener('keydown',event=>{
+    els.previewCanvas.addEventListener('keydown',event=>{if(state.exporting)return;
       if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;const photo=selectedPhoto();if(!photo||photo.fit!=='fill')return;
       const historyBefore=captureHistoryState(),step=event.shiftKey?.08:.02;
       if(event.key==='ArrowLeft')photo.cropX=Math.min(1,photo.cropX+step);
@@ -890,12 +890,12 @@
       else if(event.key==='ArrowDown')photo.cropY=Math.max(0,photo.cropY-step);
       commitHistory(historyBefore);renderAdjustPanel();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));event.preventDefault();
     });
-    els.previewCanvas.addEventListener('pointerdown',event=>{
+    els.previewCanvas.addEventListener('pointerdown',event=>{if(state.exporting)return;
       const point=canvasPoint(event);if(!point)return;const cell=state.previewCells.find(item=>point.x>=item.x&&point.x<=item.x+item.w&&point.y>=item.y&&point.y<=item.y+item.h);if(!cell)return;
       selectPhoto(cell.id);if(event.pointerType!=='touch')els.previewCanvas.focus({preventScroll:true});const photo=state.photos.find(item=>item.id===cell.id);if(!photo||photo.fit!=='fill')return;
       state.cropDrag={id:photo.id,startX:event.clientX,startY:event.clientY,cropX:photo.cropX,cropY:photo.cropY,cell,historyBefore:captureHistoryState()};if(els.previewCanvas.setPointerCapture)els.previewCanvas.setPointerCapture(event.pointerId);els.previewCanvas.classList.add('is-dragging');event.preventDefault();
     });
-    els.previewCanvas.addEventListener('pointermove',event=>{
+    els.previewCanvas.addEventListener('pointermove',event=>{if(state.exporting)return;
       const drag=state.cropDrag;if(!drag)return;const photo=state.photos.find(item=>item.id===drag.id);if(!photo)return;
       const rect=els.previewCanvas.getBoundingClientRect(),sx=els.previewCanvas.width/Math.max(1,rect.width),sy=els.previewCanvas.height/Math.max(1,rect.height),dx=(event.clientX-drag.startX)*sx,dy=(event.clientY-drag.startY)*sy;
       const base=Math.max(drag.cell.w/photo.width,drag.cell.h/photo.height)*Math.max(1,photo.zoom||1),dw=photo.width*base,dh=photo.height*base,ox=Math.max(0,dw-drag.cell.w),oy=Math.max(0,dh-drag.cell.h);
@@ -904,9 +904,9 @@
     function endCrop(event){if(!state.cropDrag)return;const historyBefore=state.cropDrag.historyBefore;state.cropDrag=null;commitHistory(historyBefore);els.previewCanvas.classList.remove('is-dragging');try{if(els.previewCanvas.releasePointerCapture)els.previewCanvas.releasePointerCapture(event.pointerId)}catch(error){}}
     els.previewCanvas.addEventListener('pointerup',endCrop);els.previewCanvas.addEventListener('pointercancel',endCrop);
     els.undoButton.addEventListener('click',undoHistory);els.redoButton.addEventListener('click',redoHistory);
-    els.resetButton.addEventListener('click',()=>{if(!els.resetButton.disabled)els.resetDialog.showModal()});
+    els.resetButton.addEventListener('click',()=>{if(!state.exporting&&!els.resetButton.disabled)els.resetDialog.showModal()});
     els.closeResetButton.addEventListener('click',()=>els.resetDialog.close());els.cancelResetButton.addEventListener('click',()=>els.resetDialog.close());
-    els.confirmResetButton.addEventListener('click',()=>{els.resetDialog.close();resetEditor()});
+    els.confirmResetButton.addEventListener('click',()=>{els.resetDialog.close();if(!state.exporting)resetEditor()});
     els.resetDialog.addEventListener('click',event=>{if(event.target===els.resetDialog)els.resetDialog.close()});
     els.resetDialog.addEventListener('close',()=>{const target=els.resetButton.disabled?els.undoButton:els.resetButton;target?.focus({preventScroll:true})});
     function editableShortcutTarget(target){return target instanceof HTMLElement&&(target.matches('input,textarea,select')||target.isContentEditable||Boolean(target.closest('[contenteditable="true"]')))}
@@ -917,7 +917,7 @@
     });
     els.cancelImportButton.addEventListener('click',()=>cancelImport());
     els.chooseButton.addEventListener('click',openPicker);els.addMoreButton.addEventListener('click',openPicker);els.fileInput.addEventListener('change',()=>addFiles(els.fileInput.files));document.getElementById('fileFallbackButton').addEventListener('click',()=>els.fileFallbackInput.click());els.fileFallbackInput.addEventListener('change',()=>{addFiles(els.fileFallbackInput.files);els.fileFallbackInput.value='';});
-    els.moreLayoutsButton.addEventListener('click',()=>{
+    els.moreLayoutsButton.addEventListener('click',()=>{if(state.exporting)return;
       const pageSize=6,pages=Math.max(1,Math.ceil(state.layoutCandidates.length/pageSize));if(pages<=1)return;
       const historyBefore=captureHistoryState();state.layoutPage=(state.layoutPage+1)%pages;const next=state.layoutCandidates[state.layoutPage*pageSize];
       if(next)state.selectedLayoutId=next.id;commitHistory(historyBefore);renderLayoutChoices();renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
