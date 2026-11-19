@@ -210,6 +210,11 @@ assert(!source.includes('class="input-note"'), 'Redundant session notice should 
 assert(source.includes("classList.toggle('has-photos',state.photos.length>0)"), 'Loaded upload area must switch to its compact appearance.');
 assert(source.includes('photo-reorder-ghost') && source.includes('previewPhotoReorder('), 'Live card reorder must remain available.');
 assert(source.includes('id="photoCountMobile"'), 'Mobile photo count must be visible in the photo list.');
+assert(!source.includes('id="addMoreButton"') && !source.includes('els.addMoreButton'), 'Only one primary photo picker is allowed.');
+assert(source.includes("state.photos.length?'addMore':'choosePhotos'"), 'The photo picker label must change after adding images.');
+assert(source.includes('id="desktopExportHost"'), 'Desktop export settings must have a host below the preview.');
+assert(source.includes('entry.panel===els.exportPanel?desktopExportHost:desktopEditorHost'), 'Desktop export must be separate from left editor controls.');
+
 const releaseWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
 for(const token of ['workflow_run:',"event == 'push'","head_branch == 'main'",'standalone-html-$VALIDATED_SHA','gh release create','--verify-tag','different commit']) {
   assert(releaseWorkflow.includes(token), 'Validated main tag/release workflow is missing: '+token);
