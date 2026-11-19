@@ -574,15 +574,19 @@
         if(Math.abs(dx)+Math.abs(dy)>1)card.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],{duration:190,easing:'cubic-bezier(.2,.7,.2,1)'});
       }
     }
-    function previewPhotoReorder(sourceId,targetId){
+    function previewPhotoReorder(sourceId,targetId,after){
       const cards=Array.from(els.photoGrid.querySelectorAll(':scope > .photo-card'));
       const source=cards.find(card=>card.dataset.photoId===sourceId),target=cards.find(card=>card.dataset.photoId===targetId);
       if(!source||!target||source===target)return false;
-      const from=cards.indexOf(source),to=cards.indexOf(target);if(from===to)return false;
+      if((after&&source.previousElementSibling===target)||(!after&&source.nextElementSibling===target))return false;
       for(const card of cards)card.getAnimations().forEach(animation=>animation.cancel());
       const before=new Map(cards.map(card=>[card.dataset.photoId,card.getBoundingClientRect()]));
-      els.photoGrid.insertBefore(source,from<to?target.nextSibling:target);
+      els.photoGrid.insertBefore(source,after?target.nextSibling:target);
       animatePhotoReflow(before);return true;
+    }
+    function photoDropAfter(card,x,y){
+      const rect=card.getBoundingClientRect(),midY=rect.top+rect.height/2,midX=rect.left+rect.width/2;
+      return Math.abs(y-midY)>rect.height*.24?y>midY:x>midX;
     }
     function nearestPhotoCard(x,y,excludeId){
       const bounds=els.photoGrid.getBoundingClientRect();
@@ -627,7 +631,7 @@
       if(event.clientY>innerHeight-75)window.scrollBy(0,15);
       else if(event.clientY<95)window.scrollBy(0,-15);
       const target=nearestPhotoCard(event.clientX,event.clientY,drag.sourceId);
-      if(target)previewPhotoReorder(drag.sourceId,target.dataset.photoId);
+      if(target)previewPhotoReorder(drag.sourceId,target.dataset.photoId,photoDropAfter(target,event.clientX,event.clientY));
       event.preventDefault();
     }
     function endPointerReorder(event,{cancel=false}={}){
@@ -1038,7 +1042,7 @@
       if(!state.dragPhotoId||state.exporting)return;
       event.preventDefault();event.dataTransfer.dropEffect='move';
       const target=nearestPhotoCard(event.clientX,event.clientY,state.dragPhotoId);
-      if(target)previewPhotoReorder(state.dragPhotoId,target.dataset.photoId);
+      if(target)previewPhotoReorder(state.dragPhotoId,target.dataset.photoId,photoDropAfter(target,event.clientX,event.clientY));
     });
     els.photoGrid.addEventListener('drop',event=>{
       if(!state.dragPhotoId||state.exporting)return;
