@@ -10,7 +10,7 @@ function element() { return {disabled: false, value: '', textContent: '', attrs:
 const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
 function harness() {
   const state = {photos: [photo('first', {cropX: .2, cropY: .8, zoom: 2, fit: 'fit', hero: true}), photo('second')], selectedPhotoId: 'first', selectedLayoutId: 'layout-1', exporting: false, generation: 0};
-  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton'].map(key => [key, element()]));
+  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton', 'exportResult'].map(key => [key, element()]));
   const api = new Function('state', 'els', `
     const HISTORY_LIMIT=50,undoStack=[],redoStack=[],historyGestures=new Map();
     let historyApplying=false,historyRevision=0,initialHistorySignature='',importJob=null;
@@ -44,6 +44,20 @@ test('reset selected adjustment is one undoable change and preserves identity, o
   h.undoHistory(); assert.deepEqual(h.captureHistoryState(), before);
   h.redoHistory(); assert.equal(h.state.photos[0].zoom, 1); assert.equal(h.state.photos[0].hero, true);
 });
+test('editing and Undo invalidate saved export details', () => {
+  const h = harness();
+  h.state.lastExportInfo = {width: 100, height: 75, format: 'JPEG', size: '12 KB'};
+  h.els.exportResult.textContent = '100 × 75 · JPEG · 12 KB';
+  h.resetPhotoAdjustment();
+  assert.equal(h.els.exportResult.textContent, '');
+  assert.equal(h.state.lastExportInfo, null);
+  h.state.lastExportInfo = {width: 100, height: 75, format: 'JPEG', size: '12 KB'};
+  h.els.exportResult.textContent = 'previous result';
+  h.undoHistory();
+  assert.equal(h.els.exportResult.textContent, '');
+  assert.equal(h.state.lastExportInfo, null);
+});
+
 test('default, empty, single-photo, and exporting reset are disabled and cannot create history', () => {
   for (const mode of ['default', 'empty', 'single', 'exporting']) {
     const h = harness();
@@ -117,6 +131,36 @@ test('language button names the destination in the current language and Help sta
   assert.match(source, /id="languageButton"[^>]*data-i18n-title="switchLanguage"[^>]*data-i18n-aria-label="switchLanguage"/);
   assert.match(source, /id="resetPhotoButton"[^>]*type="button"[^>]*data-i18n="resetPhoto"/);
   assert(source.includes("els.resetPhotoButton.addEventListener('click',resetPhotoAdjustment)"));
+});
+
+test('error and export result are translated without changing live inputs', () => {
+  const T = new Function('return (' + block('    const T=', '\n    const els=').replace('    const T=', '').trim().replace(/;$/, '') + ')')();
+  const state = {lang:'ja', statusDescriptor:{key:'partial',tone:'warning',vars:{ok:2,bad:1}},lastExportInfo:{width:1080,height:810,format:'PNG',size:'1 KB'}};
+  const els = {languageButton:element(),statusStrip:element(),statusText:element(),exportResult:element()};
+  els.languageButton.dataset={i18nTitle:'switchLanguage',i18nAriaLabel:'switchLanguage'};
+  const help=element();help.dataset={i18nTitle:'helpTitle',i18nAriaLabel:'helpTitle'};
+  const document={documentElement:{},querySelectorAll(selector){return selector==='[data-i18n]'?[]:[els.languageButton,help]}};
+  const script = `function tr(key,vars={}){let message=T[state.lang][key]||key;for(const [name,value] of Object.entries(vars))message=message.replace('{'+name+'}',String(value));return message}
+  function renderPhotos(){} function renderLayoutChoices(){} function renderAdjustPanel(){} function renderFinishPanel(){} function renderExportPanel(){}
+  ${block('    function applyLanguage()', '    function setPhase(')}
+  ${block('    function setStatus(', '    function validType(')}
+  return applyLanguage;`;
+  const apply = new Function('state','T','els','document',script)(state,T,els,document);
+  apply();assert.match(els.statusText.textContent,/2枚/);assert.match(els.exportResult.textContent,/1080/);
+  state.lang='en';apply();assert.match(els.statusText.textContent,/Added 2 photos/);
+  assert.match(els.exportResult.textContent,/1080/);assert.equal(els.statusStrip.className,'status-strip show warning');
+});
+
+test('export lock makes editor controls inert but retains navigation and progress', () => {
+  const state={exporting:false}, names=['dropZone','photoGrid','previewCanvas','adjustPanel','layoutPicker','finishPanel','addMoreButton'];
+  const els=Object.fromEntries(names.map(name=>[name,{}]));
+  const outputControls={};els.exportPanel={querySelector(selector){assert.equal(selector,'.export-grid');return outputControls}};
+  const workspace={dataset:{}},document={getElementById(id){assert.equal(id,'workspace');return workspace}};
+  const lock=new Function('state','els','document',block('    function setExportLock(active){','    async function exportImage(){')+'return setExportLock;')(state,els,document);
+  lock(true);assert.equal(state.exporting,true);assert.equal(workspace.dataset.exporting,'true');
+  for(const el of [...names.map(name=>els[name]),outputControls])assert.equal(el.inert,true);
+  lock(false);assert.equal(state.exporting,false);assert.equal(workspace.dataset.exporting,'false');
+  for(const el of [...names.map(name=>els[name]),outputControls])assert.equal(el.inert,false);
 });
 
 test('header keeps 44-pixel language and Help targets without hiding the version', () => {
