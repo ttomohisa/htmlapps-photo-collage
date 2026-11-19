@@ -180,6 +180,7 @@ async function runMobileWorkflow(browser){
     });
     await countPhotos(page,6);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),5,'four workflow pages plus one history action');
     assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   }finally{await context.close()}
 }
@@ -201,10 +202,11 @@ async function runDesktopEditorLayout(browser){
       const rect=id=>document.getElementById(id).getBoundingClientRect(),a=rect('adjustPanel'),b=rect('layoutPicker'),c=rect('finishPanel'),d=rect('exportPanel'),p=rect('previewStage'),h=document.querySelector('.header-inner').getBoundingClientRect(),main=rect('workspace'),head=document.querySelector('.header-inner');
       const headerContentX=h.left+parseFloat(getComputedStyle(head).paddingLeft);
       const mainEl=document.querySelector('.main'),mainContentX=mainEl.getBoundingClientRect().left+parseFloat(getComputedStyle(mainEl).paddingLeft);
-      return {editLeft:[a.left,b.left,c.left],editRight:[a.right,b.right,c.right],previewLeft:p.left,previewBottom:p.bottom,exportTop:d.top,exportLeft:d.left,exportHost:document.getElementById('desktopExportHost').contains(document.getElementById('exportPanel')),previewColumnRight:document.getElementById('content-panel')?.getBoundingClientRect().right,headerContentX,mainContentX,historyHeader:document.querySelector('.app-header').contains(document.getElementById('historyToolbar')),editorHost:document.querySelector('#desktopEditorControls').contains(document.getElementById('finishPanel')),bodyOverflow:document.documentElement.scrollWidth>innerWidth};
+      return {editLeft:[a.left,b.left,c.left],editRight:[a.right,b.right,c.right],previewLeft:p.left,previewBottom:p.bottom,exportTop:d.top,exportLeft:d.left,exportHost:document.getElementById('desktopExportHost').contains(document.getElementById('exportPanel')),previewColumnRight:document.getElementById('content-panel')?.getBoundingClientRect().right,headerContentX,mainContentX,historyInPreview:document.querySelector('.preview-head').contains(document.getElementById('historyToolbar')),headerPosition:getComputedStyle(document.querySelector('.app-header')).position,editorHost:document.querySelector('#desktopEditorControls').contains(document.getElementById('finishPanel')),bodyOverflow:document.documentElement.scrollWidth>innerWidth};
     });
     assert.equal(desktop.editorHost,true,'desktop controls use the real moved nodes');
-    assert.equal(desktop.historyHeader,true,'history toolbar belongs in the header');
+    assert.equal(desktop.historyInPreview,true,'desktop history toolbar belongs beside the preview title');
+    assert.equal(desktop.headerPosition,'relative','global header must scroll away rather than stick');
     assert(desktop.editRight.every(right=>right<desktop.previewLeft),'photo, layout and finish controls stay left of the preview');
     assert.equal(desktop.exportHost,true,'export form is hosted below preview on desktop');
     assert(desktop.exportLeft>=desktop.previewLeft-24,'export settings align with preview column');
@@ -226,8 +228,9 @@ async function runDesktopEditorLayout(browser){
     await page.waitForFunction(()=>document.querySelector('#layoutPage')?.contains(document.getElementById('adjustPanel')));
     assert.equal(await page.locator('.privacy-badge').isVisible(),false);
     assert.equal(await page.locator('#heroTitle').isVisible(),false);
+    assert.equal(await page.locator('#historyToolbar').evaluate(el=>el.parentElement===document.body),true,'mobile history menu must escape hidden layout page');
     await page.locator('#historyMenuButton').click();
-    assert.equal(await page.locator('#historyToolbar').isVisible(),true,'history actions open from the header');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),true,'history actions open from bottom navigation');
     assert.equal(await page.locator('#historyMenuButton').getAttribute('aria-expanded'),'true');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#historyToolbar').isVisible(),false);
@@ -237,7 +240,17 @@ async function runDesktopEditorLayout(browser){
     await page.screenshot({path:path.join(evidence,'mobile-finish-refined.png'),animations:'disabled'});
     await page.locator('[data-mobile-key="save"]').click();
     assert.equal(await page.locator('#savePage').evaluate(el=>el.contains(document.getElementById('exportPanel'))),true,'mobile Save page keeps original export form');
+    assert.equal(await page.locator('[data-mobile-key="save"] span').innerText(),'画像を保存','active Save tab becomes the export action');
+    assert.equal(await page.locator('#exportButton').isVisible(),false,'hidden duplicate export action on mobile');
+    assert.equal(await page.locator('body').evaluate(el=>getComputedStyle(document.querySelector('.app-header')).position),'relative');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     await page.screenshot({path:path.join(evidence,'mobile-save-refined.png'),animations:'disabled'});
+    await page.locator('[data-format="png"]').click();
+    const saving=page.waitForEvent('download',{timeout:45000});
+    await page.locator('[data-mobile-key="save"]').click();
+    const downloaded=await saving;
+    assert.match(downloaded.suggestedFilename(),/\.png$/,'footer Save action must download the selected format');
+    assert((await page.locator('[data-mobile-key="save"] span').innerText()).includes('保存'),'button returns to Save image after completion');
     await page.setViewportSize({width:1360,height:860});
     await page.waitForFunction(()=>document.getElementById('desktopEditorControls').contains(document.getElementById('finishPanel')));
     assert.equal(await page.locator('#desktopExportHost').evaluate(el=>el.contains(document.getElementById('exportPanel'))),true,'desktop export host restores after resize');
