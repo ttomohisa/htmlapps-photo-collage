@@ -203,6 +203,18 @@ const historyResult = new Function(
   "return {undo:undoStack.length,redo:redoStack.length};"
 )();
 
+// Browser workflow and delete confirmation must not be accidentally removed during release changes.
+assert(source.includes('id="removePhotoDialog"') && source.includes('id="confirmRemovePhotoButton"'), 'Photo removal confirmation is required.');
+assert(source.includes('requestRemovePhoto(photo.id)'), 'Photo removal must enter the confirmation workflow.');
+assert(!source.includes('class="input-note"'), 'Redundant session notice should not appear next to the importer.');
+assert(source.includes("classList.toggle('has-photos',state.photos.length>0)"), 'Loaded upload area must switch to its compact appearance.');
+assert(source.includes('photo-reorder-ghost') && source.includes('previewPhotoReorder('), 'Live card reorder must remain available.');
+assert(source.includes('id="photoCountMobile"'), 'Mobile photo count must be visible in the photo list.');
+const releaseWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
+for(const token of ['workflow_run:',"event == 'push'","head_branch == 'main'",'standalone-html-$VALIDATED_SHA','gh release create','--verify-tag','different commit']) {
+  assert(releaseWorkflow.includes(token), 'Validated main tag/release workflow is missing: '+token);
+}
+
 const staleVersions = source.match(/v0\.(?:[1-8])(?:\.\d+)?/g) || [];
 assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + [...new Set(staleVersions)].join(', '));
 
