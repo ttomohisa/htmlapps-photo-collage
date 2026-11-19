@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `1.0.1`
+- **Current development version:** `1.0.2`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -670,3 +670,12 @@ CI成功だけで実機stressや制限付き環境の `file://` browser smokeを
 ## Informational footer on smartphones
 
 Hide only the main informational footer using the existing smartphone layout query `(max-width:600px), (max-height:520px) and (pointer:coarse)`. Preserve functional navigation, desktop footer, existing local-processing wording and Help content. No build information is added.
+
+## 23. v1.0.2 consistency fixes
+
+- Export captures a snapshot of the collage. While encoding, all edit controls (photo selection, reorder/remove, crop, layout, finish and output settings) are blocked; the progress and mobile navigation remain readable and Help/language remain available. Always unlock on success or error.
+- Any committed edit, Undo/Redo, import success or Reset invalidates the previous export-result display. Successful export details are stored as structured values and translated when switching languages without re-exporting.
+- Import capacity is based on successful decoded photos, not the first selected filenames. A corrupt photo does not reserve a slot; an attempted batch can continue until it contains enough valid photos or all files are inspected. Count the remaining unattempted files as overflow and report unreadable filenames separately. Pending import cancellation, stale generation tokens, thumbnail cleanup and atomic history remain unchanged.
+- Keep status translation keys and arguments in state so a visible warning/error can be retranslated on JA/EN switching, without losing draft inputs or live edits.
+- Refresh four actual rendered v1.0.2 screenshots (JA/EN desktop/mobile). They must be captured from the built application with sample photos, not invented UI artwork.
+- Verification includes production-code state tests, original stable release regression, standalone build and generated root parity, actual browser screenshot capture, and final CI checks. Physical device and file:// browser tests are separate from CI and must not be claimed without execution.
