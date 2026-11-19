@@ -73,7 +73,9 @@ async function main(){
       await page.waitForFunction(()=>document.querySelectorAll('.photo-card').length===6&&!document.querySelector('#previewCanvas').hidden,{timeout:45000});
       if(await page.locator('html').getAttribute('lang')!==lang)await page.locator('#languageButton').click();
       if(mobile){await page.locator('[data-mobile-key="layout"]').click();await page.waitForFunction(()=>document.body.dataset.mobilePage==='layout');}
-      await page.waitForTimeout(300);
+      // Let the normal load-complete toast finish, rather than hiding UI for a screenshot.
+      await page.waitForFunction(()=>!document.querySelector('#appToast').classList.contains('show'),null,{timeout:15000});
+      await page.waitForTimeout(250);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'horizontal overflow: '+file);
       assert.deepEqual(errors,[],'browser errors: '+file);
       assert.deepEqual(requests,[],'runtime HTTP requests: '+file);
