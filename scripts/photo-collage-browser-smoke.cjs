@@ -11,11 +11,16 @@ const fixturesCount=19;
 
 async function fixtures(page,count=fixturesCount){
   const images=await page.evaluate(count=>Array.from({length:count},(_,i)=>{
-    const c=document.createElement('canvas');c.width=240;c.height=160;
-    const ctx=c.getContext('2d'),colors=['#d5a154','#287c88','#637d58','#8e6072','#345f83','#d0b2aa'];
-    ctx.fillStyle=colors[i%colors.length];ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(120,80,18+(i%4)*12,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#243b34';ctx.fillRect(10,10,24+i%9*7,22);
+    const c=document.createElement('canvas');c.width=480;c.height=320;
+    const ctx=c.getContext('2d');const fill=(color,x=0,y=0,w=480,h=320)=>{ctx.fillStyle=color;ctx.fillRect(x,y,w,h)};
+    const circle=(color,x,y,r)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()};
+    if(i%6===0){fill('#5cbed0');fill('#1d7894',0,105,480,110);fill('#e5cc8b',0,215,480,105);ctx.strokeStyle='#fff0cf';ctx.lineWidth=7;ctx.beginPath();ctx.arc(240,135,65,.12,Math.PI-.12);ctx.stroke()}
+    else if(i%6===1){fill('#874b36');circle('#f6dfbc',240,160,128);circle('#cb593d',240,160,84);circle('#f6dfbc',240,160,48);circle('#f1b95e',240,160,22)}
+    else if(i%6===2){fill('#245f43');circle('#eed17b',435,70,47);ctx.fillStyle='#d2e5d7';ctx.beginPath();ctx.moveTo(0,260);ctx.lineTo(105,92);ctx.lineTo(232,246);ctx.lineTo(360,80);ctx.lineTo(480,200);ctx.lineTo(480,320);ctx.lineTo(0,320);ctx.fill()}
+    else if(i%6===3){fill('#385676');for(let j=0;j<8;j++){const h=115+(j*43)%170;fill('#d4e0e7',j*60+8,320-h,43,h);for(let k=0;k<8;k++)fill('#f5df94',j*60+16,320-h+14+k*23,6,9)}}
+    else if(i%6===4){fill('#255c3b');for(let j=0;j<8;j++){const x=j*66+15;fill('#675039',x,195,11,125);ctx.fillStyle=j%2?'#528d4e':'#3b7c45';ctx.beginPath();ctx.moveTo(x-35,250);ctx.lineTo(x+5,38+(j%3)*25);ctx.lineTo(x+47,250);ctx.closePath();ctx.fill()}}
+    else{fill('#6c5179');circle('#e4bd9b',250,115,83);ctx.strokeStyle='#714b47';ctx.lineWidth=5;ctx.beginPath();ctx.arc(250,158,38,.15,Math.PI-.15);ctx.stroke();fill('#d6d8df',180,225,140,95)}
+    
     return c.toDataURL('image/png').split(',')[1];
   }),count);
   return images.map((base64,i)=>({name:'sample-'+String(i+1).padStart(2,'0')+'.png',mimeType:'image/png',buffer:Buffer.from(base64,'base64')}));
@@ -37,6 +42,8 @@ async function takeScreenshots(browser){
       await page.goto(url);const images=await fixtures(page,6);
       await page.locator('#fileInput').setInputFiles(images);await countPhotos(page,6);
       if(kind)await page.locator('[data-mobile-key="layout"]').click();
+      // Omit transient success toast from the documentation screenshots.
+      await page.locator('#appToast').evaluate(el=>{el.style.display='none'});
       for(const language of ['ja','en']){
         await enterLanguage(page,language);
         const name='screenshot'+kind+(language==='en'?'-en':'')+'.png';
