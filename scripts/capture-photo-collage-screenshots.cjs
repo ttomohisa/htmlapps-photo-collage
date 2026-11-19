@@ -56,6 +56,69 @@ async function createFixtures(page){
   });
   return samples.map((base64,i)=>({name:'scene-'+(i+1)+'.png',mimeType:'image/png',buffer:Buffer.from(base64,'base64')}));
 }
+async function runBrowserRegression(browser){
+  const context=await browser.newContext({viewport:{width:1280,height:900},locale:'ja',acceptDownloads:true});
+  try{
+    const page=await context.newPage(),errors=[],requests=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    page.on('request',r=>{if(/^https?:/i.test(r.url()))requests.push(r.url())});
+    await page.goto(pathToFileURL(htmlPath).href);
+    const photos=(await createFixtures(page)).slice(0,2);
+    await page.locator('#fileInput').setInputFiles(photos);
+    await page.waitForFunction(()=>document.querySelectorAll('.photo-card').length===2&&!document.querySelector('#previewCanvas').hidden);
+    await page.locator('[data-format="png"]').click();
+    await page.locator('[data-long-side="1080"]').click();
+    await page.evaluate(()=>{
+      const original=HTMLCanvasElement.prototype.toBlob;
+      window.__qaExportWaiting=false;
+      window.__qaReleaseExport=null;
+      HTMLCanvasElement.prototype.toBlob=function(callback,mime,quality){
+        if(this.width>=1000&&!window.__qaExportWaiting){
+          window.__qaExportWaiting=true;
+          window.__qaReleaseExport=()=>original.call(this,callback,mime,quality);
+          return;
+        }
+        return original.call(this,callback,mime,quality);
+      };
+    });
+    await page.locator('#exportButton').click();
+    await page.waitForFunction(()=>window.__qaExportWaiting===true&&document.getElementById('workspace').dataset.exporting==='true');
+    const lock=await page.evaluate(()=>({
+      photoGrid:document.getElementById('photoGrid').inert,
+      adjust:document.getElementById('adjustPanel').inert,
+      finish:document.getElementById('finishPanel').inert,
+      format:document.querySelector('#exportPanel .export-grid').inert,
+      progress:document.getElementById('exportProgress').classList.contains('show'),
+      count:document.querySelectorAll('.photo-card').length
+    }));
+    assert.deepEqual(lock,{photoGrid:true,adjust:true,finish:true,format:true,progress:true,count:2});
+    await page.evaluate(()=>document.querySelector('[data-ratio-key="1:1"]').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+    assert.equal(await page.locator('[data-ratio-key="4:3"]').getAttribute('aria-pressed'),'true','ratio must not change while exporting');
+    const downloadPromise=page.waitForEvent('download');
+    await page.evaluate(()=>window.__qaReleaseExport());
+    const download=await downloadPromise;
+    assert.equal(download.suggestedFilename(),'photo-collage.png');
+    const bytes=fs.readFileSync(await download.path());
+    assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+    assert.equal(bytes.readUInt32BE(16),1080);
+    assert.equal(bytes.readUInt32BE(20),810);
+    await page.waitForFunction(()=>document.getElementById('workspace').dataset.exporting==='false');
+    assert.equal(await page.locator('#photoGrid').evaluate(el=>el.inert),false);
+    assert.equal(await page.locator('#exportResult').evaluate(el=>el.classList.contains('show')),true);
+    await page.locator('[data-ratio-key="1:1"]').click();
+    assert.equal(await page.locator('#exportResult').evaluate(el=>el.classList.contains('show')),false,'stale export info remains after edit');
+    const broken={name:'broken.jpg',mimeType:'image/jpeg',buffer:Buffer.from('not a JPEG file')};
+    await page.locator('#fileInput').setInputFiles([broken]);
+    await page.waitForFunction(()=>document.getElementById('failedFiles').classList.contains('show'));
+    assert.match(await page.locator('#statusText').innerText(),/読み込め/);
+    await page.locator('#languageButton').click();
+    assert.match(await page.locator('#statusText').innerText(),/could not be loaded/i);
+    assert.match(await page.locator('#failedFilesList').innerText(),/broken\.jpg/);
+    assert.deepEqual(errors,[]);
+    assert.deepEqual(requests,[]);
+    console.log('[OK] Chromium export lock, native PNG download, stale result, and JA/EN error checks');
+  }finally{await context.close()}
+}
 async function main(){
   assert(fs.existsSync(htmlPath),'Built HTML not found');
   const dir=path.join(root,'assets'),browser=await chromium.launch({headless:true});
@@ -85,6 +148,7 @@ async function main(){
       console.log('[OK] screenshot',file,stats.size+' bytes');
       await context.close();
     }
+    await runBrowserRegression(browser);
     emitArtifact('root-html',path.join(root,'photo-collage.html'));
     for(const shot of shots)emitArtifact(shot.file,path.join(dir,shot.file));
   }finally{await browser.close()}
