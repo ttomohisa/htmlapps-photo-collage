@@ -121,10 +121,10 @@ async function runMobileWorkflow(browser){
     assert.equal(await page.locator('#heroTitle').isVisible(),false,'mobile hero title hidden');
     assert.equal(await page.locator('.privacy-badge').isVisible(),false,'mobile privacy badge hidden');
     assert.equal(await page.locator('.input-note').count(),0,'unnecessary session notice removed');
-    const emptyHeight=await page.locator('#dropZone').evaluate(el=>el.getBoundingClientRect().height);
+    const emptyHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     const images=await fixtures(page,5);
     await page.locator('#fileInput').setInputFiles(images.slice(0,4));await countPhotos(page,4);
-    const loadedHeight=await page.locator('#dropZone').evaluate(el=>el.getBoundingClientRect().height);
+    const loadedHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     assert(loadedHeight<emptyHeight&&loadedHeight<120,`drop target must shrink after import: ${loadedHeight} vs ${emptyHeight}`);
     const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     assert.equal(gridColumns,2,'even 320px wide phone must show two photo columns');
