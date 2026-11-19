@@ -1211,6 +1211,53 @@
     els.languageButton.addEventListener('click',()=>{state.lang=state.lang==='ja'?'en':'ja';applyLanguage()});els.helpButton.addEventListener('click',()=>els.helpDialog.showModal());els.closeHelpButton.addEventListener('click',()=>els.helpDialog.close());els.helpDialog.addEventListener('click',e=>{if(e.target===els.helpDialog)els.helpDialog.close()});
     els.outputFilename.value=state.outputFilename;
     initialHistorySignature=historySignature(captureHistoryState());updateHistoryControls();
+    // Keep one set of live controls: on wide screens move it beside the preview;
+    // on phones/tablets restore it to the original mobile pages.
+    const desktopEditorQuery=window.matchMedia('(min-width: 921px)');
+    const desktopEditorHost=document.getElementById('desktopEditorControls');
+    const editorPanels=[
+      document.querySelector('#photosPage .photos-section'),els.layoutPicker,els.adjustPanel,els.finishPanel,els.exportPanel
+    ];
+    const editorHomes=editorPanels.map((panel,index)=>{
+      const marker=document.createComment('photo-editor-home-'+index);
+      panel.parentNode.insertBefore(marker,panel);
+      return{panel,marker};
+    });
+    function syncDesktopEditorLayout(){
+      if(desktopEditorQuery.matches){
+        for(const entry of editorHomes)desktopEditorHost.appendChild(entry.panel);
+      }else{
+        for(const entry of editorHomes)entry.marker.parentNode.insertBefore(entry.panel,entry.marker.nextSibling);
+      }
+    }
+    const historyMenuButton=document.getElementById('historyMenuButton');
+    const historyToolbar=document.getElementById('historyToolbar');
+    function closeHistoryMenu(restoreFocus=false){
+      if(!document.body.classList.contains('history-menu-open'))return;
+      document.body.classList.remove('history-menu-open');
+      historyMenuButton.setAttribute('aria-expanded','false');
+      if(restoreFocus)historyMenuButton.focus({preventScroll:true});
+    }
+    historyMenuButton.addEventListener('click',event=>{
+      event.stopPropagation();
+      const opening=!document.body.classList.contains('history-menu-open');
+      document.body.classList.toggle('history-menu-open',opening);
+      historyMenuButton.setAttribute('aria-expanded',opening?'true':'false');
+    });
+    historyToolbar.addEventListener('click',event=>{if(event.target.closest('button'))closeHistoryMenu(true)});
+    document.addEventListener('pointerdown',event=>{
+      if(!historyMenuButton.contains(event.target)&&!historyToolbar.contains(event.target))closeHistoryMenu();
+    });
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&document.body.classList.contains('history-menu-open')){
+        closeHistoryMenu(true);event.stopPropagation();
+      }
+    });
+    desktopEditorQuery.addEventListener?.('change',()=>{
+      closeHistoryMenu();syncDesktopEditorLayout();
+      if(state.photos.length>=2)renderPreview().catch(()=>setStatus(tr('failed'),'error',{key:'failed',vars:{},tone:'error'}));
+    });
+    syncDesktopEditorLayout();
     mobileBottomBar=window.AppMobileBottomBar.mount(els.appMobileBottomBar,{initialPage:'photos',pageTopTarget:'workspace',pageTopOffset:62,onPageChange({key}){document.body.dataset.mobilePage=key}});
     applyLanguage();setPhase('empty');renderPhotos();renderLayoutChoices();renderAdjustPanel();renderFinishPanel();renderExportPanel();syncMobileNavigation();if(!webpExportSupported){const webpButton=els.formatGrid.querySelector('[data-format="webp"]');if(webpButton)webpButton.title=tr('webpUnsupported')}
   })();
