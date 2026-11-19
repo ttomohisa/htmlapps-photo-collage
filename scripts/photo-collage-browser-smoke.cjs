@@ -201,8 +201,11 @@ async function runDesktopEditorLayout(browser){
     assert(desktop.editRight.every(right=>right<desktop.previewLeft),'all editor sections are left of the preview');
     assert(Math.abs(desktop.headerContentX-desktop.mainContentX)<2,'header and body edges must align');
     assert.equal(desktop.bodyOverflow,false,'no desktop horizontal overflow');
-    const before=await page.locator('#canvasRatioKey').count(); // selection remains on the existing ratio controls
-    assert.equal(before,0);
+    await page.locator('#finishPanel').scrollIntoViewIfNeeded();
+    await page.screenshot({path:path.join(evidence,'desktop-finish-refined.png'),animations:'disabled'});
+    assert.equal(await page.locator('#finishPanel').evaluate(el=>getComputedStyle(el).borderLeftWidth),'0px','settings do not add nested boxed panels');
+    await page.locator('#exportPanel').scrollIntoViewIfNeeded();
+    await page.screenshot({path:path.join(evidence,'desktop-save-refined.png'),animations:'disabled'});
     await page.locator('[data-ratio-key="9:16"]').click();
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true');
     await page.setViewportSize({width:390,height:844});
