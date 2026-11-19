@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.1.0 - 2026-11-19
+
+### Added
+- Reorder photo cards with live movement of neighboring cards on desktop and touch devices, preserving Undo / Redo.
+- Ask for confirmation before removing a photo, with Undo still available after deletion.
+- Publish an annotated version tag and GitHub Release with standalone assets after a successful main deployment, skipping duplicate releases.
+
+### Changed
+- Keep the import/drop area compact after photos are added without disabling further imports or drops.
+- Use two photo columns on narrow mobile widths and larger touch controls.
+- Hide the hero heading and local-processing badge in the mobile workflow only, and remove the redundant session note near the importer.
+
 ### Fixed
 - Lock collage edits and export settings while encoding, and restore controls after completion or failure.
 - Clear outdated export details when the collage or output settings change.
