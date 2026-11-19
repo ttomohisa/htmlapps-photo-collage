@@ -110,7 +110,7 @@ test('language button names the destination in the current language and Help sta
   const lang = els.languageButton; lang.dataset = {i18nTitle: 'switchLanguage', i18nAriaLabel: 'switchLanguage'};
   const document = {documentElement: {}, querySelectorAll(selector) { return selector === '[data-i18n]' ? [] : [lang, help]; }};
   const state = {lang: 'ja'};
-  const apply = new Function('state','T','els','document', `let localizedStatus=null;function tr(k){return T[state.lang][k]}function renderRemovePhotoConfirmation(){}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
+  const apply = new Function('state','T','els','document', `let localizedStatus=null;function tr(k){return T[state.lang][k]}function renderRemovePhotoConfirmation(){}function syncMobileSaveAction(){}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
   for (const [language, visible, label, helpLabel] of [['ja','EN','英語に切り替え','使い方と注意事項'],['en','JA','Switch to Japanese','How to use & notes']]) {
     state.lang=language;apply();assert.equal(lang.textContent,visible);assert.equal(lang.attrs['aria-label'],label);assert.equal(lang.title,label);assert.equal(help.attrs['aria-label'],helpLabel);assert.equal(help.title,helpLabel);
   }
@@ -157,7 +157,7 @@ test('status retranslation retains the error and overflow detail after language 
   const state={lang:'ja'},els={languageButton:{textContent:''},statusText:{textContent:''},statusStrip:{className:''}};
   const document={documentElement:{lang:'ja'},querySelectorAll:()=>[]};
   const noop=()=>{};
-  const api=new Function('env','const {T,state,els,document,noop}=env;let localizedStatus=null;const renderRemovePhotoConfirmation=noop,renderPhotos=noop,renderLayoutChoices=noop,renderAdjustPanel=noop,renderFinishPanel=noop,renderExportPanel=noop;'+code+';return {tr,setStatus,applyLanguage};')({T:translations,state,els,document,noop});
+  const api=new Function('env','const {T,state,els,document,noop}=env;let localizedStatus=null;const renderRemovePhotoConfirmation=noop,syncMobileSaveAction=noop,renderPhotos=noop,renderLayoutChoices=noop,renderAdjustPanel=noop,renderFinishPanel=noop,renderExportPanel=noop;'+code+';return {tr,setStatus,applyLanguage};')({T:translations,state,els,document,noop});
   const vars={ok:1,bad:1,overflow:2},descriptor={key:'partialWithLimit',vars,tone:'warning'};
   api.setStatus(api.tr(descriptor.key,vars),'warning',descriptor);
   assert(els.statusText.textContent.includes('残り2枚'));
