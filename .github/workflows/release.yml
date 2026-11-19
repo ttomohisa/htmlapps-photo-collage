@@ -69,7 +69,8 @@ jobs:
           gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "standalone-html-$VALIDATED_SHA" --dir release-artifact
           test -s release-artifact/photo-collage.html
           test -s release-artifact/dist/index.self-extract.html
-          cmp photo-collage.html release-artifact/photo-collage.html
+          # Build metadata includes a generation timestamp, so compare both files within the same validated build.
+          cmp release-artifact/photo-collage.html release-artifact/dist/index.html
           grep -Fq "connect-src 'none'" release-artifact/photo-collage.html
 
       - name: Create tag and GitHub Release once
