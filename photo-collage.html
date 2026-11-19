@@ -301,6 +301,21 @@
       .header-icon-button{width:40px}
       .history-menu-button{width:38px;min-width:38px}
     }
+
+    /* Keep the mobile-only upload label from duplicating desktop copy. */
+    body.has-photos .drop-zone strong.mobile-drop-label{display:none}
+    @media (min-width:921px){
+      .desktop-editor-controls .photo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+      .desktop-editor-controls .photo-card .thumb{aspect-ratio:4/3}
+      .desktop-editor-controls .photo-card .photo-meta{padding:6px 5px}
+      .desktop-editor-controls .photo-card .photo-name{font-size:10px}
+      .desktop-editor-controls .photo-card .photo-size{display:none}
+      .desktop-editor-controls .photo-card .photo-actions{justify-content:space-between;margin-top:4px}
+      .desktop-editor-controls .photo-card .order-button,.desktop-editor-controls .photo-card .danger-icon-button{width:32px;height:32px;min-height:32px}
+    }
+    @media (max-width:600px), (max-height:520px) and (pointer:coarse){
+      .drop-zone strong.mobile-drop-label,body.has-photos .drop-zone strong.mobile-drop-label{display:block}
+    }
   </style>
 </head>
 <body class="has-mobile-bottom-bar has-mobile-page-tabs" data-mobile-page="photos">
