@@ -201,6 +201,10 @@ async function runDesktopEditorLayout(browser){
     assert(desktop.editRight.every(right=>right<desktop.previewLeft),'all editor sections are left of the preview');
     assert(Math.abs(desktop.headerContentX-desktop.mainContentX)<2,'header and body edges must align');
     assert.equal(desktop.bodyOverflow,false,'no desktop horizontal overflow');
+    const thumbs=await page.locator('#layoutOptions .layout-thumb').evaluateAll(nodes=>nodes.map(node=>({display:getComputedStyle(node).display,height:node.getBoundingClientRect().height,cells:node.querySelectorAll('.layout-thumb-cell').length})));
+    assert.equal(thumbs.length,6);
+    assert(thumbs.every(thumb=>thumb.display==='block'&&thumb.height>32&&thumb.cells===5),'layout options must show actual image-arrangement thumbnails');
+    await page.locator('#appToast').evaluate(el=>{el.style.display='none'});
     await page.locator('#finishPanel').scrollIntoViewIfNeeded();
     await page.screenshot({path:path.join(evidence,'desktop-finish-refined.png'),animations:'disabled'});
     assert.equal(await page.locator('#finishPanel').evaluate(el=>getComputedStyle(el).borderLeftWidth),'0px','settings do not add nested boxed panels');
