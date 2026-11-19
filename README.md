@@ -54,6 +54,8 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-photo-collage/). No in
 
 The app itself does not require Python, Node.js, a local web server, or an installed desktop application.
 
+Failed image decodes do not occupy one of the 20 photo slots: the app checks later files until it has loaded the available number of photos. It reports any files skipped after reaching the limit. Edits and export settings are temporarily locked while the image is being created; they become available again afterward. Changing the collage clears the previous export result shown in the editor.
+
 ## Usage
 
 1. Add 2–20 JPEG, PNG, or WebP photos with the file picker or Drag & Drop.
