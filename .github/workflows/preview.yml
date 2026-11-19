@@ -51,17 +51,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path test-results/photo-collage-smoke | Out-Null
         node scripts/photo-collage-browser-smoke.cjs 2>&1 | Tee-Object -FilePath test-results/photo-collage-smoke/results.log
         if ($LASTEXITCODE -ne 0) { throw "Photo Collage browser smoke failed." }
-        # One-time screenshot transfer; removed after the four images are committed.
-        Write-Host "BK_PR_HEAD $((git rev-parse HEAD).Trim())"
-        Write-Host "BK_PR_TREE $((git rev-parse 'HEAD^{tree}').Trim())"
-        foreach ($image in @("screenshot.png", "screenshot-en.png", "screenshot-mobile.png", "screenshot-mobile-en.png")) {
-          $bytes = [System.IO.File]::ReadAllBytes((Join-Path "test-results/photo-collage-smoke" $image))
-          $encoded = [Convert]::ToBase64String($bytes)
-          for ($offset = 0; $offset -lt $encoded.Length; $offset += 3000) {
-            $count = [Math]::Min(3000, $encoded.Length - $offset)
-            Write-Host "BK_IMAGE $image $offset $($encoded.Substring($offset, $count))"
-          }
-        }
     - name: Upload collage browser evidence
       if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
