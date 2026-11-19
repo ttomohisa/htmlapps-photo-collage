@@ -96,6 +96,8 @@ GitHub Pagesから最初のHTMLを読み込んだ後、写真のdecode、サム�
 
 [![Photo Collageのスマートフォン画面](assets/screenshot-mobile.png)](https://ttomohisa.github.io/htmlapps-photo-collage/)
 
+写真を削除する際は確認画面が表示されます。並べ替え中は他の写真が動いて挿入先が分かり、並べ替えを元に戻すこともできます。写真を追加した後も、小さくなった追加エリアにドロップするかボタンから写真を追加できます。
+
 ## GitHub Pagesで公開する
 
 このリポジトリには、正式版regressionを実行し、単一HTMLをbuildして `dist/` をGitHub Pagesへ公開するworkflowが含まれています。
@@ -103,6 +105,10 @@ GitHub Pagesから最初のHTMLを読み込んだ後、写真のdecode、サム�
 1. **Settings → Pages → Build and deployment → Source** で **GitHub Actions** を選択します。
 2. `main` へpushするか、Actionsから **Deploy standalone app to GitHub Pages** を実行します。
 3. 成功後、`https://ttomohisa.github.io/htmlapps-photo-collage/` で利用できます。
+
+## マージ後のタグとGitHub Release
+
+`main` へのマージ後、GitHub Pagesのビルドとデプロイが成功すると、`app.config.json` のバージョンに基づくタグとGitHub Releaseを自動作成します。配布用の単一HTMLと自己展開版を添付します。既存タグを別コミットへ移動せず、同じバージョンで別コミットを公開しようとすると失敗します。マージ操作は手動で行ってください。
 
 ## 開発とビルド
 
