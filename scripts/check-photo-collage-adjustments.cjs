@@ -151,7 +151,7 @@ test('export is immune to destructive edits during image encoding', () => {
   assert(source.includes("clearExportResult();undoStack.push(before);"));
 });
 test('status retranslation retains the error and overflow detail after language changes', () => {
-  const start=source.indexOf('    const T='),end=source.indexOf('\\n    const els=',start);
+  const start=source.indexOf('    const T='),end=source.indexOf('\n    const els=',start);
   const translations=new Function('return ('+source.slice(start+'    const T='.length,end).trim().replace(/;$/,'')+');')();
   const code=block('    function tr(', '    function validType(');
   const state={lang:'ja'},els={languageButton:{textContent:''},statusText:{textContent:''},statusStrip:{className:''}};
