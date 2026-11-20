@@ -441,6 +441,17 @@ async function runRotationAndFilenameSort(browser){
     assert.equal((await page.locator('#photoGrid .photo-card').first().locator('.photo-size').innerText()).trim(),'320 × 480');
     const clockwise=await saveAndReadColorCenters();
     assert(clockwise.red.x>clockwise.blue.x+30,'clockwise 90° must move original top (red) to the right in exported PNG');
+    assert.equal(await page.locator('#exportResult').isVisible(),true,'rotation save should show the current result');
+    await page.locator('#photoGrid .rotate-photo-button').first().click();
+    assert.equal(await page.locator('#exportResult').isVisible(),false,'editing orientation clears the previous export result');
+    await page.locator('#undoButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'90');
+    await page.locator('#redoButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'180');
+    const upsideDown=await saveAndReadColorCenters();
+    assert(upsideDown.red.y>upsideDown.blue.y+30,'180° turn must move the original top (red) below the blue half');
+    await page.locator('#undoButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'90');
     await page.locator('#undoButton').click();
     assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'0','Undo restores orientation');
     await page.locator('#redoButton').click();
@@ -452,6 +463,7 @@ async function runRotationAndFilenameSort(browser){
     assert.equal((await page.locator('#photoGrid .photo-card').first().locator('.photo-size').innerText()).trim(),'480 × 320','four quarter-turns restore source dimensions');
     await page.locator('#photoSortSelect').selectOption('asc');
     assert.deepEqual(await order(),['photo-1.png','photo-2.png','photo-10.png'],'natural ascending filename order');
+    assert.equal(await page.locator('#exportResult').isVisible(),false,'filename sort clears stale export result');
     await page.locator('#undoButton').click();
     assert.deepEqual(await order(),names,'sorting must be one desktop Undo step');
     await page.locator('#redoButton').click();
@@ -462,9 +474,24 @@ async function runRotationAndFilenameSort(browser){
     assert.deepEqual(await order(),['photo-2.png','photo-10.png','photo-1.png'],'manual arrows remain available after sorting');
     await page.locator('#undoButton').click();
     assert.deepEqual(await order(),['photo-10.png','photo-2.png','photo-1.png'],'manual reordering remains undoable');
+    await page.locator('#heroButton').click();
+    const checkBadgeOverlap=async()=>page.locator('#photoGrid .photo-card .photo-card-badge').evaluate(badge=>{
+      const r=badge.getBoundingClientRect(),thumb=badge.closest('.thumb');
+      const area=(node)=>{if(!node)return 0;const a=node.getBoundingClientRect();return Math.max(0,Math.min(r.right,a.right)-Math.max(r.left,a.left))*Math.max(0,Math.min(r.bottom,a.bottom)-Math.max(r.top,a.top))};
+      return {insideThumbnail:Boolean(thumb),rotateOverlap:area(thumb?.querySelector('.rotate-photo-button')),
+        numberOverlap:area(thumb?.querySelector('.photo-number')),dragOverlap:area(thumb?.querySelector('.drag-handle'))};
+    });
+    const badgeDesktop=await checkBadgeOverlap();
+    assert.equal(badgeDesktop.insideThumbnail,true,'featured badge belongs within its thumbnail');
+    assert.equal(badgeDesktop.rotateOverlap,0,'featured badge must not cover the rotation button on desktop');
+    assert.equal(badgeDesktop.numberOverlap,0,'featured badge must not cover the photo number');
 
     await page.setViewportSize({width:320,height:740});
     await page.waitForFunction(()=>document.querySelector('#photosPage')?.contains(document.getElementById('photoGrid')));
+    const badgeMobile=await checkBadgeOverlap();
+    assert.equal(badgeMobile.rotateOverlap,0,'featured badge must not cover the mobile rotation control');
+    assert.equal(badgeMobile.dragOverlap,0,'featured badge must not cover mobile reordering controls');
+    assert.equal(badgeMobile.numberOverlap,0,'featured badge must not cover the mobile photo number');
     assert.equal(await page.locator('#photoGrid .rotate-photo-button').count(),3,'quarter-turn controls remain in mobile cards');
     assert.equal(await page.locator('#photoGrid .photo-card').first().locator('.rotate-photo-button').evaluate(el=>el.getBoundingClientRect().height),44,'mobile rotate control is touch-sized');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'rotation and sorting do not cause mobile overflow');
