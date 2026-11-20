@@ -537,6 +537,35 @@ async function runExportFormats(browser){
     assert.deepEqual(requests,[],'local image export must not make external HTTP requests');
   }finally{await context.close()}
 }
+async function runReadableFile(browser){
+  const readableUrl=pathToFileURL(path.resolve(__dirname,'../photo-collage.html')).href;
+  const context=await browser.newContext({viewport:{width:390,height:780},locale:'ja',acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url())});
+  try{
+    await page.goto(readableUrl);
+    await page.locator('#fileInput').waitFor({timeout:30000});
+    const images=await fixtures(page,3);
+    await page.locator('#fileInput').setInputFiles(images);await countPhotos(page,3);
+    assert.equal(await page.locator('#photoSortSelect').count(),1,'readable standalone keeps filename sorting');
+    await page.locator('#photoGrid .rotate-photo-button').first().click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'90','readable standalone keeps photo rotation');
+    await page.locator('#photoSortSelect').selectOption('desc');
+    assert.deepEqual(await page.locator('#photoGrid .photo-name').allInnerTexts(),['sample-03.png','sample-02.png','sample-01.png']);
+    await page.locator('[data-mobile-key="save"]').click();
+    await page.locator('[data-format="png"]').click();
+    const pending=page.waitForEvent('download',{timeout:45000});
+    await page.locator('[data-mobile-key="save"]').click();
+    const downloaded=await pending;
+    const bytes=fs.readFileSync(await downloaded.path());
+    assert(bytes.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')),'readable file:// download must be PNG');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'readable file:// mobile view must have no horizontal overflow');
+    assert.deepEqual(errors,[],'readable file:// standalone should not produce JS errors');
+    assert.deepEqual(requests,[],'readable file:// standalone must not request HTTP resources');
+  }finally{await context.close()}
+}
+
 async function runSelfExtractFile(browser){
   const selfUrl=pathToFileURL(path.resolve(__dirname,'../dist/index.self-extract.html')).href;
   const context=await browser.newContext({viewport:{width:390,height:780},locale:'ja',acceptDownloads:true,reducedMotion:'reduce'});
@@ -561,9 +590,9 @@ async function runSelfExtractFile(browser){
 }
 async function main(){
   fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
-  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser);await runRotationAndFilenameSort(browser);await runExportFormats(browser);await runSelfExtractFile(browser)}
+  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser);await runRotationAndFilenameSort(browser);await runExportFormats(browser);await runReadableFile(browser);await runSelfExtractFile(browser)}
   finally{await browser.close()}
-  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, 90-degree photo rotation, filename sort asc/desc, Undo/Redo, PNG pixel orientation, JPEG/PNG/WebP downloads, self-extract file://, history visibility, stale result and localized errors');
+  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, 90-degree photo rotation, filename sort asc/desc, Undo/Redo, PNG pixel orientation, JPEG/PNG/WebP downloads, readable/self-extract file://, history visibility, stale result and localized errors');
   console.log('[INFO] Captured four current-UI screenshots in '+evidence);
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
