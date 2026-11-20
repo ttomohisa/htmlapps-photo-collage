@@ -5,7 +5,7 @@
 - **Name:** Photo Collage / 写真コラージュ
 - **Slug:** `photo-collage`
 - **Repository:** `ttomohisa/htmlapps-photo-collage`
-- **Current development version:** `1.0.1`
+- **Current development version:** `1.1.0`
 - **One-sentence purpose:** 複数の写真を読み込み、写真に合ったレイアウトで1枚のコラージュ画像にまとめる。
 - **Primary users:** 家族・旅行・イベント・商品・作業写真など、数枚の写真を手早く1枚にまとめたい一般ユーザー。
 
@@ -78,6 +78,7 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 - original filename
 - width / height
 - aspect ratio
+- rotation (0 / 90 / 180 / 270°)
 - order
 - thumbnail Blob URL
 - crop x / y
@@ -93,7 +94,8 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 ### Photo management
 
 - 追加 / 削除
-- 並べ替え
+- 並べ替え（手動、ファイル名順の昇順・降順。数字は自然順）
+- 写真ごとの90°右回転（最大4回で元の向き）
 - サムネイル
 - 写真サイズ表示
 - 削除Undo
@@ -101,7 +103,7 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 ### Automatic layout
 
 - 2〜20枚
-- キャンバス比率と各写真aspect ratioを利用
+- キャンバス比率と各写真の回転後aspect ratioを利用
 - Crop loss
 - Extreme cell penalty
 - Balance penalty
@@ -114,6 +116,7 @@ HEIC / HEIFはv1.0.0では正式対応しない。
 ### Photo adjustment
 
 - crop位置
+- 回転（プレビュー、写真カード、レイアウト候補、保存画像に反映）
 - zoom
 - Fill / Fit
 - 「この写真を大きく」
@@ -269,7 +272,7 @@ PC版を単純縦積みしたUIにしない。safe-area、固定UI重なり、36
 
 ### v0.7.0 — Undo / Accessibility / Interaction Polish
 
-- 50-step undo / redo
+- 50-step undo / redo（回転・ファイル名順並べ替えを含む）
 - keyboard shortcuts
 - accessible controls
 - reset confirmation

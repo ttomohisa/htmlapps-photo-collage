@@ -7,10 +7,10 @@ const {test} = require('node:test');
 const source = fs.readFileSync(path.join(__dirname, '..', 'src/index.template.html'), 'utf8');
 function block(a, b) { const start = source.indexOf(a), end = source.indexOf(b, start); assert(start >= 0 && end > start, a); return source.slice(start, end); }
 function element() { return {disabled: false, value: '', textContent: '', attrs: {}, handlers: {}, classList: {remove() {}, toggle() {}}, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(type, fn) { this.handlers[type] = fn; }}; }
-const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
+const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, rotation: 0, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
 function harness() {
   const state = {photos: [photo('first', {cropX: .2, cropY: .8, zoom: 2, fit: 'fit', hero: true}), photo('second')], selectedPhotoId: 'first', selectedLayoutId: 'layout-1', exporting: false, generation: 0};
-  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton'].map(key => [key, element()]));
+  const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton', 'exportResult'].map(key => [key, element()]));
   const api = new Function('state', 'els', `
     const HISTORY_LIMIT=50,undoStack=[],redoStack=[],historyGestures=new Map();
     let historyApplying=false,historyRevision=0,initialHistorySignature='',importJob=null;
@@ -19,12 +19,12 @@ function harness() {
     function hideToast(){} function setStatus(){} function renderFinishPanel(){}
     function updateView(){renderAdjustPanel()} function renderPreview(){return Promise.resolve()}
     ${block('    function captureHistoryState(){', '    function currentPhotoIds(')}
-    ${block('    function selectedPhoto()', '    function selectPhoto(')}
+    ${block('    function photoRotation(', '    function selectPhoto(')}
     ${block('    function renderAdjustPanel(){', '    const ratioPresets=')}
     ${source.split('\n').find(line => line.includes("els.zoomRange.addEventListener('input'"))}
     ${block("    els.previewCanvas.addEventListener('pointermove'", '    function endCrop(')}
     initialHistorySignature=historySignature(captureHistoryState());
-    return {renderAdjustPanel,resetPhotoAdjustment:typeof resetPhotoAdjustment==='function'?resetPhotoAdjustment:undefined,undoHistory,redoHistory,undoStack,redoStack,captureHistoryState};
+    return {renderAdjustPanel,resetPhotoAdjustment:typeof resetPhotoAdjustment==='function'?resetPhotoAdjustment:undefined,rotatePhoto,sortPhotosByFilename,undoHistory,redoHistory,undoStack,redoStack,captureHistoryState};
   `)(state, els);
   return {...api, state, els};
 }
@@ -62,6 +62,32 @@ test('adjusted selection enables reset; repeated reset is a no-op and keeps redo
   h.renderAdjustPanel(); assert.equal(h.els.resetPhotoButton.disabled, false);
   h.resetPhotoAdjustment(); h.redoStack.push(h.captureHistoryState()); h.resetPhotoAdjustment();
   assert.equal(h.undoStack.length, 1); assert.equal(h.redoStack.length, 1);
+});
+test('rotation changes the oriented dimensions and reset restores the original angle', () => {
+  const h=harness();
+  h.state.selectedPhotoId='second';
+  h.rotatePhoto('second');
+  assert.equal(h.state.photos[1].rotation,90);
+  assert.equal(h.state.photos[1].cropX,.5);
+  assert.equal(h.undoStack.length,1);
+  h.renderAdjustPanel();
+  assert.equal(h.els.resetPhotoButton.disabled,false);
+  h.resetPhotoAdjustment();
+  assert.equal(h.state.photos[1].rotation,0);
+  h.undoHistory();assert.equal(h.state.photos[1].rotation,90);
+  h.redoHistory();assert.equal(h.state.photos[1].rotation,0);
+});
+test('filename sorting is numeric, bidirectional, undoable, and preserves photo identity', () => {
+  const h=harness();const photos=[photo('image10'),photo('image2'),photo('image1')];
+  h.state.photos=photos;h.state.selectedPhotoId=photos[0].id;
+  h.sortPhotosByFilename('asc');
+  assert.deepEqual(h.state.photos.map(p=>p.id),['image1','image2','image10']);
+  assert.equal(h.state.selectedPhotoId,'image10');
+  assert.equal(h.undoStack.length,1);
+  h.undoHistory();assert.deepEqual(h.state.photos.map(p=>p.id),['image10','image2','image1']);
+  h.redoHistory();assert.deepEqual(h.state.photos.map(p=>p.id),['image1','image2','image10']);
+  h.sortPhotosByFilename('desc');
+  assert.deepEqual(h.state.photos.map(p=>p.id),['image10','image2','image1']);
 });
 test('zoom and pointer crop immediately enable reset without changing photo selection', () => {
   for (const gesture of ['zoom', 'crop']) {
@@ -110,7 +136,7 @@ test('language button names the destination in the current language and Help sta
   const lang = els.languageButton; lang.dataset = {i18nTitle: 'switchLanguage', i18nAriaLabel: 'switchLanguage'};
   const document = {documentElement: {}, querySelectorAll(selector) { return selector === '[data-i18n]' ? [] : [lang, help]; }};
   const state = {lang: 'ja'};
-  const apply = new Function('state','T','els','document', `function tr(k){return T[state.lang][k]}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
+  const apply = new Function('state','T','els','document', `let localizedStatus=null;function tr(k){return T[state.lang][k]}function renderRemovePhotoConfirmation(){}function syncMobileSaveAction(){}function renderPhotos(){}function renderLayoutChoices(){}function renderAdjustPanel(){}function renderFinishPanel(){}function renderExportPanel(){}${block('    function applyLanguage()', '    function setPhase(')}return applyLanguage;`)(state,T,els,document);
   for (const [language, visible, label, helpLabel] of [['ja','EN','英語に切り替え','使い方と注意事項'],['en','JA','Switch to Japanese','How to use & notes']]) {
     state.lang=language;apply();assert.equal(lang.textContent,visible);assert.equal(lang.attrs['aria-label'],label);assert.equal(lang.title,label);assert.equal(help.attrs['aria-label'],helpLabel);assert.equal(help.title,helpLabel);
   }
@@ -125,4 +151,46 @@ test('header keeps 44-pixel language and Help targets without hiding the version
   assert.match(source, /\.header-actions\{[^}]*flex-shrink:0/);
   assert.match(source, /\.brand-name\{[^}]*display:flex/);
   assert.match(source, /\.version-badge\{[^}]*flex-shrink:0/);
+});
+
+test('export lock makes all editor sections inert and restores them', () => {
+  const state={exporting:false,photos:[{},{}]},targets=['.input-panel','#layoutPage','#finishPage','#photosPage','.export-grid'];
+  const areas=Object.fromEntries(targets.map(selector=>[selector,{inert:false}]));
+  let navRefresh=0;
+  const doc={body:{dataset:{}},querySelector:selector=>areas[selector]||null};
+  const code=block('    function setExportBusy(', '    async function exportImage(');
+  const sortControl={disabled:false};const els={photoSortSelect:sortControl};
+  const setExportBusy=new Function('state','document','els','syncMobileNavigation',code+'return setExportBusy;')(state,doc,els,()=>{navRefresh++});
+  setExportBusy(true);
+  assert.equal(state.exporting,true);assert.equal(doc.body.dataset.exporting,'true');assert.equal(sortControl.disabled,true,'sorting is locked while exporting');
+  assert(targets.every(selector=>areas[selector].inert));
+  setExportBusy(false);
+  assert.equal(state.exporting,false);assert.equal(doc.body.dataset.exporting,'false');assert.equal(sortControl.disabled,false,'sorting is restored after export');
+  assert(targets.every(selector=>!areas[selector].inert));assert.equal(navRefresh,2);
+});
+test('export is immune to destructive edits during image encoding', () => {
+  for(const name of ['removePhoto','movePhoto','movePhotoNear','resetEditor','setCanvasRatio','applyCustomRatio','setExportFormat','setResolutionKey','applyCustomLongSide','resetPhotoAdjustment']){
+    const pattern=new RegExp('function '+name+'\\([^\\n]*\\)\\{if\\(state.exporting\\)return;');
+    assert.match(source,pattern,name+' must refuse edits during export');
+  }
+  assert(source.includes("setExportBusy(true);renderAdjustPanel();renderExportPanel();"));
+  assert(source.includes("setExportBusy(false);renderAdjustPanel();"));
+  assert(source.includes("clearExportResult();undoStack.push(before);"));
+});
+test('status retranslation retains the error and overflow detail after language changes', () => {
+  const start=source.indexOf('    const T='),end=source.indexOf('\n    const els=',start);
+  const translations=new Function('return ('+source.slice(start+'    const T='.length,end).trim().replace(/;$/,'')+');')();
+  const code=block('    function tr(', '    function validType(');
+  const state={lang:'ja'},els={languageButton:{textContent:''},statusText:{textContent:''},statusStrip:{className:''}};
+  const document={documentElement:{lang:'ja'},querySelectorAll:()=>[]};
+  const noop=()=>{};
+  const api=new Function('env','const {T,state,els,document,noop}=env;let localizedStatus=null;const renderRemovePhotoConfirmation=noop,syncMobileSaveAction=noop,renderPhotos=noop,renderLayoutChoices=noop,renderAdjustPanel=noop,renderFinishPanel=noop,renderExportPanel=noop;'+code+';return {tr,setStatus,applyLanguage};')({T:translations,state,els,document,noop});
+  const vars={ok:1,bad:1,overflow:2},descriptor={key:'partialWithLimit',vars,tone:'warning'};
+  api.setStatus(api.tr(descriptor.key,vars),'warning',descriptor);
+  assert(els.statusText.textContent.includes('残り2枚'));
+  state.lang='en';api.applyLanguage();
+  assert(els.statusText.textContent.includes('2 files'));
+  assert.equal(els.statusStrip.className,'status-strip show warning');
+  api.setStatus('', 'warning');state.lang='ja';api.applyLanguage();
+  assert.equal(els.statusText.textContent,'');
 });

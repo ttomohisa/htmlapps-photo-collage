@@ -19,7 +19,7 @@ function block(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-assert(config.version === '1.0.1', 'app.config.json version must be 1.0.1.');
+assert(config.version === '1.1.0', 'app.config.json version must be 1.1.0.');
 assert(source.includes('v' + config.version), 'UI version must match app.config.json.');
 
 const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
@@ -27,6 +27,38 @@ assert(committedRootHtml.includes('v' + config.version), 'Committed photo-collag
 assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collage.html must keep connect-src 'none'.");
 assert(!committedRootHtml.includes('__APP_ICON_DATA_URI__'), 'Committed photo-collage.html must not contain unresolved icon placeholders.');
 assert(!committedRootHtml.includes('__EMBEDDED_ASSET_BUNDLE_JSON__'), 'Committed photo-collage.html must not contain unresolved asset placeholders.');
+
+ // GitHub's direct-download HTML is tracked in git. Ensure it cannot silently
+ // lag behind the latest template even when the CI-generated Pages version passes.
+function embeddedLiteral(variableName, nextVariableMarker) {
+  const startToken='const '+variableName+'=';
+  const start=committedRootHtml.indexOf(startToken);
+  const end=committedRootHtml.indexOf(nextVariableMarker,start+startToken.length);
+  assert(start>=0 && end>start,'Missing generated constant: '+variableName);
+  return committedRootHtml.slice(start+startToken.length,end).trim().replace(/;$/,'');
+}
+const embeddedIcon='data:image/svg+xml;base64,'+
+  fs.readFileSync(path.join(root,'assets','favicon.svg')).toString('base64');
+assert(committedRootHtml.includes('<link rel="icon" href="'+embeddedIcon+'">'),
+  'Tracked standalone HTML must embed the canonical favicon');
+const generatedReplacements={
+  '__APP_ICON_DATA_URI__':embeddedIcon,
+  '__APP_CONFIG_JSON__':embeddedLiteral('APP_CONFIG','\n    const BUILD_MANIFEST='),
+  '__BUILD_MANIFEST_JSON__':embeddedLiteral('BUILD_MANIFEST','\n    const assetBundle='),
+  '__EMBEDDED_ASSET_BUNDLE_JSON__':embeddedLiteral('assetBundle','\n    const blobUrls=')
+};
+assert(JSON.stringify(JSON.parse(generatedReplacements.__APP_CONFIG_JSON__))===JSON.stringify(config),
+  'Committed standalone HTML must embed the current app.config.json');
+let expectedStandalone=source;
+for(const [placeholder,replacement] of Object.entries(generatedReplacements)) {
+  const actual=expectedStandalone.split(placeholder).length-1;
+  const expected=placeholder==='__APP_ICON_DATA_URI__'?2:1;
+  assert(actual===expected,'Unexpected placeholder count for '+placeholder+': '+actual);
+  expectedStandalone=expectedStandalone.split(placeholder).join(replacement);
+}
+assert(expectedStandalone===committedRootHtml,
+  'Tracked photo-collage.html is stale: rebuild it from src/index.template.html before releasing');
+
 
 const scriptMatch = source.match(/<script>\s*([\s\S]*?)\s*<\/script>/);
 assert(scriptMatch, 'Application script block is missing.');
@@ -90,8 +122,12 @@ const jaKeys = Object.keys(translations.ja).sort();
 const enKeys = Object.keys(translations.en).sort();
 assert(JSON.stringify(jaKeys) === JSON.stringify(enKeys), 'Japanese and English translation keys differ.');
 
-const layoutCode = block('    function generatePartitions(', '    function getSelectedLayout()');
-const layoutApi = new Function(layoutCode + '; return {generateLayouts};')();
+// Rotation-aware aspect helpers live before the UI handlers; include them in the isolated layout test.
+const layoutCode = block('    function photoRotation(', '    function rotatePhoto(') +
+  block('    function generatePartitions(', '    function getSelectedLayout()');
+const layoutApi = new Function(layoutCode + '; return {generateLayouts, orientedAspect};')();
+assert(Math.abs(layoutApi.orientedAspect({aspect:2,rotation:90})-0.5)<1e-9, 'Quarter-turn must swap the layout aspect ratio.');
+assert(Math.abs(layoutApi.orientedAspect({aspect:2,rotation:180})-2)<1e-9, 'Half-turn must preserve the layout aspect ratio.');
 
 let standardLayoutCases = 0;
 for (const aspect of [1, 4/5, 9/16, 16/9, 3/2, 4/3, 0.1, 10]) {
@@ -203,11 +239,35 @@ const historyResult = new Function(
   "return {undo:undoStack.length,redo:redoStack.length};"
 )();
 
+// Browser workflow and delete confirmation must not be accidentally removed during release changes.
+assert(source.includes('id="removePhotoDialog"') && source.includes('id="confirmRemovePhotoButton"'), 'Photo removal confirmation is required.');
+assert(source.includes('requestRemovePhoto(photo.id)'), 'Photo removal must enter the confirmation workflow.');
+assert(!source.includes('class="input-note"'), 'Redundant session notice should not appear next to the importer.');
+assert(source.includes("classList.toggle('has-photos',state.photos.length>0)"), 'Loaded upload area must switch to its compact appearance.');
+assert(source.includes('photo-reorder-ghost') && source.includes('previewPhotoReorder('), 'Live card reorder must remain available.');
+assert(source.includes('id="photoCountMobile"'), 'Mobile photo count must be visible in the photo list.');
+assert(!source.includes('id="addMoreButton"') && !source.includes('els.addMoreButton'), 'Only one primary photo picker is allowed.');
+assert(source.includes("state.photos.length?'addMore':'choosePhotos'"), 'The photo picker label must change after adding images.');
+assert(source.includes('id="desktopExportHost"'), 'Desktop export settings must have a host below the preview.');
+assert(source.includes('entry.panel===els.exportPanel?desktopExportHost:desktopEditorHost'), 'Desktop export must be separate from left editor controls.');
+
+const releaseWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
+for(const token of ['workflow_run:',"event == 'push'","head_branch == 'main'",'standalone-html-$VALIDATED_SHA','gh release create','--verify-tag','different commit','select(.name == "deploy")','deploy_result']) {
+  assert(releaseWorkflow.includes(token), 'Validated main tag/release workflow is missing: '+token);
+}
+
 const staleVersions = source.match(/v0\.(?:[1-8])(?:\.\d+)?/g) || [];
 assert(staleVersions.length === 0, 'Stale pre-v1.0 UI version text remains: ' + [...new Set(staleVersions)].join(', '));
 
 assert((source.match(/class="app-mobile-page/g) || []).length === 4, 'Expected exactly four mobile pages.');
 assert((source.match(/class="app-mobile-bottom-item/g) || []).length === 4, 'Expected exactly four mobile navigation items.');
+assert(!source.includes('id="historyMenuButton"') && !source.includes('data-mobile-key="history"'), 'Mobile History action must not be present.');
+assert(source.includes('.preview-head .history-toolbar{display:none!important}'), 'Desktop Undo/Redo must be hidden in the mobile workflow.');
+assert(source.includes('if(mobileViewQuery.matches)window.AppToast.show({message:tr(\'removed\'),duration:3500})'), 'Photo deletion must not expose mobile Undo toast.');
+assert(source.includes("if(mobileViewQuery.matches||els.resetDialog.open"), 'Mobile keyboard shortcuts must not invoke Undo/Redo.');
+assert((source.match(/data-mobile-page-target="/g) || []).length === 4, 'Mobile history must not become a fifth page.');
+assert(source.includes('position:relative;z-index:30;'), 'App header must not be sticky.');
+assert(source.includes("event.stopImmediatePropagation();exportImage()"), 'Active mobile Save tab must start export.');
 
 require('node:child_process').execFileSync(process.execPath, ['--test', path.join(__dirname, 'check-photo-collage-import.cjs'), path.join(__dirname, 'check-photo-collage-adjustments.cjs')], {stdio: 'inherit'});
 

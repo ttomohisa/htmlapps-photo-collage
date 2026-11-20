@@ -20,7 +20,7 @@ function harness({manualEncode = false} = {}) {
     return {textContent: ''};
   }};
   function element() { const values = new Set(); return {textContent: '', value: '', disabled: false, hidden: false, children: [], classList: {values, add: x => values.add(x), remove: x => values.delete(x), toggle(x, on) { on ? values.add(x) : values.delete(x); }}, replaceChildren() { this.children = []; }, append(n) { this.children.push(n); }, focus() { document.activeElement = this; }}; }
-  const els = Object.fromEntries(['loadingProgress', 'fileInput', 'loadingState', 'emptyState', 'readyArea', 'failedFiles', 'failedFilesList', 'chooseButton', 'addMoreButton', 'cancelImportButton', 'undoButton', 'redoButton', 'resetButton', 'exportResult', 'exportProgress'].map(k => [k, element()]));
+  const els = Object.fromEntries(['loadingProgress', 'fileInput', 'loadingState', 'emptyState', 'readyArea', 'failedFiles', 'failedFilesList', 'chooseButton', 'cancelImportButton', 'undoButton', 'redoButton', 'resetButton', 'exportResult', 'exportProgress'].map(k => [k, element()]));
   const URL = {createObjectURL() { return 'blob:thumbnail-' + (++id); }, revokeObjectURL(url) { revoked.push(url); }};
   const decodeImageSource = async f => { calls.push(f.name); const d = deferred(); pending.push({name: f.name, ...d}); await d.promise; return {width: 100, height: 100, image: {}, dispose() { disposed.push(f.name); }}; };
   const pagehideCode = source.split('\n').find(line => line.includes("addEventListener('pagehide'"));
@@ -63,7 +63,7 @@ test('Cancel immediately restores old collage, history, errors and export while 
   const h = harness(); await seed(h); h.state.failedFiles = [{name: 'earlier-bad.jpg'}]; const before = h.historySignature(h.captureHistoryState()), history = h.undoStack.length;
   const pending = h.addFiles([file('new1.jpg'), file('new2.jpg')]); h.resolve('new1.jpg'); await ticks(); h.els.cancelImportButton.focus();
   h.cancelImport(); h.cancelImport();
-  assert.equal(h.state.phase, 'ready'); assert.equal(h.getJob(), null); assert.equal(h.historySignature(h.captureHistoryState()), before); assert.equal(h.undoStack.length, history); assert.equal(h.els.exportResult.textContent, 'previous export'); assert(h.els.exportResult.classList.values.has('show')); assert.equal(h.revoked.length, 1); assert.equal(h.state.failedFiles[0].name, 'earlier-bad.jpg'); assert.equal(h.document.activeElement, h.els.addMoreButton); assert.equal(h.mobileNavigation.page, 'photos');
+  assert.equal(h.state.phase, 'ready'); assert.equal(h.getJob(), null); assert.equal(h.historySignature(h.captureHistoryState()), before); assert.equal(h.undoStack.length, history); assert.equal(h.els.exportResult.textContent, 'previous export'); assert(h.els.exportResult.classList.values.has('show')); assert.equal(h.revoked.length, 1); assert.equal(h.state.failedFiles[0].name, 'earlier-bad.jpg'); assert.equal(h.document.activeElement, h.els.chooseButton); assert.equal(h.mobileNavigation.page, 'photos');
   h.resolve('new2.jpg'); await pending; assert.equal(h.photoObjectUrls.size, 2); assert.equal(h.revoked.length, 1);
 });
 test('Cancel during first decode restores empty UI and permits retry of the same file', async () => {
@@ -131,4 +131,25 @@ test('nonpersisted pagehide releases staged and session thumbnail resources with
   const h = harness(); await seed(h); const task = h.addFiles([file('staged.jpg'), file('late.jpg')]); h.resolve('staged.jpg'); await ticks();
   h.eventPagehide({persisted: false}); assert.equal(h.getJob(), null); assert.equal(h.photoObjectUrls.size, 0); assert.equal(h.revoked.length, 3);
   h.resolve('late.jpg'); await task; assert.equal(h.photoObjectUrls.size, 0); assert.equal(h.revoked.length, 3);
+});
+
+test('failed files do not consume the final available photo slot', async () => {
+  const h = harness();
+  h.state.photos = Array.from({length: 19}, (_, i) => ({id:'old-'+i,file:file('old-'+i+'.jpg'),name:'old-'+i+'.jpg',width:100,height:100,aspect:1,thumbUrl:'blob:old-'+i,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false}));
+  const task = h.addFiles([file('broken.jpg'),file('valid.jpg')]);
+  h.reject('broken.jpg'); await ticks(); h.resolve('valid.jpg'); await task;
+  assert.equal(h.state.photos.length, 20);
+  assert.deepEqual(h.calls,['broken.jpg','valid.jpg']);
+  assert.equal(h.state.photos.at(-1).name,'valid.jpg');
+  assert.equal(h.state.failedFiles[0].name,'broken.jpg');
+  assert.equal(h.statuses.at(-1).message,'partial{"ok":1,"bad":1}');
+});
+test('the import reports both a failed image and uninspected overflow', async () => {
+  const h = harness();
+  h.state.photos = Array.from({length: 19}, (_, i) => ({id:'old-'+i,file:file('old-'+i+'.jpg'),name:'old-'+i+'.jpg',width:100,height:100,aspect:1,thumbUrl:'blob:old-'+i,cropX:.5,cropY:.5,zoom:1,fit:'fill',hero:false}));
+  const task = h.addFiles([file('broken.jpg'),file('valid.jpg'),file('skipped.jpg')]);
+  h.reject('broken.jpg'); await ticks(); h.resolve('valid.jpg'); await task;
+  assert.equal(h.state.photos.length,20);
+  assert.deepEqual(h.calls,['broken.jpg','valid.jpg']);
+  assert.equal(h.statuses.at(-1).message,'partialWithLimit{"ok":1,"bad":1,"overflow":1}');
 });

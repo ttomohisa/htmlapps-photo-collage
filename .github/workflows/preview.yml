@@ -48,6 +48,17 @@ jobs:
         New-Item -ItemType Directory -Force -Path test-results/mobile-footer | Out-Null
         node scripts/mobile-footer.browser.cjs 2>&1 | Tee-Object -FilePath test-results/mobile-footer/results.log
         if ($LASTEXITCODE -ne 0) { throw "Footer browser regression failed." }
+        New-Item -ItemType Directory -Force -Path test-results/photo-collage-smoke | Out-Null
+        node scripts/photo-collage-browser-smoke.cjs 2>&1 | Tee-Object -FilePath test-results/photo-collage-smoke/results.log
+        if ($LASTEXITCODE -ne 0) { throw "Photo Collage browser smoke failed." }
+    - name: Upload collage browser evidence
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: photo-collage-browser-evidence
+        path: test-results/photo-collage-smoke/
+        if-no-files-found: ignore
+        retention-days: 7
     - name: Upload footer browser evidence
       if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
