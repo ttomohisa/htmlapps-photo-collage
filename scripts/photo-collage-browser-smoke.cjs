@@ -150,10 +150,10 @@ async function runMobileWorkflow(browser){
     const after=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
     assert.deepEqual(after,mid,'drag release must commit live card order');
     assert.equal(await page.locator('.photo-reorder-ghost').count(),0,'ghost must be cleaned up');
-    assert.equal(await page.locator('#undoButton').isDisabled(),false);
-    await page.locator('#historyMenuButton').click();await page.locator('#undoButton').click();
-    const restored=await page.locator('#photoGrid .photo-card').evaluateAll(els=>els.map(el=>el.dataset.photoId));
-    assert.deepEqual(restored,initial,'reorder must undo in one step');
+    assert.equal(await page.locator('#historyMenuButton').count(),0,'mobile History control must be removed entirely');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),false,'desktop history controls must be hidden on phone');
+    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),4,'exactly four mobile navigation actions');
+    const deletedName=await page.locator('#photoGrid .photo-card').first().locator('.photo-name').innerText();
     const remove=page.locator('#photoGrid .photo-card').first().locator('.danger-icon-button');
     await remove.click();assert.equal(await page.locator('#removePhotoDialog').isVisible(),true);
     assert.equal(await page.locator('#photoGrid .photo-card').count(),4);
@@ -161,16 +161,17 @@ async function runMobileWorkflow(browser){
     assert.equal(await page.locator('#removePhotoDialog').isVisible(),false);
     assert.equal(await page.locator('#photoGrid .photo-card').count(),4,'cancel must preserve photo');
     await remove.click();
-    assert.equal(await page.locator('#removePhotoDescription').textContent().then(t=>t.includes('sample-01.png')),true);
+    assert.equal(await page.locator('#removePhotoDescription').textContent().then(t=>t.includes(deletedName)),true);
     await page.locator('#cancelRemovePhotoButton').click();
     await page.locator('#languageButton').click();
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'Add photos','added-photo label must translate to English');
     await remove.click();
     assert.match(await page.locator('#removePhotoDescription').textContent(),/Remove/);
     await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
-    await page.locator('#historyMenuButton').click();await page.locator('#undoButton').click();await countPhotos(page,4);
+    assert.equal(await page.locator('#appToastAction').isVisible(),false,'delete toast cannot expose Undo on mobile');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),false,'no history popup after deleting');
     // The compact bar still supports the fallback picker and direct file drops.
-    await page.locator('#fileFallbackInput').setInputFiles(images.slice(4));await countPhotos(page,5);
+    await page.locator('#fileFallbackInput').setInputFiles(images.slice(4));await countPhotos(page,4);
     await page.evaluate(async()=>{
       const canvas=document.createElement('canvas');canvas.width=160;canvas.height=100;
       const ctx=canvas.getContext('2d');ctx.fillStyle='#16624f';ctx.fillRect(0,0,160,100);
@@ -178,9 +179,9 @@ async function runMobileWorkflow(browser){
       const transfer=new DataTransfer();transfer.items.add(new File([blob],'dropped-after-import.png',{type:'image/png'}));
       document.getElementById('dropZone').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer}));
     });
-    await countPhotos(page,6);
+    await countPhotos(page,5);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),5,'four workflow pages plus one history action');
+    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),4,'four workflow pages only');
     assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   }finally{await context.close()}
 }
@@ -228,12 +229,9 @@ async function runDesktopEditorLayout(browser){
     await page.waitForFunction(()=>document.querySelector('#layoutPage')?.contains(document.getElementById('adjustPanel')));
     assert.equal(await page.locator('.privacy-badge').isVisible(),false);
     assert.equal(await page.locator('#heroTitle').isVisible(),false);
-    assert.equal(await page.locator('#historyToolbar').evaluate(el=>el.parentElement===document.body),true,'mobile history menu must escape hidden layout page');
-    await page.locator('#historyMenuButton').click();
-    assert.equal(await page.locator('#historyToolbar').isVisible(),true,'history actions open from bottom navigation');
-    assert.equal(await page.locator('#historyMenuButton').getAttribute('aria-expanded'),'true');
-    await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#historyToolbar').isVisible(),false);
+    assert.equal(await page.locator('#historyMenuButton').count(),0,'no mobile history entry');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),false,'desktop history toolbar hidden in phone workflow');
+    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),4);
     await page.locator('[data-mobile-key="finish"]').click();
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','viewport switch keeps settings');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no mobile horizontal overflow');
@@ -255,6 +253,15 @@ async function runDesktopEditorLayout(browser){
     await page.waitForFunction(()=>document.getElementById('desktopEditorControls').contains(document.getElementById('finishPanel')));
     assert.equal(await page.locator('#desktopExportHost').evaluate(el=>el.contains(document.getElementById('exportPanel'))),true,'desktop export host restores after resize');
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','settings survive restoration');
+    assert.equal(await page.locator('#historyToolbar').isVisible(),true,'desktop history controls return after resize');
+    await page.locator('#undoButton').click();
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'false','desktop Undo restores previous canvas ratio');
+    await page.locator('#redoButton').click();
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','desktop Redo re-applies canvas ratio');
+    await page.locator('#resetButton').click();
+    assert.equal(await page.locator('#resetDialog').isVisible(),true,'desktop Start over asks for confirmation');
+    await page.locator('#cancelResetButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').count(),5,'cancel Reset preserves photos');
     assert.deepEqual(errors,[]);
   }finally{await context.close()}
 }
