@@ -365,6 +365,101 @@ async function runDesktopEditorLayout(browser){
   }finally{await context.close()}
 }
 
+async function runRotationAndFilenameSort(browser){
+  const context=await browser.newContext({viewport:{width:1280,height:900},locale:'ja',acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  page.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url())});
+  try{
+    await page.goto(url);
+    const sourceImages=await page.evaluate(()=>{
+      const colored=(top,bottom)=>{
+        const canvas=document.createElement('canvas');canvas.width=480;canvas.height=320;
+        const ctx=canvas.getContext('2d');ctx.fillStyle=top;ctx.fillRect(0,0,480,160);
+        ctx.fillStyle=bottom;ctx.fillRect(0,160,480,160);
+        return canvas.toDataURL('image/png').split(',')[1];
+      };
+      return [colored('#e52222','#185deb'),colored('#5a8d66','#5a8d66'),colored('#d0b84c','#d0b84c')];
+    });
+    const names=['photo-10.png','photo-2.png','photo-1.png'];
+    const files=sourceImages.map((base64,i)=>({name:names[i],mimeType:'image/png',buffer:Buffer.from(base64,'base64')}));
+    await page.locator('#fileInput').setInputFiles(files);await countPhotos(page,3);
+    const order=()=>page.locator('#photoGrid .photo-name').allInnerTexts();
+    assert.deepEqual(await order(),names);
+    assert.equal(await page.locator('#photoGrid .rotate-photo-button').count(),3);
+    assert.match(await page.locator('#photoGrid .rotate-photo-button').first().getAttribute('aria-label'),/90°/);
+    await page.locator('#fitButton').click();
+    await page.locator('[data-format="png"]').click();
+    await page.locator('[data-long-side="1080"]').click();
+
+    async function saveAndReadColorCenters(){
+      const pending=page.waitForEvent('download',{timeout:45000});await page.locator('#exportButton').click();
+      const download=await pending,bytes=fs.readFileSync(await download.path());
+      assert.equal(bytes.toString('hex',0,4),'89504e47','rotation sample must export a PNG');
+      const sample=await page.evaluate(async base64=>{
+        const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+        const bitmap=await createImageBitmap(new Blob([bytes],{type:'image/png'}));
+        const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0);bitmap.close();
+        const {data}=ctx.getImageData(0,0,canvas.width,canvas.height),totals={red:{x:0,y:0,n:0},blue:{x:0,y:0,n:0}};
+        for(let y=0;y<canvas.height;y+=3)for(let x=0;x<canvas.width;x+=3){
+          const i=(y*canvas.width+x)*4,r=data[i],g=data[i+1],b=data[i+2];
+          const bucket=(r>160&&g<75&&b<75)?totals.red:(b>150&&r<85)?totals.blue:null;
+          if(bucket){bucket.x+=x;bucket.y+=y;bucket.n+=1}
+        }
+        canvas.width=1;canvas.height=1;
+        return {red:{x:totals.red.x/Math.max(1,totals.red.n),y:totals.red.y/Math.max(1,totals.red.n),n:totals.red.n},
+                blue:{x:totals.blue.x/Math.max(1,totals.blue.n),y:totals.blue.y/Math.max(1,totals.blue.n),n:totals.blue.n}};
+      },bytes.toString('base64'));
+      await page.waitForFunction(()=>document.body.dataset.exporting==='false');
+      assert(sample.red.n>100&&sample.blue.n>100,'both colored halves must be present in the full resolution export');
+      return sample;
+    }
+    const before=await saveAndReadColorCenters();
+    assert(before.red.y<before.blue.y-30,'original source must have red above blue');
+    await page.locator('#photoGrid .rotate-photo-button').first().click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'90');
+    assert.equal((await page.locator('#photoGrid .photo-card').first().locator('.photo-size').innerText()).trim(),'320 × 480');
+    const clockwise=await saveAndReadColorCenters();
+    assert(clockwise.red.x>clockwise.blue.x+30,'clockwise 90° must move original top (red) to the right in exported PNG');
+    await page.locator('#undoButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'0','Undo restores orientation');
+    await page.locator('#redoButton').click();
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),'90','Redo restores clockwise turn');
+    for(const rotation of ['180','270','0']){
+      await page.locator('#photoGrid .rotate-photo-button').first().click();
+      assert.equal(await page.locator('#photoGrid .photo-card').first().locator('img').getAttribute('data-rotation'),rotation);
+    }
+    assert.equal((await page.locator('#photoGrid .photo-card').first().locator('.photo-size').innerText()).trim(),'480 × 320','four quarter-turns restore source dimensions');
+    await page.locator('#photoSortSelect').selectOption('asc');
+    assert.deepEqual(await order(),['photo-1.png','photo-2.png','photo-10.png'],'natural ascending filename order');
+    await page.locator('#undoButton').click();
+    assert.deepEqual(await order(),names,'sorting must be one desktop Undo step');
+    await page.locator('#redoButton').click();
+    assert.deepEqual(await order(),['photo-1.png','photo-2.png','photo-10.png'],'Redo restores name sort');
+    await page.locator('#photoSortSelect').selectOption('desc');
+    assert.deepEqual(await order(),['photo-10.png','photo-2.png','photo-1.png'],'descending filename order');
+    await page.locator('#photoGrid .photo-card').first().locator('.order-button').nth(1).click();
+    assert.deepEqual(await order(),['photo-2.png','photo-10.png','photo-1.png'],'manual arrows remain available after sorting');
+    await page.locator('#undoButton').click();
+    assert.deepEqual(await order(),['photo-10.png','photo-2.png','photo-1.png'],'manual reordering remains undoable');
+
+    await page.setViewportSize({width:320,height:740});
+    await page.waitForFunction(()=>document.querySelector('#photosPage')?.contains(document.getElementById('photoGrid')));
+    assert.equal(await page.locator('#photoGrid .rotate-photo-button').count(),3,'quarter-turn controls remain in mobile cards');
+    assert.equal(await page.locator('#photoGrid .photo-card').first().locator('.rotate-photo-button').evaluate(el=>el.getBoundingClientRect().height),44,'mobile rotate control is touch-sized');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'rotation and sorting do not cause mobile overflow');
+    await page.locator('#languageButton').click();
+    assert.match(await page.locator('#photoGrid .rotate-photo-button').first().getAttribute('aria-label'),/Rotate right 90/,'rotate label translates');
+    assert.match(await page.locator('#photoSortSelect').getAttribute('aria-label'),/Sort by filename/,'sort label translates');
+    await page.locator('#photoSortSelect').selectOption('asc');
+    assert.deepEqual(await order(),['photo-1.png','photo-2.png','photo-10.png'],'mobile sorting works');
+    await page.locator('#photoGrid .rotate-photo-button').last().click();
+    assert.equal(await page.locator('#photoGrid .photo-card').last().locator('img').getAttribute('data-rotation'),'90','mobile rotation updates source orientation');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile quarter-turn remains within viewport');
+    assert.deepEqual(errors,[]);assert.deepEqual(requests,[],'rotation and name sort must make no HTTP requests');
+  }finally{await context.close()}
+}
 async function runExportFormats(browser){
   const context=await browser.newContext({viewport:{width:1200,height:880},locale:'en',acceptDownloads:true,reducedMotion:'reduce'});
   const page=await context.newPage(),errors=[],requests=[];
@@ -420,9 +515,9 @@ async function runSelfExtractFile(browser){
 }
 async function main(){
   fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
-  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser);await runExportFormats(browser);await runSelfExtractFile(browser)}
+  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser);await runRotationAndFilenameSort(browser);await runExportFormats(browser);await runSelfExtractFile(browser)}
   finally{await browser.close()}
-  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, JPEG/PNG/WebP downloads, self-extract file://, history visibility, stale result and localized errors');
+  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, 90-degree photo rotation, filename sort asc/desc, Undo/Redo, PNG pixel orientation, JPEG/PNG/WebP downloads, self-extract file://, history visibility, stale result and localized errors');
   console.log('[INFO] Captured four current-UI screenshots in '+evidence);
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
