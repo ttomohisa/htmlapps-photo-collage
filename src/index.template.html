@@ -420,22 +420,31 @@
       #savePage .export-actions:has(.export-progress.show){margin-top:10px}
       .app-mobile-page>.export-panel{padding-bottom:18px}
     }
-    /* Mobile photo picker: one primary action, one quiet text link. */
+    /* Mobile picker: desktop-style centered drop area, with the file link BELOW the main action. */
     @media (max-width:600px), (max-height:520px) and (pointer:coarse){
       .input-panel .panel-head,
       .mobile-drop-label,body.has-photos .drop-zone .mobile-drop-label{display:none!important}
       .input-body,body.has-photos .input-body{padding:16px}
+      body:not(.has-photos) .drop-zone{
+        padding:24px 16px;border:1px dashed var(--line-strong);
+        border-radius:12px;background:var(--surface);text-align:center
+      }
+      body:not(.has-photos) .drop-zone-icon{
+        display:block;width:40px;height:40px;margin:0 auto 8px;color:var(--accent)
+      }
       .drop-zone-content,body.has-photos .drop-zone-content{
-        display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-        align-items:center;gap:8px
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:8px;width:100%;min-width:0
       }
       .drop-zone .primary-button,body.has-photos .drop-zone .primary-button{
-        grid-column:1;grid-row:1;min-width:0;width:100%;min-height:44px;
-        margin:0;padding:8px;justify-content:center
+        display:inline-flex;align-self:center;flex:none;
+        width:auto;min-width:160px;min-height:44px;
+        margin:0;padding:8px 16px;justify-content:center
       }
       .file-fallback-button,body.has-photos .file-fallback-button{
-        display:flex;grid-column:2;grid-row:1;align-items:center;justify-content:center;
-        min-width:0;width:100%;min-height:44px;margin:0;padding:8px;
+        display:inline-flex;align-self:center;align-items:center;justify-content:center;
+        flex:none;width:auto;min-width:160px;min-height:44px;
+        margin:0;padding:8px 16px;
         border:0;border-radius:8px;background:transparent;
         color:var(--muted);font-size:12px;font-weight:500;line-height:1.4;
         text-decoration:underline;text-underline-offset:4px;
