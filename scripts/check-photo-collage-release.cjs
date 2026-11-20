@@ -28,6 +28,38 @@ assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collag
 assert(!committedRootHtml.includes('__APP_ICON_DATA_URI__'), 'Committed photo-collage.html must not contain unresolved icon placeholders.');
 assert(!committedRootHtml.includes('__EMBEDDED_ASSET_BUNDLE_JSON__'), 'Committed photo-collage.html must not contain unresolved asset placeholders.');
 
+ // GitHub's direct-download HTML is tracked in git. Ensure it cannot silently
+ // lag behind the latest template even when the CI-generated Pages version passes.
+function embeddedLiteral(variableName, nextVariableMarker) {
+  const startToken='const '+variableName+'=';
+  const start=committedRootHtml.indexOf(startToken);
+  const end=committedRootHtml.indexOf(nextVariableMarker,start+startToken.length);
+  assert(start>=0 && end>start,'Missing generated constant: '+variableName);
+  return committedRootHtml.slice(start+startToken.length,end).trim().replace(/;$/,'');
+}
+const embeddedIcon='data:image/svg+xml;base64,'+
+  fs.readFileSync(path.join(root,'assets','favicon.svg')).toString('base64');
+assert(committedRootHtml.includes('<link rel="icon" href="'+embeddedIcon+'">'),
+  'Tracked standalone HTML must embed the canonical favicon');
+const generatedReplacements={
+  '__APP_ICON_DATA_URI__':embeddedIcon,
+  '__APP_CONFIG_JSON__':embeddedLiteral('APP_CONFIG','\n    const BUILD_MANIFEST='),
+  '__BUILD_MANIFEST_JSON__':embeddedLiteral('BUILD_MANIFEST','\n    const assetBundle='),
+  '__EMBEDDED_ASSET_BUNDLE_JSON__':embeddedLiteral('assetBundle','\n    const blobUrls=')
+};
+assert(JSON.stringify(JSON.parse(generatedReplacements.__APP_CONFIG_JSON__))===JSON.stringify(config),
+  'Committed standalone HTML must embed the current app.config.json');
+let expectedStandalone=source;
+for(const [placeholder,replacement] of Object.entries(generatedReplacements)) {
+  const actual=expectedStandalone.split(placeholder).length-1;
+  const expected=placeholder==='__APP_ICON_DATA_URI__'?2:1;
+  assert(actual===expected,'Unexpected placeholder count for '+placeholder+': '+actual);
+  expectedStandalone=expectedStandalone.split(placeholder).join(replacement);
+}
+assert(expectedStandalone===committedRootHtml,
+  'Tracked photo-collage.html is stale: rebuild it from src/index.template.html before releasing');
+
+
 const scriptMatch = source.match(/<script>\s*([\s\S]*?)\s*<\/script>/);
 assert(scriptMatch, 'Application script block is missing.');
 new Function(scriptMatch[1]);
