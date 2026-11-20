@@ -133,12 +133,28 @@ async function runMobileWorkflow(browser){
     assert.equal(pickerStyle.borderWidth,'0px','secondary file picker should not have a card-like outline');
     assert.match(pickerStyle.decoration,/underline/,'secondary file picker should look like a text link');
     assert(pickerStyle.height>=44,'file picker must keep a smartphone-sized tap target');
+    const pickerLayout=async()=>page.evaluate(()=>{
+      const main=document.getElementById('chooseButton').getBoundingClientRect();
+      const link=document.getElementById('fileFallbackButton').getBoundingClientRect();
+      const drop=document.getElementById('dropZone');
+      return {mainBottom:main.bottom,linkTop:link.top,mainCenter:main.left+main.width/2,
+        linkCenter:link.left+link.width/2,dropBorder:getComputedStyle(drop).borderTopStyle};
+    });
+    const emptyPicker=await pickerLayout();
+    assert.equal(await page.locator('.drop-zone-icon').isVisible(),true,'empty mobile picker keeps the desktop-style photo icon');
+    assert.equal(emptyPicker.dropBorder,'dashed','empty mobile picker keeps the subtle drop-area outline');
+    assert(emptyPicker.linkTop>=emptyPicker.mainBottom+6,'file link sits below the primary button');
+    assert(Math.abs(emptyPicker.mainCenter-emptyPicker.linkCenter)<=2,'mobile picker controls are centered, not side by side');
     const emptyHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     const images=await fixtures(page,5);
     await page.locator('#fileInput').setInputFiles(images.slice(0,4));await countPhotos(page,4);
     const loadedHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を追加');
-    assert(loadedHeight<emptyHeight&&loadedHeight<=120,`photo upload bar should become compact after loading: ${loadedHeight} vs ${emptyHeight}`);
+    assert(loadedHeight<emptyHeight&&loadedHeight<=160,`photo upload bar should become compact after loading: ${loadedHeight} vs ${emptyHeight}`);
+    const loadedPicker=await pickerLayout();
+    assert(loadedPicker.linkTop>=loadedPicker.mainBottom+6,'file link remains below Add photos after importing');
+    assert(Math.abs(loadedPicker.mainCenter-loadedPicker.linkCenter)<=2,'loaded mobile picker remains centered');
+    assert.equal(await page.locator('.drop-zone-icon').isVisible(),false,'icon is hidden after importing to keep the bar compact');
     assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'duplicate label remains hidden after importing');
     assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile heading remains hidden after importing');
     const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
