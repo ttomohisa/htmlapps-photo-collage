@@ -7,7 +7,7 @@
 ### Added
 - Reorder photo cards with live movement of neighboring cards on desktop and touch devices, preserving Undo / Redo.
 - Ask for confirmation before removing a photo, with Undo still available after deletion.
-- Publish an annotated version tag and GitHub Release with standalone assets after a successful main deployment, skipping duplicate releases.
+- Publish an annotated version tag and GitHub Release with standalone assets only after a successful main GitHub Pages deployment job, skipping duplicate releases and skipped deployments.
 
 ### Changed
 - Place the live photo list, layout choices, per-photo adjustments, canvas controls, and export settings in one left-hand editor rail on wide screens, with a sticky preview on the right. On mobile, retain the four original workflow pages without losing editing state when the window is resized.
