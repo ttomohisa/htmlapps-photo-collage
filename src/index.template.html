@@ -335,8 +335,22 @@
     .main{padding-top:var(--space-3);padding-bottom:56px}
     .page-intro{gap:var(--space-2);margin-bottom:var(--space-3)}
     .workspace{gap:var(--space-2)}
+    .header-inner{padding:8px 24px;gap:16px}
+    .header-actions{gap:8px}
+    .main{padding-inline:24px}
+    .page-intro p{margin-top:8px}
+    footer{padding-inline:24px}
     .panel{border-radius:12px;box-shadow:none}
+    .panel-head{padding:16px}
+    .input-body,.photos-section{padding:16px}
+    .drop-zone{padding:24px}
+    .photo-grid{gap:8px}
     .photo-card{border-radius:8px;box-shadow:none}
+    .photo-card .photo-meta{padding:8px}
+    .photo-card .photo-actions{margin-top:8px}
+    .layout-option{padding:8px}
+    .layout-picker-head,.adjust-head,.export-head{margin-bottom:16px}
+    .finish-head{margin-bottom:8px}
     .photo-card[data-selected="true"]{box-shadow:inset 0 0 0 1px var(--accent)}
     .layout-picker,.adjust-panel,.finish-panel,.export-panel{padding:var(--space-3)}
     .adjust-grid,.finish-controls{gap:var(--space-3)}
@@ -366,14 +380,17 @@
       .content-panel .preview-stage{min-height:320px;max-height:none;padding:var(--space-2);border-radius:8px}
       .content-panel .preview-stage canvas{max-height:min(52dvh,480px);box-shadow:0 4px 16px rgba(24,38,31,.08)}
       .desktop-editor-controls>.photos-section,.desktop-editor-controls>.layout-picker,.desktop-editor-controls>.adjust-panel,.desktop-editor-controls>.finish-panel{padding:var(--space-3) var(--space-2)}
-      .desktop-export-host>.export-panel{padding:var(--space-3)}
+      .desktop-export-host>.export-panel{padding:var(--space-3);border-top:0}
       .desktop-export-host .export-grid{column-gap:var(--space-3);row-gap:var(--space-3)}
       .desktop-export-host .export-field{align-content:start}
       .desktop-export-host .export-actions{margin-top:var(--space-3)}
       .desktop-export-host .export-button{min-height:48px}
     }
     @media (max-width:600px), (max-height:520px) and (pointer:coarse){
-      .main{padding-top:var(--space-2)}
+      .header-inner{padding:8px 16px;gap:8px}
+      .main{padding:16px 16px 56px}
+      .photo-grid{gap:8px}
+      .photo-card .photo-meta{padding:8px}
       .app-mobile-page>.layout-picker,.app-mobile-page>.adjust-panel,.app-mobile-page>.finish-panel,.app-mobile-page>.export-panel{padding:var(--space-2)}
       .finish-controls,.export-grid{gap:var(--space-3)}
     }
