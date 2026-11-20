@@ -7,7 +7,7 @@ const {test} = require('node:test');
 const source = fs.readFileSync(path.join(__dirname, '..', 'src/index.template.html'), 'utf8');
 function block(a, b) { const start = source.indexOf(a), end = source.indexOf(b, start); assert(start >= 0 && end > start, a); return source.slice(start, end); }
 function element() { return {disabled: false, value: '', textContent: '', attrs: {}, handlers: {}, classList: {remove() {}, toggle() {}}, setAttribute(k, v) { this.attrs[k] = v; }, addEventListener(type, fn) { this.handlers[type] = fn; }}; }
-const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
+const photo = (id, extra = {}) => ({id, file: {name: id + '.png'}, name: id + '.png', width: 600, height: 400, aspect: 1.5, rotation: 0, thumbUrl: 'blob:' + id, cropX: .5, cropY: .5, zoom: 1, fit: 'fill', hero: false, ...extra});
 function harness() {
   const state = {photos: [photo('first', {cropX: .2, cropY: .8, zoom: 2, fit: 'fit', hero: true}), photo('second')], selectedPhotoId: 'first', selectedLayoutId: 'layout-1', exporting: false, generation: 0};
   const els = Object.fromEntries(['undoButton', 'redoButton', 'resetButton', 'resetPhotoButton', 'adjustPanel', 'previewCanvas', 'selectedPhotoName', 'fillButton', 'fitButton', 'zoomRange', 'zoomValue', 'heroButton', 'exportResult'].map(key => [key, element()]));
@@ -19,12 +19,12 @@ function harness() {
     function hideToast(){} function setStatus(){} function renderFinishPanel(){}
     function updateView(){renderAdjustPanel()} function renderPreview(){return Promise.resolve()}
     ${block('    function captureHistoryState(){', '    function currentPhotoIds(')}
-    ${block('    function selectedPhoto()', '    function selectPhoto(')}
+    ${block('    function photoRotation(', '    function selectPhoto(')}
     ${block('    function renderAdjustPanel(){', '    const ratioPresets=')}
     ${source.split('\n').find(line => line.includes("els.zoomRange.addEventListener('input'"))}
     ${block("    els.previewCanvas.addEventListener('pointermove'", '    function endCrop(')}
     initialHistorySignature=historySignature(captureHistoryState());
-    return {renderAdjustPanel,resetPhotoAdjustment:typeof resetPhotoAdjustment==='function'?resetPhotoAdjustment:undefined,undoHistory,redoHistory,undoStack,redoStack,captureHistoryState};
+    return {renderAdjustPanel,resetPhotoAdjustment:typeof resetPhotoAdjustment==='function'?resetPhotoAdjustment:undefined,rotatePhoto,sortPhotosByFilename,undoHistory,redoHistory,undoStack,redoStack,captureHistoryState};
   `)(state, els);
   return {...api, state, els};
 }
@@ -62,6 +62,32 @@ test('adjusted selection enables reset; repeated reset is a no-op and keeps redo
   h.renderAdjustPanel(); assert.equal(h.els.resetPhotoButton.disabled, false);
   h.resetPhotoAdjustment(); h.redoStack.push(h.captureHistoryState()); h.resetPhotoAdjustment();
   assert.equal(h.undoStack.length, 1); assert.equal(h.redoStack.length, 1);
+});
+test('rotation changes the oriented dimensions and reset restores the original angle', () => {
+  const h=harness();
+  h.state.selectedPhotoId='second';
+  h.rotatePhoto('second');
+  assert.equal(h.state.photos[1].rotation,90);
+  assert.equal(h.state.photos[1].cropX,.5);
+  assert.equal(h.undoStack.length,1);
+  h.renderAdjustPanel();
+  assert.equal(h.els.resetPhotoButton.disabled,false);
+  h.resetPhotoAdjustment();
+  assert.equal(h.state.photos[1].rotation,0);
+  h.undoHistory();assert.equal(h.state.photos[1].rotation,90);
+  h.redoHistory();assert.equal(h.state.photos[1].rotation,0);
+});
+test('filename sorting is numeric, bidirectional, undoable, and preserves photo identity', () => {
+  const h=harness();const photos=[photo('image10'),photo('image2'),photo('image1')];
+  h.state.photos=photos;h.state.selectedPhotoId=photos[0].id;
+  h.sortPhotosByFilename('asc');
+  assert.deepEqual(h.state.photos.map(p=>p.id),['image1','image2','image10']);
+  assert.equal(h.state.selectedPhotoId,'image10');
+  assert.equal(h.undoStack.length,1);
+  h.undoHistory();assert.deepEqual(h.state.photos.map(p=>p.id),['image10','image2','image1']);
+  h.redoHistory();assert.deepEqual(h.state.photos.map(p=>p.id),['image1','image2','image10']);
+  h.sortPhotosByFilename('desc');
+  assert.deepEqual(h.state.photos.map(p=>p.id),['image10','image2','image1']);
 });
 test('zoom and pointer crop immediately enable reset without changing photo selection', () => {
   for (const gesture of ['zoom', 'crop']) {
@@ -128,17 +154,18 @@ test('header keeps 44-pixel language and Help targets without hiding the version
 });
 
 test('export lock makes all editor sections inert and restores them', () => {
-  const state={exporting:false},targets=['.input-panel','#layoutPage','#finishPage','#photosPage','.export-grid'];
+  const state={exporting:false,photos:[{},{}]},targets=['.input-panel','#layoutPage','#finishPage','#photosPage','.export-grid'];
   const areas=Object.fromEntries(targets.map(selector=>[selector,{inert:false}]));
   let navRefresh=0;
   const doc={body:{dataset:{}},querySelector:selector=>areas[selector]||null};
   const code=block('    function setExportBusy(', '    async function exportImage(');
-  const setExportBusy=new Function('state','document','syncMobileNavigation',code+'return setExportBusy;')(state,doc,()=>{navRefresh++});
+  const sortControl={disabled:false};const els={photoSortSelect:sortControl};
+  const setExportBusy=new Function('state','document','els','syncMobileNavigation',code+'return setExportBusy;')(state,doc,els,()=>{navRefresh++});
   setExportBusy(true);
-  assert.equal(state.exporting,true);assert.equal(doc.body.dataset.exporting,'true');
+  assert.equal(state.exporting,true);assert.equal(doc.body.dataset.exporting,'true');assert.equal(sortControl.disabled,true,'sorting is locked while exporting');
   assert(targets.every(selector=>areas[selector].inert));
   setExportBusy(false);
-  assert.equal(state.exporting,false);assert.equal(doc.body.dataset.exporting,'false');
+  assert.equal(state.exporting,false);assert.equal(doc.body.dataset.exporting,'false');assert.equal(sortControl.disabled,false,'sorting is restored after export');
   assert(targets.every(selector=>!areas[selector].inert));assert.equal(navRefresh,2);
 });
 test('export is immune to destructive edits during image encoding', () => {
