@@ -138,7 +138,7 @@ async function runMobileWorkflow(browser){
     await page.locator('#fileInput').setInputFiles(images.slice(0,4));await countPhotos(page,4);
     const loadedHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を追加');
-    assert(loadedHeight<=120&&emptyHeight<=120,`photo upload bar should stay compact in both states: ${loadedHeight} vs ${emptyHeight}`);
+    assert(loadedHeight<emptyHeight&&loadedHeight<=120,`photo upload bar should become compact after loading: ${loadedHeight} vs ${emptyHeight}`);
     assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'duplicate label remains hidden after importing');
     assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile heading remains hidden after importing');
     const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
