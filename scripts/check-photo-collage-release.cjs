@@ -90,8 +90,12 @@ const jaKeys = Object.keys(translations.ja).sort();
 const enKeys = Object.keys(translations.en).sort();
 assert(JSON.stringify(jaKeys) === JSON.stringify(enKeys), 'Japanese and English translation keys differ.');
 
-const layoutCode = block('    function generatePartitions(', '    function getSelectedLayout()');
-const layoutApi = new Function(layoutCode + '; return {generateLayouts};')();
+// Rotation-aware aspect helpers live before the UI handlers; include them in the isolated layout test.
+const layoutCode = block('    function photoRotation(', '    function rotatePhoto(') +
+  block('    function generatePartitions(', '    function getSelectedLayout()');
+const layoutApi = new Function(layoutCode + '; return {generateLayouts, orientedAspect};')();
+assert(Math.abs(layoutApi.orientedAspect({aspect:2,rotation:90})-0.5)<1e-9, 'Quarter-turn must swap the layout aspect ratio.');
+assert(Math.abs(layoutApi.orientedAspect({aspect:2,rotation:180})-2)<1e-9, 'Half-turn must preserve the layout aspect ratio.');
 
 let standardLayoutCases = 0;
 for (const aspect of [1, 4/5, 9/16, 16/9, 3/2, 4/3, 0.1, 10]) {
