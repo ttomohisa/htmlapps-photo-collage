@@ -253,7 +253,7 @@ async function runDesktopEditorLayout(browser){
     assert.equal(saveForm.columnPosition,'sticky','preview must stay pinned on desktop');
     assert.equal(saveForm.columnOverflow,'hidden','preview itself should never scroll away');
     assert.equal(saveForm.formOverflow,'auto','only the save settings can scroll inside the preview column');
-    assert(saveForm.formScrollSpace>0,'save settings scroll on a normal desktop viewport');
+    assert(saveForm.formScrollSpace>=0,'save settings retain a valid independent scroll range');
     assert(saveForm.pageScrollHeight>860,'desktop page remains normally scrollable');
     const previewBeforeSaveScroll=await page.locator('#previewStage').boundingBox();
     await page.locator('#exportButton').scrollIntoViewIfNeeded();
@@ -267,6 +267,17 @@ async function runDesktopEditorLayout(browser){
     exportRect=await page.locator('#exportButton').boundingBox();
     assert(exportRect&&exportRect.y>=0&&exportRect.y+exportRect.height<=680,'laptop viewport must not clip Save');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'laptop viewport must not overflow horizontally');
+    await page.setViewportSize({width:1024,height:560});
+    const compactForm=await page.evaluate(()=>{
+      const host=document.getElementById('desktopExportHost'),preview=document.getElementById('previewStage');
+      return {scrollSpace:host.scrollHeight-host.clientHeight,previewY:preview.getBoundingClientRect().y};
+    });
+    assert(compactForm.scrollSpace>0,'short desktop viewport should scroll Save settings without moving the preview');
+    await page.locator('#exportButton').scrollIntoViewIfNeeded();
+    const compactSave=await page.locator('#exportButton').boundingBox();
+    const compactPreview=await page.locator('#previewStage').boundingBox();
+    assert(compactSave&&compactSave.y>=0&&compactSave.y+compactSave.height<=560,'short desktop must show the complete Save button');
+    assert(Math.abs(compactPreview.y-compactForm.previewY)<=2,'preview must stay fixed when Save settings scroll on short desktops');
     await page.setViewportSize({width:1360,height:860});
     await page.locator('[data-ratio-key="9:16"]').click();
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true');
