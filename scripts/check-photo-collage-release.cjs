@@ -216,7 +216,7 @@ assert(source.includes('id="desktopExportHost"'), 'Desktop export settings must 
 assert(source.includes('entry.panel===els.exportPanel?desktopExportHost:desktopEditorHost'), 'Desktop export must be separate from left editor controls.');
 
 const releaseWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
-for(const token of ['workflow_run:',"event == 'push'","head_branch == 'main'",'standalone-html-$VALIDATED_SHA','gh release create','--verify-tag','different commit']) {
+for(const token of ['workflow_run:',"event == 'push'","head_branch == 'main'",'standalone-html-$VALIDATED_SHA','gh release create','--verify-tag','different commit','select(.name == "deploy")','deploy_result']) {
   assert(releaseWorkflow.includes(token), 'Validated main tag/release workflow is missing: '+token);
 }
 
