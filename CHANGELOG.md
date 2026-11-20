@@ -5,6 +5,9 @@
 ## 1.1.0 - 2026-11-19
 
 ### Added
+- Rotate each photo by 90° clockwise from its card, carrying the orientation into layout scoring, preview, crop interactions, and the full-resolution export. Reset photo adjustment also restores the original orientation.
+- Sort all photos by natural filename order, ascending or descending, while preserving manual reorder, desktop Undo / Redo, and mobile photo controls.
+- Extend Chromium release smoke to check rotation pixels in PNG export, sort ordering and history, and smartphone controls.
 - Reorder photo cards with live movement of neighboring cards on desktop and touch devices, preserving Undo / Redo.
 - Ask for confirmation before removing a photo, with Undo still available after deletion.
 - Publish an annotated version tag and GitHub Release with standalone assets only after a successful main GitHub Pages deployment job, skipping duplicate releases and skipped deployments.
@@ -17,10 +20,10 @@
 - Make the global app header scroll normally instead of sticking to the viewport.
 - Make the active mobile Save tab a clear **Save image** action; users can export at any scroll position while preserving the four-page workflow.
 - Simplify layout selection, aspect-ratio choices with shape previews, canvas sliders, and export settings by removing nested panel borders.
-- Replace the mobile dashed drop zone with two adjacent photo/file selection buttons, while keeping drag/drop support.
+- Keep the desktop-style centered mobile photo drop area, placing the quiet "Choose from files" link below the main photo picker. Preserve drag/drop support.
 - Remove the verbose import cancellation paragraph from Help, retaining the actual cancel operation and other safety notes.
 - Keep the import/drop area compact after photos are added without disabling further imports or drops.
-- Use two photo columns on narrow mobile widths and larger touch controls.
+- Use two photo columns on narrow mobile widths and larger touch controls, including the photo rotation action.
 - Hide the hero heading and local-processing badge in the mobile workflow only, and remove the redundant session note near the importer.
 
 ### Fixed
