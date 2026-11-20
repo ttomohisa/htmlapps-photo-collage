@@ -222,7 +222,29 @@ async function runDesktopEditorLayout(browser){
     await page.screenshot({path:path.join(evidence,'desktop-finish-refined.png'),animations:'disabled'});
     assert.equal(await page.locator('#finishPanel').evaluate(el=>getComputedStyle(el).borderLeftWidth),'0px','settings do not add nested boxed panels');
     await page.locator('#exportPanel').scrollIntoViewIfNeeded();
+    const saveForm=await page.evaluate(()=>{
+      const fmt=document.getElementById('formatGrid').getBoundingClientRect();
+      const res=document.getElementById('resolutionGrid').getBoundingClientRect();
+      const column=document.querySelector('.content-panel');
+      const action=document.getElementById('exportButton').getBoundingClientRect();
+      return {formatHeight:fmt.height,resolutionHeight:res.height,formatTop:fmt.top,resolutionTop:res.top,
+        columnOverflow:getComputedStyle(column).overflowY,buttonWidth:action.width,
+        pageScrollHeight:document.documentElement.scrollHeight};
+    });
+    assert(Math.abs(saveForm.formatHeight-saveForm.resolutionHeight)<=1,'format and resolution selectors must be the same height');
+    assert(Math.abs(saveForm.formatTop-saveForm.resolutionTop)<=1,'desktop selector controls must align at the top');
+    assert.equal(saveForm.columnOverflow,'visible','desktop must not trap the save action inside a second scrollbar');
+    assert(saveForm.pageScrollHeight>860,'desktop settings remain reachable by normal page scrolling');
+    await page.locator('#exportButton').scrollIntoViewIfNeeded();
+    let exportRect=await page.locator('#exportButton').boundingBox();
+    assert(exportRect&&exportRect.y>=0&&exportRect.y+exportRect.height<=860,'desktop Save must be fully visible');
     await page.screenshot({path:path.join(evidence,'desktop-save-refined.png'),animations:'disabled'});
+    await page.setViewportSize({width:1024,height:680});
+    await page.locator('#exportButton').scrollIntoViewIfNeeded();
+    exportRect=await page.locator('#exportButton').boundingBox();
+    assert(exportRect&&exportRect.y>=0&&exportRect.y+exportRect.height<=680,'laptop viewport must not clip Save');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'laptop viewport must not overflow horizontally');
+    await page.setViewportSize({width:1360,height:860});
     await page.locator('[data-ratio-key="9:16"]').click();
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true');
     await page.setViewportSize({width:390,height:844});
