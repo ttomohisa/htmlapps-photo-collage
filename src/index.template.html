@@ -420,6 +420,12 @@
       #savePage .export-actions:has(.export-progress.show){margin-top:10px}
       .app-mobile-page>.export-panel{padding-bottom:18px}
     }
+    /* Mobile header to first content: one 8px gap, no reserved space for the hidden heading. */
+    @media (max-width:600px), (max-height:520px) and (pointer:coarse){
+      .main{padding-top:8px}
+      body[data-mobile-page="photos"] .page-intro{margin-bottom:8px}
+      .page-intro p{margin-top:0;line-height:1.5}
+    }
     /* Mobile picker: desktop-style centered drop area, with the file link BELOW the main action. */
     @media (max-width:600px), (max-height:520px) and (pointer:coarse){
       .input-panel .panel-head,
