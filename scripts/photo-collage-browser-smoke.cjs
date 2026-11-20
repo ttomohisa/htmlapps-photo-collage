@@ -265,11 +265,65 @@ async function runDesktopEditorLayout(browser){
     assert.deepEqual(errors,[]);
   }finally{await context.close()}
 }
+
+async function runExportFormats(browser){
+  const context=await browser.newContext({viewport:{width:1200,height:880},locale:'en',acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
+  try{
+    await page.goto(url);
+    const images=await fixtures(page,2);
+    await page.locator('#fileInput').setInputFiles(images);await countPhotos(page,2);
+    await page.locator('[data-long-side="1080"]').click();
+    await page.locator('#outputFilename').fill('release-quality');
+    for(const {key,ext} of [{key:'jpeg',ext:'jpg'},{key:'webp',ext:'webp'}]){
+      await page.locator('[data-format="'+key+'"]').click();
+      const wait=page.waitForEvent('download',{timeout:45000});
+      await page.locator('#exportButton').click();
+      const download=await wait;
+      assert.equal(download.suggestedFilename(),'release-quality.'+ext);
+      const bytes=fs.readFileSync(await download.path());
+      assert(bytes.length>1200,key+': output not empty');
+      if(key==='jpeg')assert(bytes.subarray(0,3).equals(Buffer.from('ffd8ff','hex')),'JPEG magic');
+      if(key==='webp')assert.equal(bytes.toString('ascii',0,4)+':'+bytes.toString('ascii',8,12),'RIFF:WEBP','WebP magic');
+      const size=await page.evaluate(async base64=>{
+        const data=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+        const bitmap=await createImageBitmap(new Blob([data]));const dimensions={width:bitmap.width,height:bitmap.height};bitmap.close();return dimensions;
+      },bytes.toString('base64'));
+      assert.deepEqual(size,{width:1080,height:810},key+': exported image dimensions');
+      await page.waitForFunction(()=>document.body.dataset.exporting==='false');
+    }
+    assert.deepEqual(errors,[]);
+    assert.deepEqual(requests,[],'local image export must not make external HTTP requests');
+  }finally{await context.close()}
+}
+async function runSelfExtractFile(browser){
+  const selfUrl=pathToFileURL(path.resolve(__dirname,'../dist/index.self-extract.html')).href;
+  const context=await browser.newContext({viewport:{width:390,height:780},locale:'ja',acceptDownloads:true,reducedMotion:'reduce'});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
+  try{
+    await page.goto(selfUrl);
+    await page.locator('#fileInput').waitFor({timeout:30000});
+    const images=await fixtures(page,2);
+    await page.locator('#fileInput').setInputFiles(images);await countPhotos(page,2);
+    assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),4);
+    await page.locator('[data-mobile-key="save"]').click();
+    const saving=page.waitForEvent('download',{timeout:45000});
+    await page.locator('[data-mobile-key="save"]').click();
+    const download=await saving;
+    assert.match(download.suggestedFilename(),/\.(jpg|jpeg)$/);
+    const bytes=fs.readFileSync(await download.path());
+    assert(bytes.subarray(0,3).equals(Buffer.from('ffd8ff','hex')),'self-extract HTML JPEG download');
+    assert.deepEqual(errors,[],'self-extracting file:// should have no errors');
+    assert.deepEqual(requests,[],'self-extracting file:// should have no HTTP requests');
+  }finally{await context.close()}
+}
 async function main(){
   fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
-  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser)}
+  try{await takeScreenshots(browser);await runEditingAndSave(browser);await runCapacity(browser);await runMobileWorkflow(browser);await runDesktopEditorLayout(browser);await runExportFormats(browser);await runSelfExtractFile(browser)}
   finally{await browser.close()}
-  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, PNG download, stale result and localized errors');
+  console.log('[OK] Real-browser Photo Collage smoke: JA/EN, desktop/mobile, import limit, edit lock, JPEG/PNG/WebP downloads, self-extract file://, history visibility, stale result and localized errors');
   console.log('[INFO] Captured four current-UI screenshots in '+evidence);
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
