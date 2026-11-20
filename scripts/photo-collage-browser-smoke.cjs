@@ -120,6 +120,13 @@ async function runMobileWorkflow(browser){
     await page.goto(url);
     assert.equal(await page.locator('#heroTitle').isVisible(),false,'mobile hero title hidden');
     assert.equal(await page.locator('.privacy-badge').isVisible(),false,'mobile privacy badge hidden');
+    const topGap=await page.evaluate(()=>{
+      const header=document.querySelector('.app-header').getBoundingClientRect();
+      const intro=document.querySelector('.page-intro').getBoundingClientRect();
+      return {gap:intro.top-header.bottom,descriptionVisible:getComputedStyle(document.querySelector('.page-intro p')).display!=='none'};
+    });
+    assert(topGap.gap>=0&&topGap.gap<=9,`mobile header should have only an 8px gap before its description, got ${topGap.gap}px`);
+    assert.equal(topGap.descriptionVisible,true,'mobile description must remain visible');
     assert.equal(await page.locator('.input-note').count(),0,'unnecessary session notice removed');
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を選択');
     assert.equal(await page.locator('#addMoreButton').count(),0);
