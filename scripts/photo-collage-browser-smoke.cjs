@@ -123,12 +123,24 @@ async function runMobileWorkflow(browser){
     assert.equal(await page.locator('.input-note').count(),0,'unnecessary session notice removed');
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を選択');
     assert.equal(await page.locator('#addMoreButton').count(),0);
+    assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile picker must not repeat a section heading');
+    assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'mobile Add photos label must be hidden');
+    const pickerStyle=await page.locator('#fileFallbackButton').evaluate(el=>{
+      const css=getComputedStyle(el),bounds=el.getBoundingClientRect();
+      return {borderWidth:css.borderTopWidth,decoration:css.textDecorationLine,
+        background:css.backgroundColor,height:bounds.height,width:bounds.width};
+    });
+    assert.equal(pickerStyle.borderWidth,'0px','secondary file picker should not have a card-like outline');
+    assert.match(pickerStyle.decoration,/underline/,'secondary file picker should look like a text link');
+    assert(pickerStyle.height>=44,'file picker must keep a smartphone-sized tap target');
     const emptyHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     const images=await fixtures(page,5);
     await page.locator('#fileInput').setInputFiles(images.slice(0,4));await countPhotos(page,4);
     const loadedHeight=await page.locator('.input-panel').evaluate(el=>el.getBoundingClientRect().height);
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を追加');
-    assert(loadedHeight<emptyHeight&&loadedHeight<120,`drop target must shrink after import: ${loadedHeight} vs ${emptyHeight}`);
+    assert(loadedHeight<=120&&emptyHeight<=120,`photo upload bar should stay compact in both states: ${loadedHeight} vs ${emptyHeight}`);
+    assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'duplicate label remains hidden after importing');
+    assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile heading remains hidden after importing');
     const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     assert.equal(gridColumns,2,'even 320px wide phone must show two photo columns');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
@@ -170,8 +182,11 @@ async function runMobileWorkflow(browser){
     await page.locator('#confirmRemovePhotoButton').click();await countPhotos(page,3);
     assert.equal(await page.locator('#appToastAction').isVisible(),false,'delete toast cannot expose Undo on mobile');
     assert.equal(await page.locator('#historyToolbar').isVisible(),false,'no history popup after deleting');
-    // The compact bar still supports the fallback picker and direct file drops.
-    await page.locator('#fileFallbackInput').setInputFiles(images.slice(4));await countPhotos(page,4);
+    // The text link must still open the native file picker after importing.
+    const fileChooserPromise=page.waitForEvent('filechooser');
+    await page.locator('#fileFallbackButton').click();
+    const fileChooser=await fileChooserPromise;
+    await fileChooser.setFiles(images.slice(4));await countPhotos(page,4);
     await page.evaluate(async()=>{
       const canvas=document.createElement('canvas');canvas.width=160;canvas.height=100;
       const ctx=canvas.getContext('2d');ctx.fillStyle='#16624f';ctx.fillRect(0,0,160,100);
