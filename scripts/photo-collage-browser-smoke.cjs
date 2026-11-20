@@ -255,9 +255,14 @@ async function runDesktopEditorLayout(browser){
     assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','settings survive restoration');
     assert.equal(await page.locator('#historyToolbar').isVisible(),true,'desktop history controls return after resize');
     await page.locator('#undoButton').click();
-    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'false','desktop Undo restores previous canvas ratio');
+    assert.equal(await page.locator('[data-format="jpeg"]').getAttribute('aria-pressed'),'true','desktop Undo restores previous JPEG output format');
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','output format Undo must not change the canvas ratio');
+    await page.locator('#undoButton').click();
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'false','second desktop Undo restores previous canvas ratio');
     await page.locator('#redoButton').click();
-    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','desktop Redo re-applies canvas ratio');
+    assert.equal(await page.locator('[data-ratio-key="9:16"]').getAttribute('aria-pressed'),'true','first Redo reapplies the canvas ratio');
+    await page.locator('#redoButton').click();
+    assert.equal(await page.locator('[data-format="png"]').getAttribute('aria-pressed'),'true','second Redo reapplies PNG output format');
     await page.locator('#resetButton').click();
     assert.equal(await page.locator('#resetDialog').isVisible(),true,'desktop Start over asks for confirmation');
     await page.locator('#cancelResetButton').click();
