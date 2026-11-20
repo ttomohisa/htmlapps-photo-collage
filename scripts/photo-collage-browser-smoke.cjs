@@ -214,6 +214,21 @@ async function runDesktopEditorLayout(browser){
     assert(desktop.exportTop>desktop.previewBottom,'export settings follow the preview');
     assert(Math.abs(desktop.headerContentX-desktop.mainContentX)<2,'header and body edges must align');
     assert.equal(desktop.bodyOverflow,false,'no desktop horizontal overflow');
+    const stickyInitial=await page.evaluate(()=>({
+      previewTop:document.querySelector('.content-panel').getBoundingClientRect().top,
+      maxPageScroll:document.documentElement.scrollHeight-innerHeight
+    }));
+    assert(stickyInitial.maxPageScroll>300,'desktop editor should be long enough to test sticky preview');
+    await page.evaluate(()=>window.scrollTo(0,280));
+    const stickyScrolled=await page.evaluate(()=>({
+      top:document.querySelector('.content-panel').getBoundingClientRect().top,
+      scroll:window.scrollY,
+      position:getComputedStyle(document.querySelector('.content-panel')).position
+    }));
+    assert(stickyScrolled.scroll>200,'desktop page should scroll normally');
+    assert.equal(stickyScrolled.position,'sticky','preview column follows the page');
+    assert(stickyScrolled.top>=8&&stickyScrolled.top<=24,'preview must remain pinned while scrolling the left editor');
+    await page.evaluate(()=>window.scrollTo(0,0));
     const thumbs=await page.locator('#layoutOptions .layout-thumb').evaluateAll(nodes=>nodes.map(node=>({display:getComputedStyle(node).display,height:node.getBoundingClientRect().height,cells:node.querySelectorAll('.layout-thumb-cell').length})));
     assert.equal(thumbs.length,6);
     assert(thumbs.every(thumb=>thumb.display==='block'&&thumb.height>32&&thumb.cells===5),'layout options must show actual image-arrangement thumbnails');
@@ -226,16 +241,24 @@ async function runDesktopEditorLayout(browser){
       const fmt=document.getElementById('formatGrid').getBoundingClientRect();
       const res=document.getElementById('resolutionGrid').getBoundingClientRect();
       const column=document.querySelector('.content-panel');
+      const host=document.getElementById('desktopExportHost');
       const action=document.getElementById('exportButton').getBoundingClientRect();
       return {formatHeight:fmt.height,resolutionHeight:res.height,formatTop:fmt.top,resolutionTop:res.top,
-        columnOverflow:getComputedStyle(column).overflowY,buttonWidth:action.width,
-        pageScrollHeight:document.documentElement.scrollHeight};
+        columnPosition:getComputedStyle(column).position,columnOverflow:getComputedStyle(column).overflowY,
+        formOverflow:getComputedStyle(host).overflowY,formScrollSpace:host.scrollHeight-host.clientHeight,
+        buttonWidth:action.width,pageScrollHeight:document.documentElement.scrollHeight};
     });
     assert(Math.abs(saveForm.formatHeight-saveForm.resolutionHeight)<=1,'format and resolution selectors must be the same height');
     assert(Math.abs(saveForm.formatTop-saveForm.resolutionTop)<=1,'desktop selector controls must align at the top');
-    assert.equal(saveForm.columnOverflow,'visible','desktop must not trap the save action inside a second scrollbar');
-    assert(saveForm.pageScrollHeight>860,'desktop settings remain reachable by normal page scrolling');
+    assert.equal(saveForm.columnPosition,'sticky','preview must stay pinned on desktop');
+    assert.equal(saveForm.columnOverflow,'hidden','preview itself should never scroll away');
+    assert.equal(saveForm.formOverflow,'auto','only the save settings can scroll inside the preview column');
+    assert(saveForm.formScrollSpace>0,'save settings scroll on a normal desktop viewport');
+    assert(saveForm.pageScrollHeight>860,'desktop page remains normally scrollable');
+    const previewBeforeSaveScroll=await page.locator('#previewStage').boundingBox();
     await page.locator('#exportButton').scrollIntoViewIfNeeded();
+    const previewAfterSaveScroll=await page.locator('#previewStage').boundingBox();
+    assert(Math.abs(previewAfterSaveScroll.y-previewBeforeSaveScroll.y)<=2,'scrolling the save controls must not move the preview');
     let exportRect=await page.locator('#exportButton').boundingBox();
     assert(exportRect&&exportRect.y>=0&&exportRect.y+exportRect.height<=860,'desktop Save must be fully visible');
     await page.screenshot({path:path.join(evidence,'desktop-save-refined.png'),animations:'disabled'});
