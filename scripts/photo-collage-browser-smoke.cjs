@@ -131,7 +131,15 @@ async function runMobileWorkflow(browser){
     assert.equal((await page.locator('#chooseButton span').innerText()).trim(),'写真を選択');
     assert.equal(await page.locator('#addMoreButton').count(),0);
     assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile picker must not repeat a section heading');
-    assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'mobile Add photos label must be hidden');
+    assert.equal(await page.locator('.mobile-drop-label').count(),0,'duplicate mobile Add photos label must be removed from the DOM');
+    assert.equal(await page.locator('#dropZone [data-i18n="dropBody"]').count(),0,'redundant drop-area description must be removed');
+    const dropIcon=await page.locator('#dropZone .drop-zone-icon').evaluate(svg=>({
+      paths:Array.from(svg.querySelectorAll('path')).map(path=>path.getAttribute('d')),
+      viewBox:svg.getAttribute('viewBox'),hasBox:svg.querySelectorAll('rect').length
+    }));
+    assert.equal(dropIcon.viewBox,'0 0 24 24','drop icon must use the same viewport as PDF Fill & Sign');
+    assert.deepEqual(dropIcon.paths,['M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3','M12 3v11','m8 10 4 4 4-4'],'drop icon uses only the line art from PDF Fill & Sign');
+    assert.equal(dropIcon.hasBox,0,'do not copy the PDF tool icon container or add a shape behind the lines');
     const pickerStyle=await page.locator('#fileFallbackButton').evaluate(el=>{
       const css=getComputedStyle(el),bounds=el.getBoundingClientRect();
       return {borderWidth:css.borderTopWidth,decoration:css.textDecorationLine,
@@ -162,7 +170,7 @@ async function runMobileWorkflow(browser){
     assert(loadedPicker.linkTop>=loadedPicker.mainBottom+6,'file link remains below Add photos after importing');
     assert(Math.abs(loadedPicker.mainCenter-loadedPicker.linkCenter)<=2,'loaded mobile picker remains centered');
     assert.equal(await page.locator('.drop-zone-icon').isVisible(),false,'icon is hidden after importing to keep the bar compact');
-    assert.equal(await page.locator('.mobile-drop-label').isVisible(),false,'duplicate label remains hidden after importing');
+    assert.equal(await page.locator('.mobile-drop-label').count(),0,'duplicate label remains absent after importing');
     assert.equal(await page.locator('.input-panel .panel-head').isVisible(),false,'mobile heading remains hidden after importing');
     const gridColumns=await page.locator('#photoGrid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     assert.equal(gridColumns,2,'even 320px wide phone must show two photo columns');
@@ -388,6 +396,17 @@ async function runRotationAndFilenameSort(browser){
     assert.deepEqual(await order(),names);
     assert.equal(await page.locator('#photoGrid .rotate-photo-button').count(),3);
     assert.match(await page.locator('#photoGrid .rotate-photo-button').first().getAttribute('aria-label'),/90°/);
+    const rotateIconMatchesReset=await page.evaluate(()=>{
+      const rotate=document.querySelector('#photoGrid .rotate-photo-button svg');
+      const reset=document.querySelector('#resetButton svg');
+      return {
+        samePaths:JSON.stringify(Array.from(rotate.querySelectorAll('path')).map(p=>p.getAttribute('d')))===
+          JSON.stringify(Array.from(reset.querySelectorAll('path')).map(p=>p.getAttribute('d'))),
+        flip:rotate.querySelector('g')?.getAttribute('transform')
+      };
+    });
+    assert.equal(rotateIconMatchesReset.samePaths,true,'rotate icon must reuse the exact Reset icon paths');
+    assert.equal(rotateIconMatchesReset.flip,'translate(24 0) scale(-1 1)','rotate icon must be a horizontal mirror of Reset');
     await page.locator('#fitButton').click();
     await page.locator('[data-format="png"]').click();
     await page.locator('[data-long-side="1080"]').click();
