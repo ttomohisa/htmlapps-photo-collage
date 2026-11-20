@@ -374,11 +374,21 @@
     .quality-row{grid-template-columns:minmax(0,1fr) 40px;gap:var(--space-1)}
     @media (min-width:921px){
       .workspace{gap:var(--space-3)}
-      /* No independent right-column scrollbar: the whole page scrolls and never clips Save. */
-      .content-panel{position:static;top:auto;max-height:none;overflow:visible;overscroll-behavior:auto}
+      /* Keep the preview anchored while the left editor scrolls.
+         Only the export settings scroll inside the right panel, so the preview
+         never disappears and the Save action stays reachable at short heights. */
+      .content-panel{position:sticky;top:16px;align-self:start;max-height:calc(100dvh - 32px);overflow:hidden;display:flex;flex-direction:column}
+      .content-panel .ready-area.show{display:flex;flex-direction:column;min-height:0;max-height:calc(100dvh - 32px)}
+      .content-panel #layoutPage{flex:0 0 auto}
       .content-panel .preview-wrap{padding:var(--space-3);border-bottom:1px solid var(--line)}
-      .content-panel .preview-stage{min-height:320px;max-height:none;padding:var(--space-2);border-radius:8px}
-      .content-panel .preview-stage canvas{max-height:min(52dvh,480px);box-shadow:0 4px 16px rgba(24,38,31,.08)}
+      .content-panel .preview-stage{min-height:clamp(192px,32dvh,320px);max-height:calc(100dvh - 280px);padding:var(--space-2);border-radius:8px}
+      .content-panel .preview-stage canvas{max-height:min(37dvh,380px);box-shadow:0 4px 16px rgba(24,38,31,.08)}
+      .desktop-export-host{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scroll-padding-bottom:24px}
+      .desktop-export-host>.export-panel{padding-bottom:32px}
+      @media (max-height:640px){
+        .content-panel .preview-stage{min-height:160px;max-height:30dvh}
+        .content-panel .preview-stage canvas{max-height:28dvh}
+      }
       .desktop-editor-controls>.photos-section,.desktop-editor-controls>.layout-picker,.desktop-editor-controls>.adjust-panel,.desktop-editor-controls>.finish-panel{padding:var(--space-3) var(--space-2)}
       .desktop-export-host>.export-panel{padding:var(--space-3);border-top:0}
       .desktop-export-host .export-grid{column-gap:var(--space-3);row-gap:var(--space-3)}
