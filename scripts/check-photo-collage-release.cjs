@@ -19,8 +19,9 @@ function block(startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-assert(config.version === '1.1.0', 'app.config.json version must be 1.1.0.');
-assert(source.includes('v' + config.version), 'UI version must match app.config.json.');
+assert(/^\d+\.\d+\.\d+$/.test(config.version), 'app.config.json must contain a SemVer release version.');
+assert(source.includes('id="versionBadge">v' + config.version + '</span>'), 'UI version badge must match app.config.json.');
+assert(fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8').includes('## ' + config.version + ' - '), 'CHANGELOG must include the current version.');
 
 const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
 assert(committedRootHtml.includes('v' + config.version), 'Committed photo-collage.html must match app.config.json.');
