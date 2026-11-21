@@ -1,0 +1,54 @@
+name: One-time Photo Collage screenshot refresh
+on:
+  push:
+    branches:
+      - fix/photo-collage-export-import-locale-20261119
+    paths:
+      - .github/workflows/screenshot-refresh-once.yml
+permissions:
+  contents: write
+  actions: read
+jobs:
+  refresh:
+    if: "github.event.head_commit.message == 'ci: prepare screenshot refresh'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current PR branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: true
+      - name: Retrieve screenshots from latest successful Chromium run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/actions/artifacts/14719825368/zip > "$RUNNER_TEMP/photo-collage-evidence.zip"
+      - name: Validate and copy four screenshots
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct,zipfile
+          expected={'screenshot.png':(1440,1120),'screenshot-en.png':(1440,1120),
+                    'screenshot-mobile.png':(390,844),'screenshot-mobile-en.png':(390,844)}
+          with zipfile.ZipFile(Path('${{ runner.temp }}')/'photo-collage-evidence.zip') as z:
+              for name,dims in expected.items():
+                  found=[entry for entry in z.infolist() if entry.filename==name]
+                  if len(found)!=1: raise RuntimeError('Screenshot missing or duplicated: '+name)
+                  data=z.read(found[0])
+                  if data[:8]!=b'\x89PNG\r\n\x1a\n' or data[12:16]!=b'IHDR': raise RuntimeError('Invalid PNG: '+name)
+                  if struct.unpack('>II',data[16:24])!=dims: raise RuntimeError('Unexpected dimensions: '+name)
+                  if not (10000<len(data)<5_000_000): raise RuntimeError('Unexpected PNG size: '+name)
+                  (Path('assets')/name).write_bytes(data)
+                  print(name,len(data))
+          PY
+      - name: Commit updated images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/screenshot.png assets/screenshot-en.png assets/screenshot-mobile.png assets/screenshot-mobile-en.png
+          if git diff --cached --quiet; then
+            echo "Screenshots are already current."
+            exit 0
+          fi
+          git commit -m "docs: refresh screenshots after removing hero title"
+          git push origin HEAD:"$GITHUB_REF_NAME"
