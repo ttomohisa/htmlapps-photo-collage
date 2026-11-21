@@ -23,12 +23,12 @@ assert(/^\d+\.\d+\.\d+$/.test(config.version), 'app.config.json must contain a S
 assert(source.includes('id="versionBadge">v' + config.version + '</span>'), 'UI version badge must match app.config.json.');
 assert(fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8').includes('## ' + config.version + ' - '), 'CHANGELOG must include the current version.');
 
-const releaseWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
-assert(releaseWorkflow.includes('git/matching-refs/tags/$TAG'),
+const releaseTagWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
+assert(releaseTagWorkflow.includes('git/matching-refs/tags/$TAG'),
   'Release must use a successful empty-list response when a tag does not exist.');
-assert(releaseWorkflow.includes('select(.ref == $ref)'),
+assert(releaseTagWorkflow.includes('select(.ref == $ref)'),
   'Release must distinguish an exact tag from tags that share its prefix.');
-assert(!releaseWorkflow.includes('git/ref/tags/$TAG" 2>/dev/null || true'),
+assert(!releaseTagWorkflow.includes('git/ref/tags/$TAG" 2>/dev/null || true'),
   'Release must not interpret a failed GitHub API lookup as an existing tag.');
 
 
