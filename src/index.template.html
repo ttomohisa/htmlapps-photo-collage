@@ -332,13 +332,14 @@
 
     /* Release polish: quiet surfaces and an 8px spacing rhythm. Icons and type sizes are exempt. */
     :root{--space-1:8px;--space-2:16px;--space-3:24px;--space-4:32px}
-    .main{padding-top:var(--space-3);padding-bottom:56px}
-    .page-intro{gap:var(--space-2);margin-bottom:var(--space-3)}
+    .main{padding-top:var(--space-2);padding-bottom:56px}
+    .page-intro{align-items:center;gap:var(--space-2);margin-bottom:var(--space-2)}
     .workspace{gap:var(--space-2)}
     .header-inner{padding:8px 24px;gap:16px}
     .header-actions{gap:8px}
     .main{padding-inline:24px}
-    .page-intro p{margin-top:8px}
+    .page-intro p{margin:0;line-height:1.6}
+    .page-intro .privacy-badge{margin-top:0}
     footer{padding-inline:24px}
     .panel{border-radius:12px;box-shadow:none}
     .panel-head{padding:16px}
@@ -502,10 +503,10 @@
   </header>
 
   <main class="main">
-    <section class="page-intro" aria-labelledby="heroTitle">
-      <div><h1 id="heroTitle" data-i18n="introTitle">写真を1枚のコラージュにまとめる</h1><p data-i18n="lead">写真を整えて、JPEG・PNG・WebPとして端末に保存できます。</p></div>
+    <div class="page-intro">
+      <p data-i18n="lead">写真を整えて、JPEG・PNG・WebPとして端末に保存できます。</p>
       <div class="privacy-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg><span data-i18n="privacyBadge">完全ローカル処理</span></div>
-    </section>
+    </div>
 
 
     <!-- APP:BEGIN -->
