@@ -10,7 +10,7 @@ permissions:
   actions: read
 jobs:
   refresh:
-    if: "github.event.head_commit.message == 'ci: prepare screenshot refresh'"
+    if: "github.event.head_commit.message == 'ci: run screenshot refresh once'"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
