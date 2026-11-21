@@ -90,7 +90,11 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          ref_json="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" 2>/dev/null || true)"
+          # A missing tag returns HTTP 404. Do not mistake an error response body
+          # for an existing Git ref (or swallow unrelated API failures).
+          # Matching refs returns [] for a missing tag and may also return prefix matches.
+          refs_json="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$TAG")"
+          ref_json="$(jq -c --arg ref "refs/tags/$TAG" '[.[] | select(.ref == $ref)] | first // empty' <<< "$refs_json")"
           if [[ -n "$ref_json" ]]; then
             target_sha="$(jq -r '.object.sha' <<< "$ref_json")"
             object_type="$(jq -r '.object.type' <<< "$ref_json")"

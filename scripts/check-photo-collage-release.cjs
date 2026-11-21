@@ -23,6 +23,15 @@ assert(/^\d+\.\d+\.\d+$/.test(config.version), 'app.config.json must contain a S
 assert(source.includes('id="versionBadge">v' + config.version + '</span>'), 'UI version badge must match app.config.json.');
 assert(fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8').includes('## ' + config.version + ' - '), 'CHANGELOG must include the current version.');
 
+const releaseTagWorkflow=fs.readFileSync(path.join(root,'.github','workflows','release.yml'),'utf8');
+assert(releaseTagWorkflow.includes('git/matching-refs/tags/$TAG'),
+  'Release must use a successful empty-list response when a tag does not exist.');
+assert(releaseTagWorkflow.includes('select(.ref == $ref)'),
+  'Release must distinguish an exact tag from tags that share its prefix.');
+assert(!releaseTagWorkflow.includes('git/ref/tags/$TAG" 2>/dev/null || true'),
+  'Release must not interpret a failed GitHub API lookup as an existing tag.');
+
+
 const committedRootHtml = fs.readFileSync(path.join(root, 'photo-collage.html'), 'utf8');
 assert(committedRootHtml.includes('v' + config.version), 'Committed photo-collage.html must match app.config.json.');
 assert(committedRootHtml.includes("connect-src 'none'"), "Committed photo-collage.html must keep connect-src 'none'.");
