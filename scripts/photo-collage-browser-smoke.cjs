@@ -118,7 +118,7 @@ async function runMobileWorkflow(browser){
   page.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url())});
   try{
     await page.goto(url);
-    assert.equal(await page.locator('#heroTitle').isVisible(),false,'mobile hero title hidden');
+    assert.equal(await page.locator('#heroTitle').count(),0,'hero title removed from markup, not just hidden');
     assert.equal(await page.locator('.privacy-badge').isVisible(),false,'mobile privacy badge hidden');
     const topGap=await page.evaluate(()=>{
       const header=document.querySelector('.app-header').getBoundingClientRect();
@@ -260,6 +260,17 @@ async function runDesktopEditorLayout(browser){
     assert(desktop.exportTop>desktop.previewBottom,'export settings follow the preview');
     assert(Math.abs(desktop.headerContentX-desktop.mainContentX)<2,'header and body edges must align');
     assert.equal(desktop.bodyOverflow,false,'no desktop horizontal overflow');
+    const introSpacing=await page.evaluate(()=>{
+      const header=document.querySelector('.app-header').getBoundingClientRect();
+      const intro=document.querySelector('.page-intro').getBoundingClientRect();
+      const workspace=document.querySelector('.workspace').getBoundingClientRect();
+      const lead=document.querySelector('.page-intro p').getBoundingClientRect();
+      return {top:intro.top-header.bottom,bottom:workspace.top-intro.bottom,leadTop:lead.top-intro.top};
+    });
+    assert.equal(await page.locator('#heroTitle').count(),0,'desktop hero heading has been removed');
+    assert(introSpacing.top>=15&&introSpacing.top<=17,'desktop intro starts 16px below header');
+    assert(introSpacing.bottom>=15&&introSpacing.bottom<=17,'desktop workspace starts 16px below intro');
+    assert(introSpacing.leadTop>=0&&introSpacing.leadTop<=2,'no leftover top margin where hero heading used to be');
     const stickyInitial=await page.evaluate(()=>({
       previewTop:document.querySelector('.content-panel').getBoundingClientRect().top,
       maxPageScroll:document.documentElement.scrollHeight-innerHeight
@@ -330,7 +341,7 @@ async function runDesktopEditorLayout(browser){
     await page.setViewportSize({width:390,height:844});
     await page.waitForFunction(()=>document.querySelector('#layoutPage')?.contains(document.getElementById('adjustPanel')));
     assert.equal(await page.locator('.privacy-badge').isVisible(),false);
-    assert.equal(await page.locator('#heroTitle').isVisible(),false);
+    assert.equal(await page.locator('#heroTitle').count(),0,'hero title is absent at phone widths');
     assert.equal(await page.locator('#historyMenuButton').count(),0,'no mobile history entry');
     assert.equal(await page.locator('#historyToolbar').isVisible(),false,'desktop history toolbar hidden in phone workflow');
     assert.equal(await page.locator('#appMobileBottomBar .app-mobile-bottom-item').count(),4);
