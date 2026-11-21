@@ -18,15 +18,18 @@ GitHub Pages delivers the initial HTML. After it loads, photo decoding, thumbnai
 
 ## Features
 
+On desktop, photo ordering, layout, and canvas adjustments sit in a left rail beside a sticky preview, with export settings below. Undo, Redo, and Start over are alongside the preview title on desktop only. On smartphones, the four workflow pages remain, without history controls.
+
+
 - **Photo-aware layout suggestions** — Add 2–20 photos and choose from layouts scored against the actual photo aspect ratios instead of starting from a blank canvas.
 - **More layouts when you want another arrangement** — Additional candidate pages are available for larger photo sets, and switching pages immediately updates the preview.
-- **Reorder photos naturally** — Use desktop Drag & Drop, a touch-friendly drag handle, or the move buttons.
-- **Adjust each photo without a free-form editor** — Change crop position, 1×–3× zoom, Fill / Fit, or mark one photo as the featured image.
-- **Reset one photo’s adjustment** — Return the selected photo to centered Fill at 100% zoom without changing its featured status or order. Undo restores its previous crop, zoom, and mode.
+- **Reorder photos naturally** — Use desktop Drag & Drop, a touch-friendly drag handle, the move buttons, or sort by filename (A–Z / Z–A with natural number ordering).
+- **Adjust each photo without a free-form editor** — Rotate by 90° per tap, change crop position, 1×–3× zoom, Fill / Fit, or mark one photo as the featured image. The rotation also affects the suggested layouts and saved image.
+- **Reset one photo’s adjustment** — Return the selected photo to centered Fill at 100% zoom and its original orientation without changing its featured status or order. On desktop, Undo restores the previous adjustment.
 - **Finish the canvas quickly** — Start at 4:3 or choose 1:1, 4:5, 9:16, 16:9, 3:2, 4:3, or a custom ratio, then adjust spacing, outer margin, background, transparency, and rounded corners.
 - **Export from the original photos** — Save as JPEG, PNG, or WebP at 1080, 2160, 4096px, or a custom long-side size.
 - **Cancel photo imports safely** — Stop a pending batch without changing existing photos, edits, or Undo / Redo. Failed filenames stay visible even if none load, and selecting again replaces only the pending batch.
-- **Undo and redo safely** — Keep up to 50 edit steps, including reorder, layout, crop, finish settings, and export settings.
+- **Undo and redo safely** — Keep up to 50 edit steps, including filename sorting, rotations, reorder, layout, crop, finish settings, and export settings.
 - **Desktop and smartphone workflows** — Smartphones use dedicated Photos / Layout / Finish / Save pages instead of a long stacked desktop UI.
 - **Fully local processing** — No account, runtime CDN, remote font, analytics, telemetry, or external API is required by the app.
 
@@ -54,11 +57,13 @@ Just [open the demo](https://ttomohisa.github.io/htmlapps-photo-collage/). No in
 
 The app itself does not require Python, Node.js, a local web server, or an installed desktop application.
 
+Failed image decodes do not occupy one of the 20 photo slots: the app checks later files until it has loaded the available number of photos. It reports any files skipped after reaching the limit. Edits and export settings are temporarily locked while the image is being created; they become available again afterward. Changing the collage clears the previous export result shown in the editor.
+
 ## Usage
 
 1. Add 2–20 JPEG, PNG, or WebP photos with the file picker or Drag & Drop.
 2. Choose a suggested layout. When more candidate pages are available, use **More layouts**.
-3. Reorder photos as needed.
+3. Reorder photos manually or sort by filename (A–Z / Z–A). Use the circular arrow on a photo card to rotate it 90° clockwise.
 4. Select a photo to adjust crop position, zoom, Fill / Fit, or featured-photo status.
 5. Adjust the canvas ratio, photo spacing, outer margin, background, transparency, and rounded corners.
 6. Choose JPEG, PNG, or WebP, then set the output resolution and quality.
@@ -85,10 +90,10 @@ The default canvas ratio is **4:3**. Transparent background is available for PNG
 
 On narrow smartphone layouts, the fixed bottom bar separates the workflow into four pages:
 
-- **Photos** — add, review, reorder, and remove photos.
+- **Photos** — add, review, rotate, sort by filename, reorder manually, and remove photos.
 - **Layout** — choose a layout and adjust individual photos.
 - **Finish** — adjust ratio, spacing, background, transparency, and corners.
-- **Save** — choose export settings and save the result.
+- **Save** — choose the output format, resolution, quality, and filename. Once the Save page is open, tap **Save image** in the bottom navigation to download without scrolling.
 
 Layout, Finish, and Save stay disabled until at least two photos are ready.
 
@@ -101,6 +106,10 @@ This repository includes a workflow that validates the stable-release regression
 1. Open **Settings → Pages → Build and deployment → Source** and select **GitHub Actions**.
 2. Push to `main`, or run **Deploy standalone app to GitHub Pages** from the Actions tab.
 3. After a successful deployment, the app is available at `https://ttomohisa.github.io/htmlapps-photo-collage/`.
+
+## Automatic tag and GitHub Release
+
+After a merged push to `main` passes the GitHub Pages deployment workflow, the app automatically creates an annotated tag and a GitHub Release for the version in `app.config.json`. The validated standalone HTML and self-extracting HTML are attached. Existing version tags are never moved; publishing a different commit under an existing version fails. Merging remains a manual action.
 
 ## Development and build layout
 
