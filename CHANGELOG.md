@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.1.1 - 2026-11-22
+
+### Fixed
+- Align release metadata with a new patch version after the merged v1.1.0 release automation detected a conflicting tag. No application behavior changes.
+- Keep the standalone HTML version badge, embedded build metadata, and release tag consistent.
+
 ## 1.1.0 - 2026-11-19
 
 ### Added
