@@ -265,12 +265,13 @@ async function runDesktopEditorLayout(browser){
       const intro=document.querySelector('.page-intro').getBoundingClientRect();
       const workspace=document.querySelector('.workspace').getBoundingClientRect();
       const lead=document.querySelector('.page-intro p').getBoundingClientRect();
-      return {top:intro.top-header.bottom,bottom:workspace.top-intro.bottom,leadTop:lead.top-intro.top};
+      return {top:intro.top-header.bottom,bottom:workspace.top-intro.bottom,leadTop:lead.top-intro.top,leadMarginTop:parseFloat(getComputedStyle(document.querySelector('.page-intro p')).marginTop)};
     });
     assert.equal(await page.locator('#heroTitle').count(),0,'desktop hero heading has been removed');
     assert(introSpacing.top>=15&&introSpacing.top<=17,'desktop intro starts 16px below header');
     assert(introSpacing.bottom>=15&&introSpacing.bottom<=17,'desktop workspace starts 16px below intro');
-    assert(introSpacing.leadTop>=0&&introSpacing.leadTop<=2,'no leftover top margin where hero heading used to be');
+    assert.equal(introSpacing.leadMarginTop,0,'hero removal must not leave an empty paragraph top margin');
+    assert(introSpacing.leadTop>=0&&introSpacing.leadTop<=12,'intro text remains aligned with the privacy label');
     const stickyInitial=await page.evaluate(()=>({
       previewTop:document.querySelector('.content-panel').getBoundingClientRect().top,
       maxPageScroll:document.documentElement.scrollHeight-innerHeight
